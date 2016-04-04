@@ -68,3 +68,24 @@ all$date[all$date == "MARCH24"] <- "MARCH29"
 
 
 ggplot(all, aes(x = date, y = cell_count, group = uniqueID, color = factor(all$treatment))) + geom_line() +ylim(0,20000)
+
+
+### April 2
+
+fnams <- list.files("/Users/Joey/Documents/p-temp/run-summaries-April2", full.names = TRUE) ## find out the names of all the files in data-summary, use full.names to get the relative path for each file
+
+ptemp_summaries_April2 <- fnams %>%  
+	lapply(FUN = function(p) read.csv(p)) %>% 
+	as.data.frame(.) %>% 
+	filter(List.File == "Particles / ml") %>% 
+	select(- starts_with("List")) %>%
+	t(.) %>%
+	as.data.frame() %>%
+	mutate(dataset = rownames(.)) %>%
+	mutate(cell_count = as.numeric(as.character(V1))) %>%
+	select(-V1)
+
+ptemp_sep_April2 <- separate(ptemp_summaries_April2, dataset, c("UniqueID", "treatment", "temperature", "replicate", "date", "try", "type"))
+
+ggplot(ptemp_sep_April2, aes(x = temperature, y = cell_count, group = treatment, color = factor(treatment))) + geom_point()
+
