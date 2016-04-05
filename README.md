@@ -3,6 +3,9 @@ temperature and nutrient effects on productivity
 
 ### Documents
 
+[Experiment notes in the issues](https://github.com/JoeyBernhardt/p-temp/issues)
+
+
 [Experiment schedule](https://docs.google.com/spreadsheets/d/1N39WazSOI1MwCgxlQtFRjEsyxo3v4xB1Cw4YITfxUd8/edit?usp=sharing)
 
 
