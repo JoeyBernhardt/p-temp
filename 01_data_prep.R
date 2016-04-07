@@ -139,6 +139,50 @@ april_5_cellcount %>%
 	filter(replicate %in% c("1", "2", "3", "4", "5", "6")) %>% 
 	ggplot(., aes(x = as.factor(temperature), y = cell_count, fill = factor(treatment), geom = "boxplot")) +
 	geom_boxplot()
+ggsave("cellcount_t2.png")
+
+ptemp_sep_29_u <- unite(ptemp_sep_29, treatment_ID, treatment:replicate, remove = FALSE)
+
+april_5_cellcount_u <- unite(april_5_cellcount, treatment_ID, treatment:replicate, remove = FALSE)
+
+sep_29_u <- ptemp_sep_29_u %>% 
+	select(treatment_ID, treatment, temperature, date, cell_count)
+
+april_5_u <- april_5_cellcount_u %>% 
+	select(treatment_ID, treatment, temperature, date, cell_count)
+
+cell_counts <- bind_rows(sep_29_u, april_5_u)
+
+
+cell_counts %>% 
+	group_by(treatment_ID) %>% 
+	
+	
+	cell_counts$date <- factor(cell_counts$date, c("MARCH24","MARCH29", "APRIL5"))
+	
+cell_counts$date[cell_counts$date == "MARCH24"] <- "MARCH29"
+
+
+cell_counts %>% 
+	# filter(temperature != 20) %>% 
+ggplot(., aes(x=date, y=cell_count, group=treatment_ID, color=temperature)) +
+	geom_line(size=1) +
+	geom_point(size=3)
+ggsave("cell_count_t1t2w-20.png")
+
+
+cell_counts %>% 
+	filter(temperature %in% c("12", "16")) %>% 
+	ggplot(., aes(x=date, y=cell_count, group=treatment_ID, color=temperature)) +
+	geom_line(size=1) +
+	geom_point(size=3)
+
+
+cell_counts %>% 
+	filter(temperature %in% c("12", "16")) %>% 
+ggplot(., aes(x = date, y = cell_count, fill = factor(temperature), geom = "boxplot")) +
+	geom_boxplot()
+ggsave("cellcounts_12.16.png")
 	
 	
 	
