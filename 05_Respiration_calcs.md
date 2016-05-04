@@ -1,4 +1,9 @@
-# Daph_Resp
+### Daphnia respiration rate calculations
+#### May 4 2016
+#### Joey Bernhardt
+
+
+Hi Matt, Mary and Jenn! Thanks for looking at this!!
 
 #### Load libraries
 
