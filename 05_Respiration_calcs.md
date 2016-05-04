@@ -67,7 +67,7 @@ resp %>%
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-3-3.png)<!-- -->
 
 
-#### Calculate slopes to get oxygen consumption (here for 20C run only)
+#### Calculate 'microbial control' slopes to get oxygen consumption in COMBO only (here for 20C run only)
 
 ```r
 control.slopes <- resp.long20 %>% 
