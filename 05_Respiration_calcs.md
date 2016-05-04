@@ -48,7 +48,7 @@ ggplot(data = resp.long12, aes(x = time, y = oxygen)) + geom_point() + facet_wra
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ```r
-## 20C plots
+## 20C plots, blue lines are linear fits
 ggplot(data = resp.long20, aes(x = time, y = oxygen)) + geom_point() +
 	stat_summary(fun.y= "mean", geom = "point") +
 	geom_smooth(method = 'lm') + 
