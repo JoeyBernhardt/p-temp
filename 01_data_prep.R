@@ -185,7 +185,51 @@ ggplot(., aes(x = date, y = cell_count, fill = factor(temperature), geom = "boxp
 ggsave("cellcounts_12.16.png")
 	
 	
-	
-	
+#### April 8 ####
 
 
+
+fnams <- list.files("/Users/Joey/Documents/p-temp/run-summaries-April8", full.names = TRUE) ## find out the names of all the files in data-summary, use full.names to get the relative path for each file
+
+#### Step 3: create a df with the dataset ID and the cell count ####
+ptemp_summaries_april8 <- fnams %>%  
+	lapply(FUN = function(p) read.csv(p)) %>% 
+	as.data.frame(.) %>% 
+	filter(List.File == "Particles / ml") %>% 
+	select(- starts_with("List")) %>%
+	t(.) %>%
+	as.data.frame() %>%
+	mutate(dataset = rownames(.)) %>%
+	mutate(cell_count = as.numeric(as.character(V1))) %>%
+	select(-V1) %>% 
+	filter(dataset != "X23.lst")
+
+View(ptemp_summaries_april8)
+
+ptemp_sep_april8 <- separate(ptemp_summaries_april8, dataset, c("UniqueID", "date", "try"), extra = "drop", remove = FALSE)
+?separate
+	
+sep_april8 <- separate(ptemp_sep_april8, UniqueID, c("x", "Unique_ID"), sep = 1) %>% 
+	select(-1)
+
+Unique_ID_key <- read_csv("P-TEMP-UniqueID-key.csv")
+
+Unique_ID_key <- separate(Unique_ID_key, TREATMENT_ID, c("treatment", "temperature", "replicate"))
+sep_april8 <- sep_april8 %>% 
+	rename(UniqueID = Unique_ID)
+sep_april8$UniqueID <- as.integer(sep_april8$UniqueID)
+
+april_8_cellcount <- left_join(sep_april8, Unique_ID_key, by = "UniqueID")
+
+
+write_csv(april_8_cellcount, "april8_cell.count.csv")
+
+april_8_cellcount_edit <- read_csv("data-processed/april8_cell.count_edited.csv")
+
+ggplot(april_8_cellcount_edit, aes(x = temperature, y = cell_count, group = treatment, color = factor(treatment))) + geom_point()
+ggplot(april_8_cellcount_edit, aes(x = treatment, y = cell_count, group = factor(temperature), color = factor(temperature))) + geom_boxplot()
+
+april_8_cellcount_edit %>% 
+	filter(replicate %in% c("1", "2", "3", "4", "5", "6")) %>% 
+	ggplot(., aes(x = as.factor(temperature), y = cell_count, fill = factor(treatment), geom = "boxplot")) +
+	geom_boxplot()
