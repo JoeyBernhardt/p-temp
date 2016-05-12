@@ -12,39 +12,95 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 library(broom)
+library(plotrix)
 ```
 
 #### Import data
 ```{r}
 resp12 <- read_csv("respirometry-data/daph_resp_april29.csv")
 resp20 <- read_csv("respirometry-data/daph_resp_april28.csv")
-resp20_weights <- read_csv("respirometry-data/Daph_resp_weights_April28.csv")
+resp20_weights <- read_csv("respirometry-data/May5_20C_resp_weights.csv") %>% 
+	mutate(temperature = 20)
+resp12_weights <- read_csv("respirometry-data/May6_12C_resp_weights.csv") %>% 
+	mutate(temperature = 12)
+resp24_weights <- read_csv("respirometry-data/May5_24C_resp_weights.csv") %>% 
+	mutate(temperature = 24)
+resp16_weights <- read_csv("respirometry-data/May6_16C_resp_weights.csv") %>% 
+	mutate(temperature = 16)
+
+# resp_20 <- read_delim("respirometry-data/May5-24-R3-RESP_Oxygen.txt",delim = ";", na = c("", "NA"), comment = "", skip = 34)
+
+resp24 <- read_csv("respirometry-data/May5-24-resp.csv")
+resp20 <- read_csv("respirometry-data/May5-20-resp.csv")
+resp16 <- read_csv("respirometry-data/May6-16-resp.csv")
+resp12 <- read_csv("respirometry-data/May6-12-resp.csv")
 
 
 #### Turn into long form
 resp.long12 <- gather(resp12, channel, oxygen, 3:25)
 resp.long20 <- gather(resp20, channel, oxygen, 3:25)
-
+resp.long24 <- gather(resp24, channel, oxygen, 3:25)
+resp.long16 <- gather(resp16, channel, oxygen, 3:25)
 #### create new column with test temperature
 resp.long20$temperature <- 20
 resp.long12$temperature <- 12
-
+resp.long24$temperature <- 24
+resp.long16$temperature <- 16
 #### fiddle with the time column so that it's reported in seconds, as a numeric variable
 ## this is going to be the dependent variable in my regressions
-resp.long20$time <- as.numeric(resp.long20$`Time/Sec.`)
-resp.long12$time <- as.numeric(resp.long12$`Time/Sec.`)
-
+resp.long20$time <- as.numeric(resp.long20$time)
+resp.long12$time <- as.numeric(resp.long12$time)
+resp.long24$time <- as.numeric(resp.long24$time)
+resp.long16$time <- as.numeric(resp.long16$time)
 
 #### merge the two datasets
-resp <- bind_rows(resp.long20, resp.long12)
+resp <- bind_rows(resp.long20, resp.long12, resp.long24, resp.long16)
 resp$temperature <- as.factor(resp$temperature)
 ```
 
 
 #### Initial Plots
 ```{r}
+
+weights <- bind_rows(resp12_weights, resp16_weights, resp20_weights, resp24_weights) %>% 
+	mutate(temperature = as.factor(temperature))
+
+g <- ggplot(weights, aes(daph_weight)) + geom_histogram(binwidth = 0.009)
+g + facet_grid(temperature ~ ., scales = "free_y") + theme_bw() 
+
+mean_daph_weight <- mean(weights$daph_weight)
+
+weights %>% 
+	group_by(temperature) %>% 
+	select(daph_weight, temperature) %>% 
+# 	summarize(mean = mean(mass.corr.cons),
+# 						sd = sd(mass.corr.cons)) %>% 
+	summarise_each(funs(mean,median, sd,std.error)) %>% 
+	ggplot(data = ., aes(temperature, y = mean)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.1) +
+    geom_point()
+
+
+
+resp.long16 %>%
+	group_by(temperature) %>% 
+	filter(time > 300 & time < 2000) %>% 
+	ggplot(data = ., aes(x = time, y = oxygen, group = temperature, color = temperature)) + geom_point() + stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm')
+
+
 ## 12C plots
-ggplot(data = resp.long12, aes(x = time, y = oxygen)) + geom_point() + facet_wrap( ~ channel)
+resp.long12 %>% 
+	ggplot(data = ., aes(x = time, y = oxygen)) + geom_point() 
+
+
+resp.long24 %>% 
+	filter(time > 300 & time < 2000) %>% 
+	ggplot(data = ., aes(x = time, y = oxygen)) + geom_point() + stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	facet_wrap( ~ channel)
+
+ggplot(data = resp.long24, aes(x = time, y = oxygen)) + geom_point() + facet_wrap( ~ channel)
 
 ## 20C plots
 ggplot(data = resp.long20, aes(x = time, y = oxygen)) + geom_point() +
@@ -62,27 +118,29 @@ resp %>%
 
 #### Calculate slopes to get oxygen consumption (here for 20C run only)
 ```{r}
-control.slopes <- resp.long20 %>% 
-	filter(channel %in% c("A3", "A4", "A5", "A6")) %>% ## I'm filtering out only the A row, b/c these were my plain COMBO wells
+control.slopes20 <- resp.long20 %>% 
+	filter(channel %in% c("A2", "A3", "A4")) %>% ## I'm filtering out only the A row, b/c these were my plain COMBO wells
 	group_by(channel) %>% 
-	filter(time < 3600 & time > 300) %>% ## here I filter out the chunk of time between 5 minutes and one hour
+	filter(time < 2000 & time > 300) %>% ## here I filter out the chunk of time between 5 minutes and one hour
 	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## here I fit a linear model of oxygen concentration as a function of time, for each well
 	filter(term != "(Intercept)") %>% ## get rid of the intercept estimate
 	summarise(mean.slope = mean(estimate)) ## create a new column for the mean slope
 
-mean.control.slope <- mean(control.slopes$mean.slope) ## calculate the mean control slope
+mean.control.slope20 <- mean(control.slopes20$mean.slope) ## calculate the mean control slope
+
+
 ```
 #### Calculate and manipulate daphnia respiration slopes (want to eventually end up in units of mg O2/hr)
 ```{r}
-slopes <- resp.long20 %>% 
-	filter(channel %in% c("D1", "D2", "D3", "D5", "B3", "B4", "B5", "B6", "C5")) %>% ## pull out the wells where it looks like the measurements worked
+slopes20 <- resp.long20 %>% 
+	filter(channel %in% c("A6", "B2", "B4", "B5", "C1", "C3", "C6", "D2", "D4")) %>% ## pull out the wells where it looks like the measurements worked
 	group_by(channel) %>% 
-	filter(time < 3600 & time > 300) %>% ## select time chunk
+	filter(time < 2000 & time > 300) %>% ## select time chunk
 	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## fit linear models, grouped by channel
 	filter(term != "(Intercept)") %>% ## get rid of intercept term
 	## create new variable, called "microbe.corr.slope" in which I subtract the mean of the COMBO only slopes, correcting for microbial respiration
 	## now units are mg O2 / L*s
-	mutate(microbe.corr.slope = estimate - mean.control.slope) %>% 
+	mutate(microbe.corr.slope = estimate - mean.control.slope20) %>% 
 	## now multiply the mg O2 /L*s by 0.0002L, which is the volume of the wells, and by 3600s, to convert my metric in seconds to hours
 	## and finally, multiply by -1 to convert negative concentrations to a positive respiration value
 	## units should now be mg O2/hr
@@ -91,18 +149,193 @@ slopes <- resp.long20 %>%
 
 #### Bring in the Daphnia weights, left join with the slope estimates
 ```{r}
-mass_slopes <- left_join(slopes, resp20_weights, by = "channel")
+mass_slopes20 <- left_join(slopes20, resp20_weights, by = "channel")
 ```
 #### Get mass-specific respiration rates
 ##### take the respiration rates (in mg O2/hr) and divide by daphnia weights
 ##### scroll all the way to the right to see the mass corrected consumption, which should be in mg O2/mg dry weight * hour
 ```{r}
-mass_slopes %>% 
-	mutate(mass.corr.cons = (cons_per_hour/daph_minus_water)) %>% 
+mass_slopes20 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight)) %>%
 knitr::kable(., align = 'c', format = 'markdown', digits = 4)
 ```
 
+#### 12C
+#### Calculate and manipulate daphnia respiration slopes (want to eventually end up in units of mg O2/hr)
+```{r}
+control.slopes12 <- resp.long12 %>% 
+	filter(channel %in% c("A2", "A3", "A4")) %>% ## I'm filtering out only the A row, b/c these were my plain COMBO wells
+	group_by(channel) %>% 
+	filter(time < 2000 & time > 300) %>% ## here I filter out the chunk of time between 5 minutes and one hour
+	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## here I fit a linear model of oxygen concentration as a function of time, for each well
+	filter(term != "(Intercept)") %>% ## get rid of the intercept estimate
+	summarise(mean.slope = mean(estimate)) ## create a new column for the mean slope
+
+mean.control.slope12 <- mean(control.slopes12$mean.slope) ## calculate the mean control slope
+
+
+slopes12 <- resp.long12 %>% 
+	filter(channel %in% c("A5", "B1", "B5", "B6", "C1", "C3", "D6")) %>% ## pull out the wells where it looks like the measurements worked
+	group_by(channel) %>% 
+	filter(time < 3600 & time > 300) %>% ## select time chunk
+	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## fit linear models, grouped by channel
+	filter(term != "(Intercept)") %>% ## get rid of intercept term
+	## create new variable, called "microbe.corr.slope" in which I subtract the mean of the COMBO only slopes, correcting for microbial respiration
+	## now units are mg O2 / L*s
+	mutate(microbe.corr.slope = estimate - mean.control.slope12) %>% 
+	## now multiply the mg O2 /L*s by 0.0002L, which is the volume of the wells, and by 3600s, to convert my metric in seconds to hours
+	## and finally, multiply by -1 to convert negative concentrations to a positive respiration value
+	## units should now be mg O2/hr
+	mutate(cons_per_hour = ((microbe.corr.slope * 0.0002 *3600) * -1)) 
+```
+
+#### Bring in the Daphnia weights, left join with the slope estimates
+```{r}
+mass_slopes12 <- left_join(slopes12, resp12_weights, by = "channel")
+```
+
+#### 24C
+#### Calculate and manipulate daphnia respiration slopes (want to eventually end up in units of mg O2/hr)
+```{r}
+
+control.slopes24 <- resp.long24 %>% 
+	filter(channel %in% c("A2", "A3", "A4")) %>% ## I'm filtering out only the A row, b/c these were my plain COMBO wells
+	group_by(channel) %>% 
+	filter(time < 2000 & time > 300) %>% ## here I filter out the chunk of time between 5 minutes and one hour
+	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## here I fit a linear model of oxygen concentration as a function of time, for each well
+	filter(term != "(Intercept)") %>% ## get rid of the intercept estimate
+	summarise(mean.slope = mean(estimate)) ## create a new column for the mean slope
+
+mean.control.slope24 <- mean(control.slopes24$mean.slope) ## calculate the mean control slope
+
+
+
+slopes24 <- resp.long24 %>% 
+	filter(channel %in% c("A6", "B3", "B4", "B5", "B6", "C1", "C3", "C5", "C6", "D3", "D4")) %>% ## pull out the wells where it looks like the measurements worked
+	group_by(channel) %>% 
+	filter(time < 2000 & time > 300) %>% ## select time chunk
+	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## fit linear models, grouped by channel
+	filter(term != "(Intercept)") %>% ## get rid of intercept term
+	## create new variable, called "microbe.corr.slope" in which I subtract the mean of the COMBO only slopes, correcting for microbial respiration
+	## now units are mg O2 / L*s
+	mutate(microbe.corr.slope = estimate - mean.control.slope24) %>% 
+	## now multiply the mg O2 /L*s by 0.0002L, which is the volume of the wells, and by 3600s, to convert my metric in seconds to hours
+	## and finally, multiply by -1 to convert negative concentrations to a positive respiration value
+	## units should now be mg O2/hr
+	mutate(cons_per_hour = ((microbe.corr.slope * 0.0002 *3600) * -1)) 
+```
+
+#### Bring in the Daphnia weights, left join with the slope estimates
+```{r}
+mass_slopes24 <- left_join(slopes24, resp24_weights, by = "channel")
+```
+#### Get mass-specific respiration rates
+##### take the respiration rates (in mg O2/hr) and divide by daphnia weights
+##### scroll all the way to the right to see the mass corrected consumption, which should be in mg O2/mg dry weight * hour
+```{r}
+mass_slopes24 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight)) %>%
+knitr::kable(., align = 'c', format = 'markdown', digits = 4)
+```
+
+#### 16C
+#### Calculate and manipulate daphnia respiration slopes (want to eventually end up in units of mg O2/hr)
+```{r}
+control.slopes16 <- resp.long16 %>% 
+	filter(channel %in% c("A3", "A4")) %>% ## I'm filtering out only the A row, b/c these were my plain COMBO wells
+	group_by(channel) %>% 
+	filter(time < 2000 & time > 300) %>% ## here I filter out the chunk of time between 5 minutes and one hour
+	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## here I fit a linear model of oxygen concentration as a function of time, for each well
+	filter(term != "(Intercept)") %>% ## get rid of the intercept estimate
+	summarise(mean.slope = mean(estimate)) ## create a new column for the mean slope
+
+mean.control.slope16 <- mean(control.slopes16$mean.slope) ## calculate the mean control slope
+
+
+slopes16 <- resp.long16 %>% 
+	filter(channel %in% c("A6", "B1", "B4", "B5", "B6", "C1", "C3", "C4", "C6", "D1", "D2", "D4", "D5")) %>% ## pull out the wells where it looks like the measurements worked
+	group_by(channel) %>% 
+	filter(time < 2000 & time > 300) %>% ## select time chunk
+	do(tidy(lm(oxygen ~ time, data = .), conf.int = TRUE)) %>% ## fit linear models, grouped by channel
+	filter(term != "(Intercept)") %>% ## get rid of intercept term
+	## create new variable, called "microbe.corr.slope" in which I subtract the mean of the COMBO only slopes, correcting for microbial respiration
+	## now units are mg O2 / L*s
+	mutate(microbe.corr.slope = estimate - mean.control.slope16) %>% 
+	## now multiply the mg O2 /L*s by 0.0002L, which is the volume of the wells, and by 3600s, to convert my metric in seconds to hours
+	## and finally, multiply by -1 to convert negative concentrations to a positive respiration value
+	## units should now be mg O2/hr
+	mutate(cons_per_hour = ((microbe.corr.slope * 0.0002 *3600) * -1)) 
+```
+
+#### Bring in the Daphnia weights, left join with the slope estimates
+```{r}
+mass_slopes16 <- left_join(slopes16, resp16_weights, by = "channel")
+```
+
+
+
+
+
+#### Get mass-specific respiration rates
+##### take the respiration rates (in mg O2/hr) and divide by daphnia weights
+##### scroll all the way to the right to see the mass corrected consumption, which should be in mg O2/mg dry weight * hour
+```{r}
+mass_slopes12 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight_median)) %>%
+knitr::kable(., align = 'c', format = 'markdown', digits = 4)
+
+flux_12 <- mass_slopes12 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight_median)) %>% 
+	mutate(temperature = 12)
+
+flux_20 <- mass_slopes20 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight_median_no)) %>% 
+	mutate(temperature = 20)
+
+flux_24 <- mass_slopes24 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight_median)) %>% 
+	mutate(temperature = 24)
+
+
+flux_16 <- mass_slopes16 %>% 
+	mutate(mass.corr.cons = (cons_per_hour/daph_weight_median_no)) %>% 
+	mutate(temperature = 16)
+
+fluxes <- bind_rows(flux_20, flux_12, flux_24, flux_16) %>% 
+	mutate(mass.corr.mean = (cons_per_hour/mean_daph_weight)) %>% 
+	mutate(mass.corr.flux = (cons_per_hour/daph_weight))
+
+library(plotrix)
+
+#### respiration (divided by median mass of daphnia)
+fluxes %>% 
+	group_by(temperature) %>% 
+	select(mass.corr.cons, temperature) %>% 
+# 	summarize(mean = mean(mass.corr.cons),
+# 						sd = sd(mass.corr.cons)) %>% 
+	summarise_each(funs(mean,sd,std.error)) %>% 
+	ggplot(data = ., aes(temperature, y = mean)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.1) +
+    geom_point() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
+
+#### respiration (divided by mean mass of daphnia)
+fluxes %>% 
+	group_by(temperature) %>% 
+	select(mass.corr.mean, temperature) %>% 
+# 	summarize(mean = mean(mass.corr.cons),
+# 						sd = sd(mass.corr.cons)) %>% 
+	summarise_each(funs(mean,sd,std.error)) %>% 
+	ggplot(data = ., aes(temperature, y = mean)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.1) +
+    geom_point() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
+
+
+
+ggplot(data = fluxes, aes(x = factor(temperature), y = mass.corr.mean, group = temperature, color = factor(temperature))) + geom_boxplot() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
+```
+
 #### Visualize the slopes estimates in a coefficient plot
+
 ```{r}
 resp.long20 %>% 
 	filter(channel %in% c("D1", "D2", "D3", "D5", "B3", "B4", "B5", "B6")) %>% 
