@@ -1,4 +1,9 @@
-# Daph_Resp
+### Daphnia respiration rate calculations
+#### May 4 2016
+#### Joey Bernhardt
+
+
+Hi Matt, Mary and Jenn! Thanks for looking at this!!
 
 #### Load libraries
 
@@ -69,6 +74,7 @@ g + facet_grid(temperature ~ ., scales = "free_y") + theme_bw()
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ```r
+<<<<<<< HEAD
 mean_daph_weight <- mean(weights$daph_weight)
 
 weights %>% 
@@ -120,6 +126,9 @@ ggplot(data = resp.long24, aes(x = time, y = oxygen)) + geom_point() + facet_wra
 
 ```r
 ## 20C plots
+=======
+## 20C plots, blue lines are linear fits
+>>>>>>> cc72b4dcc4b5dcc2a670307dc8002ce7caa1ff20
 ggplot(data = resp.long20, aes(x = time, y = oxygen)) + geom_point() +
 	stat_summary(fun.y= "mean", geom = "point") +
 	geom_smooth(method = 'lm') + 
@@ -138,7 +147,7 @@ resp %>%
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-3-8.png)<!-- -->
 
 
-#### Calculate slopes to get oxygen consumption (here for 20C run only)
+#### Calculate 'microbial control' slopes to get oxygen consumption in COMBO only (here for 20C run only)
 
 ```r
 control.slopes20 <- resp.long20 %>% 
