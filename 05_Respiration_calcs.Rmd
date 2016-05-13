@@ -329,7 +329,8 @@ fluxes %>%
 	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.1) +
     geom_point() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
 
-
+mod1 <- lm(cons_per_hour ~ temperature, data = fluxes)
+summary(mod1)
 
 ggplot(data = fluxes, aes(x = factor(temperature), y = mass.corr.mean, group = temperature, color = factor(temperature))) + geom_boxplot() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
 ```

@@ -1,9 +1,4 @@
-### Daphnia respiration rate calculations
-#### May 4 2016
-#### Joey Bernhardt
-
-
-Hi Matt, Mary and Jenn! Thanks for looking at this!!
+# Daph_Resp
 
 #### Load libraries
 
@@ -74,7 +69,6 @@ g + facet_grid(temperature ~ ., scales = "free_y") + theme_bw()
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ```r
-<<<<<<< HEAD
 mean_daph_weight <- mean(weights$daph_weight)
 
 weights %>% 
@@ -126,9 +120,6 @@ ggplot(data = resp.long24, aes(x = time, y = oxygen)) + geom_point() + facet_wra
 
 ```r
 ## 20C plots
-=======
-## 20C plots, blue lines are linear fits
->>>>>>> cc72b4dcc4b5dcc2a670307dc8002ce7caa1ff20
 ggplot(data = resp.long20, aes(x = time, y = oxygen)) + geom_point() +
 	stat_summary(fun.y= "mean", geom = "point") +
 	geom_smooth(method = 'lm') + 
@@ -147,7 +138,7 @@ resp %>%
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-3-8.png)<!-- -->
 
 
-#### Calculate 'microbial control' slopes to get oxygen consumption in COMBO only (here for 20C run only)
+#### Calculate slopes to get oxygen consumption (here for 20C run only)
 
 ```r
 control.slopes20 <- resp.long20 %>% 
@@ -421,7 +412,33 @@ fluxes %>%
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-15-2.png)<!-- -->
 
 ```r
-ggplot(data = fluxes, aes(x = factor(temperature), y = mass.corr.cons, group = temperature, color = factor(temperature))) + geom_boxplot() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
+mod1 <- lm(cons_per_hour ~ temperature, data = fluxes)
+summary(mod1)
+```
+
+```
+## 
+## Call:
+## lm(formula = cons_per_hour ~ temperature, data = fluxes)
+## 
+## Residuals:
+##        Min         1Q     Median         3Q        Max 
+## -7.949e-04 -1.857e-04  9.120e-06  2.087e-04  8.082e-04 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) 3.326e-05  2.253e-04   0.148 0.883405    
+## temperature 4.925e-05  1.193e-05   4.129 0.000192 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.0003222 on 38 degrees of freedom
+## Multiple R-squared:  0.3097,	Adjusted R-squared:  0.2916 
+## F-statistic: 17.05 on 1 and 38 DF,  p-value: 0.000192
+```
+
+```r
+ggplot(data = fluxes, aes(x = factor(temperature), y = mass.corr.mean, group = temperature, color = factor(temperature))) + geom_boxplot() + xlab("temperature, C") + ylab("oxygen flux (mg O2/L *mg DM)")
 ```
 
 ![](05_Respiration_calcs_files/figure-html/unnamed-chunk-15-3.png)<!-- -->
