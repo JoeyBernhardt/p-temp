@@ -1,0 +1,40 @@
+### May 17 2016
+### Final biomasses
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(plotrix)
+
+
+biomass <- read_csv("data-raw/daphnia_weights_may16.csv")
+UniqueID <- read_csv("P-TEMP-UniqueID-key.csv")
+
+biomass <- biomass %>% 
+	rename(., UniqueID = `Replicate number`)
+
+biomass_ID <- left_join(biomass, UniqueID, by = "UniqueID") %>% 
+	separate(TREATMENT_ID, c("treatment", "temperature", "replicate"))
+
+biomass_ID$`sample weight`[biomass_ID$`sample weight` == "1.6343"]<-"3.0736"
+biomass_ID$`sample weight`[biomass_ID$`sample weight` == "1.4393"]<-"0.00"
+biomass_ID$`sample weight` <- as.numeric(biomass_ID$`sample weight`)
+biomass_ID$temperature <- as.factor(biomass_ID$temperature)
+
+biomass_ID %>% 
+	filter(UniqueID < 43) %>% 
+	ggplot(data = ., aes(x = factor(temperature), y = `sample weight`, fill = treatment)) +
+	geom_boxplot() 
+
+str(biomass_ID)
+
+biomass_ID %>% 
+	filter(UniqueID != "1") %>% 
+	dplyr::select(`sample weight`, treatment, temperature) %>% 
+	group_by(temperature, treatment) %>%
+	summarise_each(funs(mean, median, sd, std.error)) %>%
+	ggplot(data = ., aes(temperature, y = mean, group = treatment, color = treatment)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 2) + theme_bw() + ylab("biomass") + xlab("temperature, C")
+
