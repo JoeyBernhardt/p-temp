@@ -8,7 +8,7 @@ library(ggplot2)
 
 x <- read_csv("daph_size_csv/268-4-size-April19.csv")
 
-fnams <- list.files("daph_size_csv", full.names = TRUE) ## find out the names of all the files in data-raw, use full.names to get the relative path for each file
+fnams <- list.files("daph_size_data", full.names = TRUE) ## find out the names of all the files in data-raw, use full.names to get the relative path for each file
 
 ## Step 2: Name the the vector with filenames (i.e. fnams) with the basename (i.e file name without the directory) of the data files.
 ## then get rid of the ".csv" part
@@ -26,7 +26,7 @@ daph_size_sep <- daph_size %>%
 	separate(dataset, c("photo", "UniqueID", "type", "date")) %>% 
 	select(-X)
 
-Unique_ID_key <- read_csv("P-TEMP-UniqueID-key.csv")
+Unique_ID_key <- read_csv("data-raw/P-TEMP-UniqueID-key.csv")
 Unique_ID_key <- separate(Unique_ID_key, TREATMENT_ID, c("treatment", "temperature", "replicate"))
 Unique_ID_key$UniqueID <- as.factor(Unique_ID_key$UniqueID)
 daph_size_sep$UniqueID <- as.factor(daph_size_sep$UniqueID)

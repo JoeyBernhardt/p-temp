@@ -4,10 +4,11 @@ library(readr)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(broom)
 
 
 Daph_raw <- read_csv("data-processed/P-TEMP_DaphPop.csv")
-UniqueID <- read_csv("P-TEMP-UniqueID-key.csv")
+UniqueID <- read_csv("data-raw/P-TEMP-UniqueID-key.csv")
 
 Daph_raw <- tbl_df(Daph_raw)
 
@@ -43,7 +44,7 @@ library(ggplot2)
 DaphPop <- gs_title("P-TEMP_DaphPop")
 Daph <- gs_read(DaphPop)
 
-UniqueID <- read_csv("P-TEMP-UniqueID-key.csv")
+UniqueID <- read_csv("data-raw/P-TEMP-UniqueID-key.csv")
 
 
 UniqueID_treat <- separate(UniqueID, TREATMENT_ID, c("treatment", "temperature", "replicate"), remove = FALSE)
@@ -71,7 +72,6 @@ Daph_pro %>%
 	ggplot(data = ., aes(x = temperature.y, y = juveniles)) + geom_boxplot() + facet_wrap( ~ sample_date)
 
 Daph_tot %>% 
-	# filter(sample_date %in% c("4/12/2016", "4/16/2016", "4/19/2016")) %>% 
 	ggplot(data = ., aes(x = temperature.y, y = daph_tot)) + geom_boxplot() + facet_wrap( ~ sample_date)
 
 
@@ -115,7 +115,7 @@ Daph_tot %>%
 	filter(term != "(Intercept)") %>%  View
 
 Daph_tot %>% 
-	filter(sample_date == "5/3/2016" & temperature.y == 12) %>% 
+	filter(sample_date == "5/3/2016" & temperature.y == 24) %>% 
 	lm(data = ., daph_tot ~ treatment.y) %>% 
 		summary()
 
@@ -128,13 +128,23 @@ str(Daph_tot)
 
 Daph_tot %>% 
 	dplyr::filter(sample_date == "5/3/2016") %>% 
+	# dplyr::mutate(log_daph = log(daph_tot)) %>% 
 	dplyr::select(daph_tot, treatment.y, temperature.y) %>% 
 	group_by(temperature.y, treatment.y) %>%
 	summarise_each(funs(mean,median, sd,std.error)) %>% 
 	ggplot(data = ., aes(temperature.y, y = mean, group = treatment.y, color = treatment.y)) +
 	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
-	geom_point(size = 2) + theme_bw() + ylab("population abundance") + xlab("temperature, C")
+	geom_point(size = 6) + theme_bw() + ylab("ln(population abundance)") + xlab("temperature, C") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	scale_y_continuous(trans = "log")
 
+
+Daph_tot %>% 
+	dplyr::filter(sample_date == "5/3/2016") %>% 
+	# dplyr::filter(temperature.y == "16") %>% 
+lm(daph_tot ~ temperature.y + treatment.y, data = .) %>% 
+	summary()
 
 
 Daph_tot %>% 
