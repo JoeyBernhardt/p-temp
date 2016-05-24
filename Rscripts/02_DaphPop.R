@@ -155,6 +155,8 @@ april26$daph_tot <- as.numeric(april26$daph_tot)
 	nut <- lm(daph_tot ~ treatment.y, data = april26)
 	summary(nut)
 	
+	summary(nut)
+	
 	
 	
 	
