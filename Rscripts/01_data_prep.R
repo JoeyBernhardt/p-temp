@@ -29,7 +29,6 @@ View(ptemp_summaries)
 
 ptemp_sep_29 <- separate(ptemp_summaries_march29, dataset, c("treatment", "temperature", "replicate", "date"), extra = "drop")
 
-#I'm stupid
 
 #### Step 4: write out the df to a csv ####
 write_csv(ptemp_sep_29, "ptemp_summaries_March29.csv")
