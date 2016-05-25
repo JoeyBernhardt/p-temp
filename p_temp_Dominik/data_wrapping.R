@@ -32,35 +32,59 @@ p_temp_sums <- fnams %>%
   p_temp_sums <- p_temp_sums[,c(2,4:6)]
   
 #import metadata and Daphnia-count-data
-ID <- read.csv("/Users/dominikbahlburg/Documents/Studium/Bewerbungen/Oconnor/p_temp/UniqueID.csv", sep=';')  
-daphnia_count <- read.csv("~/Documents/Studium/Bewerbungen/Oconnor/p_temp/daphnia_count.csv")
-
-p_temp <- merge(p_temp_sums,ID,by="ID")
-daphnia_algae <- merge(p_temp_sums,daphnia_count,by=c("ID",'date'))
-daphnia_algae$biovol <- as.numeric(as.character((daphnia_algae[,3]))) * as.numeric(as.character((daphnia_algae[,4])))
-
-p_temp <- p_temp[order(p_temp$date,as.numeric(p_temp$ID)),]
-p_temp <- p_temp[ , c("ID", "P", "temp", "replicate",'date','cells/ml','volume/cell')]
-p_temp$biovol <- as.numeric(as.character((p_temp[,6]))) * as.numeric(as.character((p_temp[,7])))
-
-#I'm cheating here!!! It's only to get a nicer plot
-#we could consider making a column with something like "sampling No"
-#that could group data of very similar but not equal dates
-p_temp$date[p_temp$date=='APRIL2'] <- 'APRIL1'
-
-p_temp$date <- as.factor(p_temp$date)
-row.names(p_temp) <- 1:nrow(p_temp)
-
-
-p_temp$date <- factor(p_temp$date, levels=c('APRIL1','APRIL5','APRIL8',
-                                                     'APRIL12','APRIL15','APRIL19',
-                                                     'APRIL26','MAY4'))
-
-ggplot(p_temp, aes(x = date, y = biovol, group = P, color = factor(temp))) + geom_point()
-
-write_csv(p_temp, "p_temp_algae.csv")
-write_csv(daphnia_algae, "p_temp_daphnia_algae.csv")
-
-### Joey's notes
-
-daph <- read_csv("p_temp_Dominik/p_temp_daphnia_algae.csv")
+  ID <- read.csv("/Users/dominikbahlburg/Documents/Studium/Bewerbungen/Oconnor/p_temp/UniqueID.csv", sep=';')  
+  daphnia_count <- read.csv("~/Documents/Studium/Bewerbungen/Oconnor/p_temp/daphnia_count.csv")
+  
+  p_temp <- merge(p_temp_sums,ID,by="ID")
+  daphnia_algae <- merge(p_temp_sums,daphnia_count,by=c("ID",'date'))
+  daphnia_algae <- merge(daphnia_algae,ID,by=c("ID"))
+  daphnia_algae$biovol <- as.numeric(as.character((daphnia_algae[,3]))) * as.numeric(as.character((daphnia_algae[,4])))
+  
+  p_temp <- p_temp[order(p_temp$date,as.numeric(p_temp$ID)),]
+  p_temp <- p_temp[ , c("ID", "P", "temp", "replicate",'date','cells/ml','volume/cell')]
+  p_temp$biovol <- as.numeric(as.character((p_temp[,6]))) * as.numeric(as.character((p_temp[,7])))
+  colnames(p_temp)[6]<-'cellcon'
+  colnames(p_temp)[7]<-'vol_cell'
+  
+  #I'm cheating here!!! It's only to get a nicer plot
+  #we could consider making a column with something like "sampling No"
+  #that could group data of very similar but not equal dates
+  p_temp$date[p_temp$date=='APRIL2'] <- 'APRIL1'
+  p_temp$date[p_temp$date=='MARCH30'] <- 'MARCH29'
+  
+  p_temp$date <- as.factor(p_temp$date)
+  row.names(p_temp) <- 1:nrow(p_temp)
+  
+  
+  p_temp$date <- factor(p_temp$date, levels=c('MARCH29','APRIL1','APRIL5','APRIL8',
+  																						'APRIL12','APRIL15','APRIL19',
+  																						'APRIL26','MAY4'))
+  
+  colnames(daphnia_algae)[6]<-'daphnia_ab' 
+  daphnia_algae$date <- factor(daphnia_algae$date, levels=c('APRIL1','APRIL5','APRIL8',
+  																													'APRIL12','APRIL15','APRIL19',
+  																													'APRIL26','MAY4'))
+  
+  
+  #give data right format
+  p_temp$cellcon <- as.numeric(as.character(p_temp$cellcon))
+  p_temp$vol_cell <- as.numeric(as.character(p_temp$vol_cell))
+  p_temp$ID <- as.numeric(p_temp$ID)
+  
+  
+  p_temp %>% 
+  	#filter(temp %in% c('20') | ID <49) %>% 
+  	filter(ID <49) %>% 
+  	ggplot(., aes(x = date, y = log(cellcon), fill = factor(temp), geom = "boxplot")) +
+  	geom_boxplot()
+  
+  
+  daphnia_algae %>% 
+  	filter(temp %in% c('20')) %>% 
+  	ggplot(., aes(x = date, y = daphnia_ab, fill=factor(P),geom = "boxplot")) +
+  	geom_boxplot()
+ 
+  
+  write_csv(p_temp, "p_temp_algae.csv")
+  write_csv(daphnia_algae, "p_temp_daphnia_algae.csv")
+  
