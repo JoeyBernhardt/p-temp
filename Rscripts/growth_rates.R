@@ -1,3 +1,5 @@
+p_temp <- read.csv("p_temp_algae.csv")
+
 #calculate growth rates
 datevec<-c('MARCH29','APRIL1','APRIL5','APRIL8',
 					 'APRIL12','APRIL15','APRIL19',
@@ -17,11 +19,16 @@ p_temp<-p_temp %>%
 	group_by(ID) %>%
 	arrange(date) 
 
-#calculate numerator (biovol difference between recent and previous timepoint)
+#calculate growth rate (biovol difference between recent and previous timepoint/number of days between sampling)
 p_temp$voldiff <- ave(p_temp$biovol, p_temp$ID, FUN=function(x) c(0, diff(x)))
 p_temp$daydiff <- ave(p_temp$datediff, p_temp$ID, FUN=function(x) c(0, diff(x)))
 p_temp$growthrate <- p_temp$voldiff/p_temp$daydiff
 
+p_temp %>% 
+	#filter(temp %in% c('20') | ID <49) %>% 
+	filter(ID <49) %>% 
+	ggplot(., aes(x = date, y = growthrate, fill = factor(temp), geom = "boxplot")) +
+	geom_boxplot()
 
 
 
