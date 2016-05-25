@@ -44,8 +44,6 @@ df_c_daph <- df_c_daph %>%
 	mutate(total_algal_c = pp_carbon*250) %>% 
 	mutate(CRR_c = daph_c/total_algal_c) 
 
-hist(df_c_daph$total_algal_c)
-
 df_c_daph %>% 
 	filter(UniqueID != "1") %>% 
 	# filter(treatment.x == "FULL") %>% 
@@ -60,21 +58,21 @@ df_c_daph %>%
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
 
-df2 %>% 
-	filter(date == "MAY4") %>% 
-	# filter(UniqueID != "1") %>% 
-	# filter(treatment == "FULL") %>% 
-	dplyr::select(biovol, P, temp) %>% 
-	group_by(P, temp) %>%
-	summarise_each(funs(mean, median, sd, std.error)) %>%
-	ggplot(data = ., aes(temp, y = mean, group = P, color = P)) +
+df_c_daph %>% 
+	filter(UniqueID != "1") %>% 
+	# filter(treatment.x == "FULL") %>% 
+	filter(temperature.x <24) %>% 
+	dplyr::select(CRR_c, temperature.x) %>% 
+	group_by(temperature.x) %>% 
+	summarise_each(funs(mean, median, sd, std.error)) %>% 
+	ggplot(data = ., aes(temperature.x, y = mean)) +
 	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
-	geom_point(size = 6) + ylab("biovolume") + xlab("temperature, C") +
+	geom_point(size = 6) + ylab("CRR_c") + xlab("temperature, C") +
 	theme_bw() +
 	theme(axis.text=element_text(size=16),
-				axis.title=element_text(size=16,face="bold"))
+				axis.title=element_text(size=16,face="bold")) + scale_y_log10()
 
-df2 <- df2 %>% 
-	rename(UniqueID = ID)
+df_c_daph$temperature.x <- as.numeric(df_c_daph$temperature.x)
+mod <- lm(log(CRR_c) ~ temperature.x, data = df_c_daph)
+summary(mod)
 
-df2_c_daph <- left_join(df2, biomass, by = "UniqueID")
