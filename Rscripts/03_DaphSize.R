@@ -34,6 +34,8 @@ daph_size_sep$UniqueID <- as.factor(daph_size_sep$UniqueID)
 
 Daph <- left_join(daph_size_sep, Unique_ID_key, by = "UniqueID")
 
+write_csv(Daph, "Daphnia_body_sizes_May4.csv")
+
 Daph.size <- Daph %>% 
 	group_by(UniqueID, temperature, date, treatment) %>% 
 	summarise(mean.length = mean(Length)) 
