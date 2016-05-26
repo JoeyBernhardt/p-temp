@@ -1,8 +1,57 @@
+#-----------------------------------------------------------------------------------#
+#multiplot function for better presentation of results
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+#-----------------------------------------------------------------------------------#
+
 library(dplyr)
 library(ggplot2)
 
-p_temp <- read.csv("p_temp_algae.csv")
-p_temp_Daphnia <- read.csv("p_temp_daphnia_algae.csv")
+
+p_temp <- read.csv("/Users/dominikbahlburg/p_temp_res/p-temp/p_temp_algae.csv")
+p_temp_Daphnia <- read.csv("/Users/dominikbahlburg/p_temp_res/p-temp/p_temp_daphnia_algae.csv")
+
+#
+p_temp$date <- factor(p_temp$date, levels=c('MARCH29','APRIL1','APRIL5','APRIL8',
+                                            'APRIL12','APRIL15','APRIL19',
+                                            'APRIL26','MAY4'))
+p_temp_Daphnia$date <- factor(p_temp_Daphnia$date, levels=c('APRIL1','APRIL5','APRIL8',
+                                            'APRIL12','APRIL15','APRIL19',
+                                            'APRIL26','MAY4'))
+
 
 #calculate growth rates
 datevec<-c('MARCH29','APRIL1','APRIL5','APRIL8',
@@ -40,15 +89,58 @@ p_temp_Daphnia$abu_diff <- ave(p_temp_Daphnia$daphnia_ab, p_temp_Daphnia$ID, FUN
 p_temp_Daphnia$daydiff <- ave(p_temp_Daphnia$date_edit, p_temp_Daphnia$ID, FUN=function(x) c(0, diff(x)))
 p_temp_Daphnia$growthrate <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$daydiff
 
-p_temp %>% 
-	#filter(temp %in% c('20') | ID <49) %>% 
-	filter(ID <49) %>% 
-	ggplot(., aes(x = date, y = growthrate, fill = factor(temp), geom = "boxplot")) +
-	geom_boxplot()
 
-p_temp_Daphnia %>% 
-	#filter(temp %in% c('20') | ID <49) %>% 
-	filter(date != 'APRIL1') %>% 
-	ggplot(., aes(x = date, y = growthrate, fill = factor(temp), geom = "boxplot")) +
-	geom_boxplot()
+#Plot preparation
+#Algae
+p_temp$temp <- as.factor(p_temp$temp)
+sums_algae <- p_temp[,c(1,2,3,5,12)]
+sums_algae <- sums_algae[sums_algae$ID<49,]
 
+sums_algae <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae[,c(2:5)],
+                                        FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
+sums_algae <- na.omit(sums_algae)
+
+#Daphnia
+p_temp_Daphnia$temp <- as.factor(p_temp_Daphnia$temp)
+sums_daphnia <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = p_temp_Daphnia[,c(2,10,11,17)],
+                                        FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
+sums_daphnia <- na.omit(sums_daphnia)
+
+
+plots_algae<-list()
+for (k in 1:length(levels(sums_algae$temp))){
+  p<-ggplot(data =sums_algae[sums_algae$temp==levels(sums_algae$temp)[k],], aes(date, y = growthrate.mn, group = P, color = P)) +
+  geom_errorbar(aes(ymin=growthrate.mn-growthrate.se, ymax=growthrate.mn+growthrate.se), width=.2) +
+  geom_point(size = 6) + theme_bw() + ylab("growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_algae$temp)[k],'ºC'))+
+  geom_hline(aes(yintercept=0))+
+  theme(title = element_text(size=20),
+          legend.text = element_text(size = 22),
+          axis.text.y = element_text(size = 16),
+          axis.text.x = element_text(size = 16),
+          axis.title.y = element_text(size = 20))
+  plots_algae[[k]]<-p
+}
+png(filename = "growth_rate_algae.png",
+    width = 1400, height = 1000, units = "px",
+    pointsize = )
+multiplot(plotlist=plots_algae,cols=2)
+dev.off()
+
+plots_daphnia<-list()
+for (k in 1:length(levels(sums_daphnia$temp))){
+  p<-ggplot(data =sums_daphnia[sums_daphnia$temp==levels(sums_daphnia$temp)[k],], aes(date, y = growthrate.mn, group = P, color = P)) +
+    geom_errorbar(aes(ymin=growthrate.mn-growthrate.se, ymax=growthrate.mn+growthrate.se), width=.2) +
+    geom_point(size = 6) + theme_bw() + ylab("growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_daphnia$temp)[k],'ºC'))+
+    geom_hline(aes(yintercept=0))+
+    theme(title = element_text(size=20),
+          legend.text = element_text(size = 22),
+          axis.text.y = element_text(size = 16),
+          axis.text.x = element_text(size = 16),
+          axis.title.y = element_text(size = 20))
+  plots_daphnia[[k]]<-p
+}
+png(filename = "growth_rate_daphnia.png",
+    width = 1400, height = 1000, units = "px",
+    pointsize = )
+multiplot(plotlist=plots_daphnia,cols=2)
+dev.off()
