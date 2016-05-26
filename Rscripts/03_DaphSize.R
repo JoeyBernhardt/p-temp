@@ -4,11 +4,12 @@ library(purrr)
 library(readr)
 library(tidyr)
 library(ggplot2)
+library(plotrix)
 
 
 x <- read_csv("daph_size_csv/268-4-size-April19.csv")
 
-fnams <- list.files("daph_size_data", full.names = TRUE) ## find out the names of all the files in data-raw, use full.names to get the relative path for each file
+fnams <- list.files("daph_size_data/May3_daph_size", full.names = TRUE) ## find out the names of all the files in data-raw, use full.names to get the relative path for each file
 
 ## Step 2: Name the the vector with filenames (i.e. fnams) with the basename (i.e file name without the directory) of the data files.
 ## then get rid of the ".csv" part
@@ -23,7 +24,7 @@ daph_size <- fnams %>%
 ## .id argument allows us to create a variable giving the name of the dataset
 
 daph_size_sep <- daph_size %>% 
-	separate(dataset, c("photo", "UniqueID", "type", "date")) %>% 
+	separate(dataset, c("photo", "UniqueID", "date", "type")) %>% 
 	select(-X)
 
 Unique_ID_key <- read_csv("data-raw/P-TEMP-UniqueID-key.csv")
@@ -40,6 +41,19 @@ Daph.size <- Daph %>%
 ggplot(data = Daph.size, aes(x = factor(temperature), y = mean.length)) + geom_boxplot()
 
 
+Daph %>% 
+	dplyr::select(Length, treatment, temperature) %>% 
+	group_by(temperature, treatment) %>%
+	summarise_each(funs(mean,median, sd,std.error)) %>% 
+	ggplot(data = ., aes(temperature, y = mean, group = treatment, color = treatment)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 6) + theme_bw() + ylab("ln(body length)") + xlab("temperature, C") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	scale_y_continuous(trans = "log")
+
+
+
 ### top quartile
 
 Daph25 <- Daph %>% 
@@ -49,8 +63,6 @@ Daph25 <- Daph %>%
 						n = n())
 
 Daph25 %>% 
-	# filter(UniqueID != "28") %>% 
-	filter(date == "April12") %>% 
 	ggplot(data = ., aes(x = factor(temperature), y = top)) + geom_boxplot()
 
 mod <- lm(top ~ temperature + treatment, data = Daph25)
@@ -60,12 +72,12 @@ summary(mod)
 ### top 10
 Daphtop10 <- Daph %>% 
 	group_by(UniqueID, temperature, date, treatment) %>% 
-	filter(temperature != "20") %>% 
+	# filter(temperature != "20") %>% 
 	arrange(desc(Length)) %>% 
 	top_n(., 10, wt = Length) %>% 
-	summarise(top2 = mean(Length),
+	summarise(top10 = mean(Length),
 						n = n()) %>% 
-	ggplot(data = ., aes(x = factor(temperature), y = top2)) + geom_boxplot()
+	ggplot(data = ., aes(x = factor(temperature), y = top10)) + geom_boxplot()
 
 
 mod <- lm(top2 ~ temperature, data = Daphtop10)
