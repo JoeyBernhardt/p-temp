@@ -42,15 +42,24 @@ ggplot(data = Daph.size, aes(x = factor(temperature), y = mean.length)) + geom_b
 
 
 Daph %>% 
-	dplyr::select(Length, treatment, temperature) %>% 
+	dplyr::select(Length, treatment, temperature) %>%
+	filter(temperature != "12") %>% 
 	group_by(temperature, treatment) %>%
 	summarise_each(funs(mean,median, sd,std.error)) %>% 
 	ggplot(data = ., aes(temperature, y = mean, group = treatment, color = treatment)) +
 	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
-	geom_point(size = 6) + theme_bw() + ylab("ln(body length)") + xlab("temperature, C") +
+	geom_point(size = 6) + theme_bw() + ylab("body length, cm") + xlab("temperature, C") +
 	theme(axis.text=element_text(size=16),
-				axis.title=element_text(size=16,face="bold")) +
-	scale_y_continuous(trans = "log")
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/body_size.png")
+
+
+Daph %>% 
+	filter(temperature != "12") %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	# filter(treatment == "DEF") %>% 
+	lm(Length ~ temperature + treatment, data = .) %>% 
+	summary()
 
 
 
@@ -61,6 +70,19 @@ Daph25 <- Daph %>%
 	summarise(top = quantile(Length, probs = 0.75),
 						avg = mean(Length),
 						n = n())
+Daph25 <- as.data.frame(Daph25)
+
+Daph25 %>% 
+	dplyr::select(top, treatment, temperature) %>% 
+	group_by(temperature, treatment) %>%
+	summarise_each(funs(mean,median, sd,std.error)) %>%
+	ggplot(data = ., aes(temperature, y = mean, group = treatment, color = treatment)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 6) + theme_bw() + ylab("ln(body length)") + xlab("temperature, C") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	scale_y_continuous(trans = "log")
+
 
 Daph25 %>% 
 	ggplot(data = ., aes(x = factor(temperature), y = top)) + geom_boxplot()
