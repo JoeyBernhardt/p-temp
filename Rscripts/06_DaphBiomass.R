@@ -23,6 +23,8 @@ biomass_ID$sample_weight[biomass_ID$sample_weight == "1.4393"]<-"0.00"
 biomass_ID$sample_weight <- as.numeric(biomass_ID$sample_weight)
 # biomass_ID$temperature <- as.factor(biomass_ID$temperature)
 
+write_csv(biomass_ID, "daphnia_final_DW_biomasses.csv")
+
 biomass_ID %>% 
 	# filter(UniqueID < 43) %>% 
 	ggplot(data = ., aes(x = factor(temperature), y = sample_weight, fill = treatment)) +
@@ -41,6 +43,7 @@ biomass_ID %>%
 	theme_bw() +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/final_dry_weights.png")
 
 biomass_ID$temperature <- as.numeric(biomass_ID$temperature)
 
@@ -55,7 +58,7 @@ biomassEa <- biomass_ID %>%
 	rename(., rvalues = sample_weight, tvalues = temperature) %>% 
 	filter(UniqueID != 1 & UniqueID < 43) %>% 
 	filter(tvalues < 24) %>% 
-	select(rvalues, tvalues) 
+	select(rvalues, tvalues, treatment) 
 
 biomassEa$tvalues <- as.numeric(biomassEa$tvalues)
 biomassEa$rvalues <- as.numeric(biomassEa$rvalues)
@@ -134,6 +137,7 @@ estimate.m<-function(tvalues,rvalues)
 estimate.m(biomassEa$tvalues, biomassEa$rvalues)
 
 
+
 ####
 
 #Boltzmann's constant in eV
@@ -153,3 +157,12 @@ mod <- lm(biomassEa$yval ~ biomassEa$xval)
 summary(mod)
 plot(mod)
 
+biomassEa %>% 
+	filter(treatment == "FULL") %>% 
+ggplot(data = ., aes(x = xval, y = yval, group = treatment, color = treatment)) +
+geom_point(size = 3) + theme_bw() + ylab("population biomass") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/biomass_arrhenius.png")
