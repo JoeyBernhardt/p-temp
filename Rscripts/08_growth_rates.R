@@ -104,7 +104,7 @@ sums_algae <- na.omit(sums_algae)
 sums_algae_controls <- p_temp[,c(1,2,3,5,12)]
 sums_algae_controls <- sums_algae_controls[sums_algae_controls$ID>48,]
 
-sums_algae_controls <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae[,c(2:5)],
+sums_algae_controls <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae_controls[,c(2:5)],
 																							FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_algae_controls <- na.omit(sums_algae_controls)
 
