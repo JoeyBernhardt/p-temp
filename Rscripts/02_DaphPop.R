@@ -59,17 +59,20 @@ Daph_pro <- left_join(Daph, UniqueID_treat, by = "UniqueID")
 str(Daph_pro)
 unique(Daph_pro$juveniles)
 
-Daph_tot <- Daph_pro %>% 
+Daph<- Daph_pro %>% 
 	mutate(daph_tot = unknown + grown + juveniles) %>%
 	mutate(sample_date = as.factor(sample_date))
+
+str(Daph_tot)
 
 Daph_tot$sample_date <- factor(Daph_tot$sample_date, levels = c("3/31/2016", "4/5/2016", "4/8/2016", "4/12/2016", "4/16/2016", "4/19/2016", "4/26/2016", "5/3/2016"))
 
 hist(Daph_tot$daph_tot)
 
-Daph_pro %>% 
-	# filter(sample_date == "4/19/2016") %>% 
-	ggplot(data = ., aes(x = temperature.y, y = juveniles)) + geom_boxplot() + facet_wrap( ~ sample_date)
+Daph %>% 
+	filter(sample_date == "5/3/2016") %>% 
+	# group_by(treatment) %>% 
+	ggplot(data = ., aes(x = temperature.x, y = daph_tot, group = treatment.x, color = treatment.x)) + geom_boxplot() + facet_wrap( ~ sample_date, scales = "free") 
 
 Daph_tot %>% 
 	ggplot(data = ., aes(x = temperature.y, y = daph_tot)) + geom_boxplot() + facet_wrap( ~ sample_date)
@@ -157,6 +160,48 @@ april26$daph_tot <- as.numeric(april26$daph_tot)
 	
 	summary(nut)
 	
+#####
 	
+daph <- read_csv("p_temp_daphnia_algae.csv")
+str(daph)	
 	
+
+daph %>% 
+	filter(sample_date == "5/3/2016") %>% 
+	ggplot(data = ., aes(x = factor(temp), y = daphnia_ab, group = P, color = P)) + geom_point()
+
+
+body_sizes <- read_csv("Daphnia_body_sizes_May4.csv")
+
+daph_carbon <- body_sizes %>% 
+	group_by(UniqueID) %>% 
+	summarise(mean.length = mean(Length)) %>%
+	mutate(mean.size = (0.0042*(mean.length^2.66))) %>% 
+	mutate(daphnia_carbon = mean.size*0.4) 
 	
+daph_abundance_may4 <- daph %>% 
+	filter(sample_date == "5/3/2016") %>% 
+	rename(., UniqueID = ID)
+
+daph_carbon_total <- left_join(daph_abundance_may4, daph_carbon, by = "UniqueID")
+
+daph_carbon_total %>% 
+	mutate(total_c_per_jar = daphnia_carbon*daphnia_ab) %>%
+	mutate(pp_carbon = (biovol*0.103*250)/10^9) %>% 
+	mutate(CRR = total_c_per_jar/pp_carbon) %>% 
+	# filter(!is.na(CRR)) %>% 
+	# filter(temp < 24 ) %>% 
+	dplyr::select(biovol, temp, P) %>% 
+	group_by(temp, P) %>%
+	summarise_each(funs(mean, median, sd, std.error)) %>%
+	ggplot(data = ., aes(temp, y = mean, group = P, color = P)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 2) + ylab("consumer:resource biomass, mgC") + xlab("temperature, C") +
+	theme_bw() +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+	ggplot(data = ., aes(x = temp, y = CRR, group = P, color = P)) + geom_point()
+
+
+
+

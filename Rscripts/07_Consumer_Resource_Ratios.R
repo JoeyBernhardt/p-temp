@@ -27,7 +27,7 @@ df_all <- left_join(df, Unique_ID_treat, by = "UniqueID")
 
 
 df_c <- df_all %>% 
-	mutate(pp_carbon = biovol*0.103) %>% 
+	mutate(pp_carbon = ((biovol*250*0.103)/10^9)) %>% 
 	mutate(UniqueID = as.integer(UniqueID)) %>% 
 	filter(UniqueID < 49)
 
@@ -42,12 +42,12 @@ df_c_daph <- left_join(df_c, biomass, by = "UniqueID") %>%
 
 write_csv(df_c_daph, "biomasses.csv")
 
-
+df_c_daph <- read_csv("biomasses.csv")
 
 df_c_daph <- df_c_daph %>% 
 	mutate(daph_c = sample_weight*0.4) %>% 
-	mutate(total_algal_c = pp_carbon*250) %>% 
-	mutate(CRR_c = daph_c/total_algal_c) 
+	# mutate(total_algal_c = (pp_carbon*250)/10^9) %>% 
+	mutate(CRR_c = daph_c/pp_carbon) 
 
 df_c_daph %>% 
 	filter(temperature != "24") %>% 
@@ -68,7 +68,7 @@ df_c_daph %>%
 	theme_bw() +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
-ggsave("p-temp-figures_files/figure-html/CRR.png")
+ggsave("p-temp-figures_files/figure-html/CRR_2.png")
 
 df_c_daph %>% 
 	filter(UniqueID != "1") %>% 
@@ -83,7 +83,7 @@ df_c_daph %>%
 	theme_bw() +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
-ggsave("p-temp-figures_files/figure-html/CRR-both-treatments.png")
+ggsave("p-temp-figures_files/figure-html/CRR-both-treatments_2.png")
 
 
 
