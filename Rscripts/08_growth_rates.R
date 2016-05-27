@@ -139,11 +139,11 @@ for (k in 1:length(levels(sums_algae$temp))){
           axis.title.y = element_text(size = 20))
   plots_algae[[k]]<-p
 }
-png(filename = "growth_rate_algae.png",
-    width = 1400, height = 1000, units = "px",
-    pointsize = )
-multiplot(plotlist=plots_algae,cols=2)
-dev.off()
+#png(filename = "growth_rate_algae.png",
+#    width = 1400, height = 1000, units = "px",
+#    pointsize = )
+#multiplot(plotlist=plots_algae,cols=2)
+#dev.off()
 
 #plot algae controls
 plots_algae_controls<-list()
@@ -160,11 +160,11 @@ for (k in 1:length(levels(sums_algae_controls$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_algae_controls[[k]]<-p
 }
-png(filename = "growth_rate_algae_ctrls.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_algae_controls,cols=2)
-dev.off()
+#png(filename = "growth_rate_algae_ctrls.png",
+#		width = 1400, height = 1000, units = "px",
+#		pointsize = )
+#multiplot(plotlist=plots_algae_controls,cols=2)
+#dev.off()
 
 
 #plot daphnia
@@ -182,14 +182,15 @@ for (k in 1:length(levels(sums_daphnia$temp))){
           axis.title.y = element_text(size = 20))
   plots_daphnia[[k]]<-p
 }
-png(filename = "growth_rate_daphnia.png",
-    width = 1400, height = 1000, units = "px",
-    pointsize = )
-multiplot(plotlist=plots_daphnia,cols=2)
-dev.off()
+#png(filename = "growth_rate_daphnia.png",
+#    width = 1400, height = 1000, units = "px",
+#    pointsize = )
+#multiplot(plotlist=plots_daphnia,cols=2)
+#dev.off()
 
 #------------------------------------------------------------------------------------------------------------------#
 #plot relative growth rates
+#Daphnia + Algae
 plots_rel_growth<-list()
 for (k in 1:length(levels(sums_algae$temp))){
 	p<-ggplot(data =sums_algae[sums_algae$temp==levels(sums_algae$temp)[k],], aes(date, y = rel_growth.mn, group = P, colour=P)) +
@@ -206,10 +207,30 @@ for (k in 1:length(levels(sums_algae$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_rel_growth[[k]]<-p
 }
-png(filename = "relative_growth.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_rel_growth,cols=2)
-dev.off()
+#png(filename = "relative_growth.png",
+#		width = 1400, height = 1000, units = "px",
+#		pointsize = )
+#multiplot(plotlist=plots_rel_growth,cols=2)
+#dev.off()
 
+#Daphnia only
+plots_rel_growth_daphnia<-list()
+for (k in 1:length(levels(sums_daphnia$temp))){
+	p<-ggplot(data =sums_daphnia[sums_daphnia$temp==levels(sums_daphnia$temp)[k],], aes(date, y = rel_growth.mn, group = P, color = P)) +
+		geom_errorbar(aes(ymin=rel_growth.mn-rel_growth.se, ymax=rel_growth.mn+rel_growth.se), width=.2) +
+		geom_point(size = 6) + theme_bw() + ylab("growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_daphnia$temp)[k],'ºC'))+
+		ylim(min(sums_daphnia$rel_growth.mn)-max(sums_daphnia$rel_growth.se),max(sums_daphnia$rel_growth.se+sums_daphnia$rel_growth.mn))+
+		geom_hline(aes(yintercept=0))+
+		theme(title = element_text(size=20),
+					legend.text = element_text(size = 22),
+					axis.text.y = element_text(size = 16),
+					axis.text.x = element_text(size = 16),
+					axis.title.y = element_text(size = 20))
+	plots_rel_growth_daphnia[[k]]<-p
+}
+png(filename = "relative_growth_Daphnia.png",
+	width = 1400, height = 1000, units = "px",
+	pointsize = )
+multiplot(plotlist=plots_rel_growth_daphnia,cols=2)
+dev.off()
 
