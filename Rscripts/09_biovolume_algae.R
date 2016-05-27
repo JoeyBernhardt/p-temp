@@ -42,6 +42,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 library(dplyr)
 library(ggplot2)
 
+p_temp_Daphnia <- read.csv("/Users/dominikbahlburg/p_temp_res/p-temp/p_temp_daphnia_algae.csv")
 
 p_temp <- read.csv("/Users/dominikbahlburg/p_temp_res/p-temp/p_temp_algae.csv")
 p_temp$date <- factor(p_temp$date, levels=c('MARCH29','APRIL1','APRIL5','APRIL8',
@@ -50,7 +51,11 @@ p_temp$date <- factor(p_temp$date, levels=c('MARCH29','APRIL1','APRIL5','APRIL8'
 p_temp$temp <- as.factor(p_temp$temp)
 biovol_mean <- p_temp[p_temp$ID<49,c(1,2,3,5,8)]
 biovol_ctrl_mean <- p_temp[p_temp$ID>48,c(1,2,3,5,8)]
-
+daphnia_abu <- p_temp_Daphnia[,c(2,10,11,6:9)]
+daphnia_abu$temp <- as.factor(daphnia_abu$temp)
+daphnia_abu$date <- factor(daphnia_abu$date, levels=c('APRIL1','APRIL5','APRIL8',
+																						'APRIL12','APRIL15','APRIL19',
+																						'APRIL26','MAY4'))
 #for samples with Daphnia -> n=11 and n=12 for 12ºC&FULL/DEF on MARCH29 because those were flow cammed at March29 and March30 (which I merged as one time point)
 biovol_mean <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = biovol_mean[,c(2:5)],
 																							FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
@@ -59,6 +64,10 @@ biovol_mean <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = biovol_mea
 biovol_ctrl_mean <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = biovol_ctrl_mean[,c(2:5)],
 																							 FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 biovol_ctrl_mean<-na.omit(biovol_ctrl_mean)
+
+#for Daphnia:
+daphnia_mean <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = daphnia_abu[,c(1:7)],
+																										FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 
 
 #plot biovol with daphnia
@@ -99,4 +108,28 @@ png(filename = "biovol_controls_algae.png",
 		width = 1600, height = 1100, units = "px",
 		pointsize = )
 multiplot(plotlist=plots_ctrl_biovol,cols=2)
+dev.off()
+
+
+
+
+###
+
+plots_daphnia<-list()
+for (k in 1:length(levels(daphnia_mean$temp))){
+	p<-ggplot(data =daphnia_mean[daphnia_mean$temp==levels(daphnia_mean$temp)[k],], aes(date, y = daphnia_ab.mn, group = P, color = P)) +
+		geom_errorbar(aes(ymin=daphnia_ab.mn-daphnia_ab.se, ymax=daphnia_ab.mn+daphnia_ab.se), width=.2) +
+		geom_point(size = 6) + theme_bw() + ylab("abundance") + xlab('') + ggtitle(paste('Temperature:',levels(biovol_ctrl_mean$temp)[k],'ºC'))+
+		geom_hline(aes(yintercept=0))+
+		theme(title = element_text(size=20),
+					legend.text = element_text(size = 22),
+					axis.text.y = element_text(size = 16),
+					axis.text.x = element_text(size = 16),
+					axis.title.y = element_text(size = 20))
+	plots_daphnia[[k]]<-p
+}
+png(filename = "daphnia_abund.png",
+		width = 1600, height = 1100, units = "px",
+		pointsize = )
+multiplot(plotlist=plots_daphnia,cols=2)
 dev.off()
