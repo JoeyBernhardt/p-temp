@@ -78,42 +78,52 @@ p_temp_Daphnia<-p_temp_Daphnia %>%
 	group_by(ID) %>%
 	arrange(date) 
 
-#calculate growth rate (difference between recent and previous timepoint/number of days between sampling)
+#calculate absolute growth rates (difference between recent and previous timepoint/number of days between sampling)
 #Biovol alge
 p_temp$voldiff <- ave(p_temp$biovol, p_temp$ID, FUN=function(x) c(0, diff(x)))
 p_temp$daydiff <- ave(p_temp$date_edit, p_temp$ID, FUN=function(x) c(0, diff(x)))
 p_temp$growthrate <- p_temp$voldiff/p_temp$daydiff
+p_temp <- na.omit(p_temp)
 
 #abundance Daphnia
 p_temp_Daphnia$abu_diff <- ave(p_temp_Daphnia$daphnia_ab, p_temp_Daphnia$ID, FUN=function(x) c(0, diff(x)))
 p_temp_Daphnia$daydiff <- ave(p_temp_Daphnia$date_edit, p_temp_Daphnia$ID, FUN=function(x) c(0, diff(x)))
 p_temp_Daphnia$growthrate <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$daydiff
+p_temp_Daphnia <- na.omit(p_temp_Daphnia)
+
+#relative growth rates
+#Algae
+p_temp$rel_growth <- p_temp$voldiff/p_temp$biovol
+
+#relative growth Daphnia
+p_temp_Daphnia$rel_growth <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$daphnia_ab
 
 
 #Plot preparation
 #Algae without controls
 p_temp$temp <- as.factor(p_temp$temp)
-sums_algae <- p_temp[,c(1,2,3,5,12)]
+sums_algae <- p_temp[,c(1,2,3,5,12,13)]
 sums_algae <- sums_algae[sums_algae$ID<49,]
-
-sums_algae <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae[,c(2:5)],
+sums_algae <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae[,c(2:6)],
                                         FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_algae <- na.omit(sums_algae)
 
 #Algae controls
-sums_algae_controls <- p_temp[,c(1,2,3,5,12)]
+sums_algae_controls <- p_temp[,c(1,2,3,5,12,13)]
 sums_algae_controls <- sums_algae_controls[sums_algae_controls$ID>48,]
 
-sums_algae_controls <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae_controls[,c(2:5)],
+sums_algae_controls <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = sums_algae_controls[,c(2:6)],
 																							FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_algae_controls <- na.omit(sums_algae_controls)
 
 #Daphnia
 p_temp_Daphnia$temp <- as.factor(p_temp_Daphnia$temp)
-sums_daphnia <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = p_temp_Daphnia[,c(2,10,11,17)],
+p_temp_Daphnia<-do.call(data.frame,lapply(p_temp_Daphnia, function(x) replace(x, is.infinite(x),NA)))
+sums_daphnia <- as.data.frame(as.list(aggregate(. ~ date+temp+P,data = p_temp_Daphnia[,c(2,10,11,17,18)],
                                         FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_daphnia <- na.omit(sums_daphnia)
 
+#plot absolute growth rates
 #plot algae without controls
 plots_algae<-list()
 for (k in 1:length(levels(sums_algae$temp))){
@@ -121,6 +131,7 @@ for (k in 1:length(levels(sums_algae$temp))){
   geom_errorbar(aes(ymin=growthrate.mn-growthrate.se, ymax=growthrate.mn+growthrate.se), width=.2) +
   geom_point(size = 6) + theme_bw() + ylab("growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_algae$temp)[k],'ºC'))+
   geom_hline(aes(yintercept=0))+
+  ylim(min(sums_algae$growthrate.mn)-max(sums_algae$growthrate.se),max(sums_algae$growthrate.mn+sums_algae$growthrate.se))+
   theme(title = element_text(size=20),
           legend.text = element_text(size = 22),
           axis.text.y = element_text(size = 16),
@@ -141,6 +152,7 @@ for (k in 1:length(levels(sums_algae_controls$temp))){
 		geom_errorbar(aes(ymin=growthrate.mn-growthrate.se, ymax=growthrate.mn+growthrate.se), width=.2) +
 		geom_point(size = 6) + theme_bw() + ylab("growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_algae$temp)[k],'ºC'))+
 		geom_hline(aes(yintercept=0))+
+		ylim(min(sums_algae_controls$growthrate.mn)-max(sums_algae_controls$growthrate.se),max(sums_algae_controls$growthrate.mn+sums_algae_controls$growthrate.se))+
 		theme(title = element_text(size=20),
 					legend.text = element_text(size = 22),
 					axis.text.y = element_text(size = 16),
@@ -161,7 +173,8 @@ for (k in 1:length(levels(sums_daphnia$temp))){
   p<-ggplot(data =sums_daphnia[sums_daphnia$temp==levels(sums_daphnia$temp)[k],], aes(date, y = growthrate.mn, group = P, color = P)) +
     geom_errorbar(aes(ymin=growthrate.mn-growthrate.se, ymax=growthrate.mn+growthrate.se), width=.2) +
     geom_point(size = 6) + theme_bw() + ylab("growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_daphnia$temp)[k],'ºC'))+
-    geom_hline(aes(yintercept=0))+
+    ylim(-14,16)+
+  	geom_hline(aes(yintercept=0))+
     theme(title = element_text(size=20),
           legend.text = element_text(size = 22),
           axis.text.y = element_text(size = 16),
@@ -174,3 +187,29 @@ png(filename = "growth_rate_daphnia.png",
     pointsize = )
 multiplot(plotlist=plots_daphnia,cols=2)
 dev.off()
+
+#------------------------------------------------------------------------------------------------------------------#
+#plot relative growth rates
+plots_rel_growth<-list()
+for (k in 1:length(levels(sums_algae$temp))){
+	p<-ggplot(data =sums_algae[sums_algae$temp==levels(sums_algae$temp)[k],], aes(date, y = rel_growth.mn, group = P, colour=P)) +
+		geom_line(size=1.5,linetype="dotted") + 
+		geom_line(data =sums_daphnia[sums_daphnia$temp==levels(sums_daphnia$temp)[k],], 
+							aes(date, y = rel_growth.mn, group = P, colour=P),size=1.5)+
+		#geom_hline(aes(yintercept=0))+
+		theme_bw() + ylab("relative growth rate") + xlab('') + ggtitle(paste('Temperature:',levels(sums_algae$temp)[k],'ºC'))+	
+		ylim(-85,10)+
+		theme(title = element_text(size=20),
+					legend.text = element_text(size = 22),
+					axis.text.y = element_text(size = 16),
+					axis.text.x = element_text(size = 16),
+					axis.title.y = element_text(size = 20))
+	plots_rel_growth[[k]]<-p
+}
+png(filename = "relative_growth.png",
+		width = 1400, height = 1000, units = "px",
+		pointsize = )
+multiplot(plotlist=plots_rel_growth,cols=2)
+dev.off()
+
+
