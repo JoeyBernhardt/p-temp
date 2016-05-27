@@ -77,6 +77,7 @@ for (k in 1:length(levels(biovol_mean$temp))){
 		geom_errorbar(aes(ymin=biovol.mn-biovol.se, ymax=biovol.mn+biovol.se), width=.2) +
 		geom_point(size = 6) + theme_bw() + ylab("biovolume") + xlab('') + ggtitle(paste('Temperature:',levels(biovol_mean$temp)[k],'ºC'))+
 		geom_hline(aes(yintercept=0))+
+		ylim(0,max(biovol_mean$biovol.mn+biovol_mean$biovol.se)+200)+
 		theme(title = element_text(size=20),
 					legend.text = element_text(size = 22),
 					axis.text.y = element_text(size = 16),
@@ -97,6 +98,7 @@ for (k in 1:length(levels(biovol_ctrl_mean$temp))){
 		geom_errorbar(aes(ymin=biovol.mn-biovol.se, ymax=biovol.mn+biovol.se), width=.2) +
 		geom_point(size = 6) + theme_bw() + ylab("biovolume") + xlab('') + ggtitle(paste('Temperature:',levels(biovol_ctrl_mean$temp)[k],'ºC'))+
 		geom_hline(aes(yintercept=0))+
+		ylim(0,max(biovol_ctrl_mean$biovol.mn+biovol_ctrl_mean$biovol.se)+200)+
 		theme(title = element_text(size=20),
 					legend.text = element_text(size = 22),
 					axis.text.y = element_text(size = 16),
@@ -121,6 +123,7 @@ for (k in 1:length(levels(daphnia_mean$temp))){
 		geom_errorbar(aes(ymin=daphnia_ab.mn-daphnia_ab.se, ymax=daphnia_ab.mn+daphnia_ab.se), width=.2) +
 		geom_point(size = 6) + theme_bw() + ylab("abundance") + xlab('') + ggtitle(paste('Temperature:',levels(biovol_ctrl_mean$temp)[k],'ºC'))+
 		geom_hline(aes(yintercept=0))+
+		ylim(0,max(daphnia_mean$daphnia_ab.mn+daphnia_mean$daphnia_ab.se))+
 		theme(title = element_text(size=20),
 					legend.text = element_text(size = 22),
 					axis.text.y = element_text(size = 16),
