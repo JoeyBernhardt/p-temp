@@ -37,7 +37,7 @@ summary(daph_r_mass$mean.size)
 daph_r_Ea <- daph_r_mass %>% 
 	mutate(growth_rate = daphnia_final/daphnia_initial) %>%
 	mutate(mass_corr_r = growth_rate*(mean.size^0.25)) %>% 
-	filter(temp.y < 24) %>% 
+	# filter(temp.y < 24) %>% 
 	rename(., rvalues = mass_corr_r, tvalues = temp.y) %>%
 	select(rvalues, tvalues, P.y) %>% 
 	filter(!is.na(rvalues))
@@ -68,14 +68,15 @@ hist(daph_r_Ea$yval)
 
 daph_r_Ea %>% 
 	# filter(P.y == "FULL") %>% 
-	group_by(P.y) %>% 
+	group_by(P.y) %>%
+	filter(xval > 39.5) %>% 
 	ggplot(data = ., aes(x = xval, y = yval, group = P.y, color = P.y)) +
-	geom_point(size = 3) + theme_bw() + ylab("population growth rate") + xlab("temperature, 1/kt") +
+	geom_point(size = 3) + theme_bw() + ylab("ln(mass-corrected population growth rate)") + xlab("temperature, 1/kt") +
 	stat_summary(fun.y= "mean", geom = "point") +
 	geom_smooth(method = 'lm') + 
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
-ggsave("p-temp-figures_files/figure-html/growthrate_arrhenius.png")
+ggsave("p-temp-figures_files/figure-html/growthrate_arrhenius_no24.png")
 
 
 daph_r_Ea %>% 
