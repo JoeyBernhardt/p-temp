@@ -185,8 +185,10 @@ daph_abundance_may4 <- daph %>%
 
 daph_carbon_total <- left_join(daph_abundance_may4, daph_carbon, by = "UniqueID")
 
+write_csv(daph_carbon_total, "daph_carbon_total.csv")
+
 daph_carbon_total %>% 
-	mutate(total_c_per_jar = daphnia_carbon*daphnia_ab) %>%
+	mutate(total_c_per_jar = daphnia_carbon*daphnia_ab) %>% View
 	mutate(pp_carbon = (biovol*0.103*250)/10^9) %>% 
 	mutate(CRR = total_c_per_jar/pp_carbon) %>% 
 	# filter(!is.na(CRR)) %>% 
