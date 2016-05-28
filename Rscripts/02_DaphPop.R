@@ -188,7 +188,7 @@ daph_carbon_total <- left_join(daph_abundance_may4, daph_carbon, by = "UniqueID"
 write_csv(daph_carbon_total, "daph_carbon_total.csv")
 
 daph_carbon_total %>% 
-	mutate(total_c_per_jar = daphnia_carbon*daphnia_ab) %>% View
+	mutate(total_c_per_jar = daphnia_carbon*daphnia_ab) %>%
 	mutate(pp_carbon = (biovol*0.103*250)/10^9) %>% 
 	mutate(CRR = total_c_per_jar/pp_carbon) %>% 
 	# filter(!is.na(CRR)) %>% 
@@ -196,9 +196,9 @@ daph_carbon_total %>%
 	dplyr::select(biovol, temp, P) %>% 
 	group_by(temp, P) %>%
 	summarise_each(funs(mean, median, sd, std.error)) %>%
-	ggplot(data = ., aes(temp, y = mean, group = P, color = P)) +
+	ggplot(data = ., aes(x = factor(temp), y = mean, group = P, color = P)) +
 	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
-	geom_point(size = 2) + ylab("consumer:resource biomass, mgC") + xlab("temperature, C") +
+	geom_point(size = 6) + ylab("phytoplankton biovolume") + xlab("temperature, C") +
 	theme_bw() +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
