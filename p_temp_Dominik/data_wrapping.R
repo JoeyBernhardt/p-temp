@@ -31,6 +31,45 @@ p_temp_sums <- fnams %>%
   p_temp_sums <- as.data.frame(p_temp_sums)
   p_temp_sums <- p_temp_sums[,c(2,4:6)]
   
+  
+  #I'm cheating here!!! It's only to get a nicer plot
+  #we could consider making a column with something like "sampling No"
+  #that could group data of very similar but not equal dates
+  p_temp_sums$date[p_temp_sums$date=='APRIL2'] <- 'APRIL1'
+  p_temp_sums$date[p_temp_sums$date=='MARCH30'] <- 'MARCH29'
+ 
+#add number of days experiment is running + format date   
+  p_temp_sums$date <- as.factor(p_temp_sums$date)
+  row.names(p_temp_sums) <- 1:nrow(p_temp_sums)
+  
+  
+  p_temp_sums$date <- factor(p_temp_sums$date, levels=c('MARCH29','APRIL1','APRIL5','APRIL8',
+  																						'APRIL12','APRIL15','APRIL19',
+  																						'APRIL26','MAY4'))
+  
+  
+  datevec<-c('MARCH29','APRIL1','APRIL5','APRIL8',
+  					 'APRIL12','APRIL15','APRIL19',
+  					 'APRIL26','MAY4')
+  
+  realdatevec<-c('2016-03-29','2016-04-01','2016-04-05','2016-04-08',
+  							 '2016-04-12','2016-04-15','2016-04-19',
+  							 '2016-04-26','2016-05-04')
+  
+  p_temp_sums$date_edit <- NA
+  for (i in 1:length(datevec)){
+  	p_temp_sums$date_edit[p_temp_sums$date==datevec[i]] <- as.Date(realdatevec[i])
+  }
+  
+  p_temp_sums$ID <- as.numeric(as.character(as.factor(p_temp_sums$ID)))
+  p_temp_sums<-p_temp_sums %>%
+  	group_by(ID) %>%
+  	arrange(date) 
+  p_temp_sums$daydiff <- ave(p_temp_sums$date_edit, p_temp_sums$ID, FUN=function(x) c(0, diff(x)))
+  days <- aggregate(daydiff ~ ID, data = p_temp_sums, cumsum)
+  p_temp_sums<-p_temp_sums[order(p_temp_sums$ID),]
+  p_temp_sums$days<-unlist(days$daydiff)
+  
 #import metadata and Daphnia-count-data
   ID <- read.csv("/Users/dominikbahlburg/Documents/Studium/Bewerbungen/Oconnor/p_temp/UniqueID.csv", sep=';')  
   daphnia_count <- read.csv("~/Documents/Studium/Bewerbungen/Oconnor/p_temp/daphnia_count.csv")
@@ -41,30 +80,10 @@ p_temp_sums <- fnams %>%
   daphnia_algae$biovol <- as.numeric(as.character((daphnia_algae[,3]))) * as.numeric(as.character((daphnia_algae[,4])))
   
   p_temp <- p_temp[order(p_temp$date,as.numeric(p_temp$ID)),]
-  p_temp <- p_temp[ , c("ID", "P", "temp", "replicate",'date','cells/ml','volume/cell')]
-  p_temp$biovol <- as.numeric(as.character((p_temp[,6]))) * as.numeric(as.character((p_temp[,7])))
-  colnames(p_temp)[6]<-'cellcon'
-  colnames(p_temp)[7]<-'vol_cell'
-  
-  #I'm cheating here!!! It's only to get a nicer plot
-  #we could consider making a column with something like "sampling No"
-  #that could group data of very similar but not equal dates
-  p_temp$date[p_temp$date=='APRIL2'] <- 'APRIL1'
-  p_temp$date[p_temp$date=='MARCH30'] <- 'MARCH29'
-  
-  p_temp$date <- as.factor(p_temp$date)
-  row.names(p_temp) <- 1:nrow(p_temp)
-  
-  
-  p_temp$date <- factor(p_temp$date, levels=c('MARCH29','APRIL1','APRIL5','APRIL8',
-  																						'APRIL12','APRIL15','APRIL19',
-  																						'APRIL26','MAY4'))
-  
-  colnames(daphnia_algae)[6]<-'daphnia_ab' 
-  daphnia_algae$date <- factor(daphnia_algae$date, levels=c('APRIL1','APRIL5','APRIL8',
-  																													'APRIL12','APRIL15','APRIL19',
-  																													'APRIL26','MAY4'))
-  
+  p_temp <- p_temp[ , c("ID", "P", "temp", "replicate",'date','daydiff','days','cells/ml','volume/cell')]
+  p_temp$biovol <- as.numeric(as.character((p_temp[,8]))) * as.numeric(as.character((p_temp[,9])))
+  colnames(p_temp)[8]<-'cellcon'
+  colnames(p_temp)[9]<-'vol_cell'
   
   #give data right format
   p_temp$cellcon <- as.numeric(as.character(p_temp$cellcon))
@@ -75,7 +94,7 @@ p_temp_sums <- fnams %>%
   p_temp %>% 
   	#filter(temp %in% c('20') | ID <49) %>% 
   	filter(ID <49) %>% 
-  	ggplot(., aes(x = date, y = log(cellcon), fill = factor(temp), geom = "boxplot")) +
+  	ggplot(., aes(x = days, y = log(cellcon), fill = factor(temp), geom = "boxplot")) +
   	geom_boxplot()
   
   
