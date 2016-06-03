@@ -78,24 +78,24 @@ p_temp_Daphnia$rel_growth <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$dapnia_count
 #Plot preparation
 #Algae without controls
 p_temp$temp <- as.factor(p_temp$temp)
-sums_algae <- p_temp[,c(1,2,3,7,12,13)]
+sums_algae <- p_temp[,c(1,2,3,7,10,12,13)]
 sums_algae <- sums_algae[sums_algae$ID<49,]
-sums_algae <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = sums_algae[,c(2:6)],
+sums_algae <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = sums_algae[,c(2:7)],
 																							FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_algae <- na.omit(sums_algae)
 
 #Algae controls
-sums_algae_controls <- p_temp[,c(1,2,3,7,12,13)]
+sums_algae_controls <- p_temp[,c(1,2,3,7,10,12,13)]
 sums_algae_controls <- sums_algae_controls[sums_algae_controls$ID>48,]
 
-sums_algae_controls <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = sums_algae_controls[,c(2:6)],
+sums_algae_controls <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = sums_algae_controls[,c(2:7)],
 																											 FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_algae_controls <- na.omit(sums_algae_controls)
 
 #Daphnia
 p_temp_Daphnia$temp <- as.factor(p_temp_Daphnia$temp)
 p_temp_Daphnia<-do.call(data.frame,lapply(p_temp_Daphnia, function(x) replace(x, is.infinite(x),NA)))
-sums_daphnia <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = p_temp_Daphnia[,c(7,13,14,18,19)],
+sums_daphnia <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = p_temp_Daphnia[,c(7,9,13,14,18,19)],
 																								FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_daphnia <- na.omit(sums_daphnia)
 
@@ -215,14 +215,16 @@ for (k in 1:length(levels(sums_daphnia$temp))){
 #########
 #get maximum growth rates for different temperatures
 #algae
-max_algae <- as.data.frame(as.list(aggregate(. ~ sums_algae$temp+sums_algae$P,data = sums_algae[,c(4,7)],
+max_algae <- as.data.frame(as.list(aggregate(. ~ sums_algae$temp+sums_algae$P,data = sums_algae[,c(4,7,10)],
 																						 FUN=function(x) c(max_growth =max(x)))))
 growth_days_vec<-"NA"
 rel_growth_days_vec<-"NA"
+biovol_days_algae<-"NA"
 for (i in 1:length(max_algae$growthrate.mn)){
 	growth_days_vec[i]<-as.character(sums_algae$days[sums_algae$growthrate.mn==max_algae$growthrate.mn[i]])
 	rel_growth_days_vec[i]<-as.character(sums_algae$days[sums_algae$rel_growth.mn==max_algae$rel_growth.mn[i]])
-}
+	biovol_days_algae[i]<-as.character(sums_algae$days[sums_algae$biovol.mn==max_algae$biovol.mn[i]])
+	}
 # png(filename = "max_growth_rates.png",
 # 		width = 1000, height = 750, units = "px")
 # ggplot(data = max_algae, aes(sums_algae.temp, y = log(growthrate.mn),label=paste(growth_days_vec,'days'), group = sums_algae.P, color = sums_algae.P)) +
@@ -245,16 +247,28 @@ for (i in 1:length(max_algae$growthrate.mn)){
 # 				legend.text=element_text(size=25))
 # dev.off()
 
+# png(filename = "max_biovol_algae.png",
+# 		width = 1000, height = 750, units = "px")
+# ggplot(data = max_algae, aes(sums_algae.temp, y = log(biovol.mn), group = sums_algae.P,label=paste(biovol_days_algae,'days'), color = sums_algae.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("log(max biovol)") + xlab('temperature') +
+# 	geom_text(size=10, nudge_y = 0.2)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
 #####################################################################################################################
 #####################################################################################################################
 #controls
-max_controls <- as.data.frame(as.list(aggregate(. ~ sums_algae_controls$temp+sums_algae_controls$P,data = sums_algae_controls[,c(4,7)],
+max_controls <- as.data.frame(as.list(aggregate(. ~ sums_algae_controls$temp+sums_algae_controls$P,data = sums_algae_controls[,c(4,7,10)],
 																								FUN=function(x) c(max_growth =max(x)))))
 growth_days_ctrl<-"NA"
 rel_growth_days_ctrl<-"NA"
+biovol_days_ctrl<-"NA"
 for (i in 1:length(max_controls$growthrate.mn)){
 	growth_days_ctrl[i]<-as.character(sums_algae_controls$days[sums_algae_controls$growthrate.mn==max_controls$growthrate.mn[i]])
 	rel_growth_days_ctrl[i]<-as.character(sums_algae_controls$days[sums_algae_controls$rel_growth.mn==max_controls$rel_growth.mn[i]])
+	biovol_days_ctrl[i]<-as.character(sums_algae_controls$days[sums_algae_controls$biovol.mn==max_controls$biovol.mn[i]])
 }
 # png(filename = "max_growth_rates_controls.png",
 # 		width = 1300, height = 750, units = "px")
@@ -278,17 +292,30 @@ for (i in 1:length(max_controls$growthrate.mn)){
 # 				legend.text=element_text(size=25))
 # dev.off()
 
+# png(filename = "max_biovol_controls.png",
+# 		width = 1300, height = 750, units = "px")
+# ggplot(data = max_controls, aes(sums_algae_controls.temp, y = log(biovol.mn),label=paste(biovol_days_ctrl,'days'), group = sums_algae_controls.P, color = sums_algae_controls.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("log(max biovol)") + xlab('temperature') +
+# 	geom_text(size=8, nudge_y = 0.2)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
+
 #####################################################################################################################
 #####################################################################################################################
 #Daphnia
-max_daphnia <- as.data.frame(as.list(aggregate(. ~ sums_daphnia$temp+sums_daphnia$P,data = sums_daphnia[,c(4,7)],
+max_daphnia <- as.data.frame(as.list(aggregate(. ~ sums_daphnia$temp+sums_daphnia$P,data = sums_daphnia[,c(4,7,10)],
 																							 FUN=function(x) c(max_growth =max(x)))))
 growth_days_daphnia<-"NA"
 rel_growth_days_daphnia<-"NA"
+abu_days_daphnia<-"NA"
 for (i in 1:length(max_daphnia$growthrate.mn)){
 	growth_days_daphnia[i]<-as.character(sums_daphnia$days[sums_daphnia$growthrate.mn==max_daphnia$growthrate.mn[i]])
 	rel_growth_days_daphnia[i]<-as.character(sums_daphnia$days[sums_daphnia$rel_growth.mn==max_daphnia$rel_growth.mn[i]])
-}
+	abu_days_daphnia[i]<-as.character(sums_daphnia$days[sums_daphnia$dapnia_count.mn==max_daphnia$dapnia_count.mn[i]])
+	}
 # png(filename = "max_growth_rates_daphnia.png",
 # 		width = 1300, height = 750, units = "px")
 # ggplot(data = max_daphnia, aes(sums_daphnia.temp, y = growthrate.mn,label=paste(growth_days_daphnia,'days'), group = sums_daphnia.P, color = sums_daphnia.P)) +
@@ -311,7 +338,210 @@ for (i in 1:length(max_daphnia$growthrate.mn)){
 # 				legend.text=element_text(size=25))
 # dev.off()
 
+png(filename = "max_abundance_daphnia.png",
+		width = 1300, height = 750, units = "px")
+ggplot(data = max_daphnia, aes(sums_daphnia.temp, y = rel_growth.mn, group = sums_daphnia.P, color = sums_daphnia.P)) +
+	geom_point(size = 15) + theme_bw() + ylab("max population abundance") + xlab('temperature') +
+	theme(axis.title=element_text(size=30),
+				axis.text=element_text(size=25),
+				legend.title=element_text(size=25),
+				legend.text=element_text(size=25))
+dev.off()
+
 maxgrowth <- cbind(max_daphnia[,c(1:4)],max_controls[,c(3:4)],max_algae[c(3:4)])
 colnames(maxgrowth)<-c('temp','phosphate','growth_daphnia','rel_growth_daphnia','growth_controls','rel_growth_controls',
 											 'growth_algae','rel_growth_algae')
 write.csv(maxgrowth, "max_rates.csv")
+
+
+
+
+####################################################################################
+####################################################################################
+
+#### Arrhenius plots of max growth rates, Daphnia
+
+#Boltzmann's constant in eV
+k=.00008617
+
+#convert celsius values to Kelvin
+max_daphnia$tvalues<-as.numeric(as.character(max_daphnia$sums_daphnia.temp))
+max_daphnia$tvalues<-max_daphnia$tvalues+273.15
+
+#convert kelvin values to 1/kT
+max_daphnia$xval<-1/(k*max_daphnia$tvalues)
+
+#convert response values to log(response) values
+max_daphnia$yval<-log(max_daphnia$rel_growth.mn)
+
+
+
+max_daphnia %>% 
+	group_by(sums_daphnia.P) %>%
+	ggplot(data = ., aes(x = xval, y = yval, group = sums_daphnia.P, color = sums_daphnia.P)) +
+	geom_point(size = 3) + theme_bw() + ylab("ln(daphnia max population growth rate)") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/daphnia_max_growth_arrhenius.png")
+
+mod1 <- lm(yval ~ xval*sums_daphnia.P, data = max_daphnia)
+summary(mod1)
+
+#### Arrhenius plots of max growth rates, algae controls
+
+#Boltzmann's constant in eV
+k=.00008617
+
+#convert celsius values to Kelvin
+max_controls$tvalues<-as.numeric(as.character(max_controls$sums_algae_controls.temp))
+max_controls$tvalues<-max_controls$tvalues+273.15
+
+#convert kelvin values to 1/kT
+max_controls$xval<-1/(k*max_controls$tvalues)
+
+#convert response values to log(response) values
+max_controls$yval<-log(max_controls$rel_growth.mn)
+
+
+
+max_controls %>% 
+	group_by(sums_algae_controls.P) %>%
+	ggplot(data = ., aes(x = xval, y = yval, group = sums_algae_controls.P, color = sums_algae_controls.P)) +
+	geom_point(size = 3) + theme_bw() + ylab("ln(algae max population growth rate)") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/algae_controls_max_growth_arrhenius.png")
+
+mod1 <- lm(yval ~ xval, data = max_controls)
+summary(mod1)
+
+#### Arrhenius plots of max growth rates, algae 
+
+#Boltzmann's constant in eV
+k=.00008617
+
+#convert celsius values to Kelvin
+max_algae$tvalues<-as.numeric(as.character(max_algae$sums_algae.temp))
+max_algae$tvalues<-max_algae$tvalues+273.15
+
+#convert kelvin values to 1/kT
+max_algae$xval<-1/(k*max_algae$tvalues)
+
+#convert response values to log(response) values
+max_algae$yval<-log(max_algae$rel_growth.mn)
+
+
+
+max_algae %>% 
+	group_by(sums_algae.P) %>%
+	ggplot(data = ., aes(x = xval, y = yval, group = sums_algae.P, color = sums_algae.P)) +
+	geom_point(size = 3) + theme_bw() + ylab("ln(algae max population growth rate)") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/algae_controls_max_growth_arrhenius.png")
+
+mod1 <- lm(yval ~ xval, data = max_algae)
+summary(mod1)
+
+
+
+
+#################################################################################################
+#################################################################################################
+
+#### Arrhenius plots of max biovolume/abundances
+
+#Boltzmann's constant in eV
+k=.00008617
+
+#convert celsius values to Kelvin
+max_daphnia$tvalues<-as.numeric(as.character(max_daphnia$sums_daphnia.temp))
+max_daphnia$tvalues<-max_daphnia$tvalues+273.15
+
+#convert kelvin values to 1/kT
+max_daphnia$xval<-1/(k*max_daphnia$tvalues)
+
+#convert response values to log(response) values
+max_daphnia$yval<-log(max_daphnia$dapnia_count.mn)
+
+
+
+max_daphnia %>% 
+	group_by(sums_daphnia.P) %>%
+	ggplot(data = ., aes(x = xval, y = yval, group = sums_daphnia.P, color = sums_daphnia.P)) +
+	geom_point(size = 3) + theme_bw() + ylab("ln(daphnia max population abundance)") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/daphnia_max_abundance_arrhenius.png")
+
+mod1 <- lm(yval ~ xval, data = max_daphnia[max_daphnia$sums_daphnia.P=="DEF",])
+mod2 <- lm(yval ~ xval, data = max_daphnia[max_daphnia$sums_daphnia.P=="FULL",])
+anova(mod1,mod2, test = "F")
+
+#### Arrhenius plots of max growth rates, algae controls
+
+#Boltzmann's constant in eV
+k=.00008617
+
+#convert celsius values to Kelvin
+max_controls$tvalues<-as.numeric(as.character(max_controls$sums_algae_controls.temp))
+max_controls$tvalues<-max_controls$tvalues+273.15
+
+#convert kelvin values to 1/kT
+max_controls$xval<-1/(k*max_controls$tvalues)
+
+#convert response values to log(response) values
+max_controls$yval<-log(max_controls$biovol.mn)
+
+
+
+max_controls %>% 
+	group_by(sums_algae_controls.P) %>%
+	ggplot(data = ., aes(x = xval, y = yval, group = sums_algae_controls.P, color = sums_algae_controls.P)) +
+	geom_point(size = 3) + theme_bw() + ylab("ln(algae max biovolume)") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/algae_controls_max_biovolume.png")
+
+mod1 <- lm(yval ~ xval, data = max_controls)
+summary(mod1)
+
+#### Arrhenius plots of max growth rates, algae 
+
+#Boltzmann's constant in eV
+k=.00008617
+
+#convert celsius values to Kelvin
+max_algae$tvalues<-as.numeric(as.character(max_algae$sums_algae.temp))
+max_algae$tvalues<-max_algae$tvalues+273.15
+
+#convert kelvin values to 1/kT
+max_algae$xval<-1/(k*max_algae$tvalues)
+
+#convert response values to log(response) values
+max_algae$yval<-log(max_algae$biovol.mn)
+
+
+
+max_algae %>% 
+	group_by(sums_algae.P) %>%
+	ggplot(data = ., aes(x = xval, y = yval, group = sums_algae.P, color = sums_algae.P)) +
+	geom_point(size = 3) + theme_bw() + ylab("ln(algae max biovolume)") + xlab("temperature, 1/kt") +
+	stat_summary(fun.y= "mean", geom = "point") +
+	geom_smooth(method = 'lm') + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold"))
+ggsave("p-temp-figures_files/figure-html/algae_max_biovolume.png")
+
+mod1 <- lm(yval ~ xval, data = max_algae)
+summary(mod1)
