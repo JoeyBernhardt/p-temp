@@ -115,11 +115,11 @@ for (k in 1:length(levels(sums_algae$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_algae[[k]]<-p
 }
-png(filename = "growth_rate_algae.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_algae,cols=2)
-dev.off()
+# png(filename = "growth_rate_algae.png",
+# 		width = 1400, height = 1000, units = "px",
+# 		pointsize = )
+# multiplot(plotlist=plots_algae,cols=2)
+# dev.off()
 
 #plot algae controls
 plots_algae_controls<-list()
@@ -136,11 +136,11 @@ for (k in 1:length(levels(sums_algae_controls$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_algae_controls[[k]]<-p
 }
-png(filename = "growth_rate_algae_ctrls.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_algae_controls,cols=2)
-dev.off()
+# png(filename = "growth_rate_algae_ctrls.png",
+# 		width = 1400, height = 1000, units = "px",
+# 		pointsize = )
+# multiplot(plotlist=plots_algae_controls,cols=2)
+# dev.off()
 
 
 #plot daphnia
@@ -158,11 +158,11 @@ for (k in 1:length(levels(sums_daphnia$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_daphnia[[k]]<-p
 }
-png(filename = "growth_rate_daphnia.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_daphnia,cols=2)
-dev.off()
+# png(filename = "growth_rate_daphnia.png",
+# 		width = 1400, height = 1000, units = "px",
+# 		pointsize = )
+# multiplot(plotlist=plots_daphnia,cols=2)
+# dev.off()
 
 #------------------------------------------------------------------------------------------------------------------#
 #plot relative growth rates
@@ -183,11 +183,11 @@ for (k in 1:length(levels(sums_algae$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_rel_growth[[k]]<-p
 }
-png(filename = "relative_growth.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_rel_growth,cols=2)
-dev.off()
+# png(filename = "relative_growth.png",
+# 		width = 1400, height = 1000, units = "px",
+# 		pointsize = )
+# multiplot(plotlist=plots_rel_growth,cols=2)
+# dev.off()
 
 #Daphnia only
 plots_rel_growth_daphnia<-list()
@@ -204,11 +204,11 @@ for (k in 1:length(levels(sums_daphnia$temp))){
 					axis.title.y = element_text(size = 20))
 	plots_rel_growth_daphnia[[k]]<-p
 }
-png(filename = "relative_growth_Daphnia.png",
-		width = 1400, height = 1000, units = "px",
-		pointsize = )
-multiplot(plotlist=plots_rel_growth_daphnia,cols=2)
-dev.off()
+# png(filename = "relative_growth_Daphnia.png",
+# 		width = 1400, height = 1000, units = "px",
+# 		pointsize = )
+# multiplot(plotlist=plots_rel_growth_daphnia,cols=2)
+# dev.off()
 
 
 
@@ -223,27 +223,27 @@ for (i in 1:length(max_algae$growthrate.mn)){
 	growth_days_vec[i]<-as.character(sums_algae$days[sums_algae$growthrate.mn==max_algae$growthrate.mn[i]])
 	rel_growth_days_vec[i]<-as.character(sums_algae$days[sums_algae$rel_growth.mn==max_algae$rel_growth.mn[i]])
 }
-png(filename = "max_growth_rates.png",
-		width = 1000, height = 750, units = "px")
-ggplot(data = max_algae, aes(sums_algae.temp, y = log(growthrate.mn),label=paste(growth_days_vec,'days'), group = sums_algae.P, color = sums_algae.P)) +
-	geom_point(size = 15) + theme_bw() + ylab("log(growth rate)") + xlab('temperature') +
-	geom_text(size=8, nudge_y = 0.25)+
-	theme(axis.title=element_text(size=30),
-				axis.text=element_text(size=25),
-				legend.title=element_text(size=25),
-				legend.text=element_text(size=25))
-dev.off()
+# png(filename = "max_growth_rates.png",
+# 		width = 1000, height = 750, units = "px")
+# ggplot(data = max_algae, aes(sums_algae.temp, y = log(growthrate.mn),label=paste(growth_days_vec,'days'), group = sums_algae.P, color = sums_algae.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("log(growth rate)") + xlab('temperature') +
+# 	geom_text(size=8, nudge_y = 0.25)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
 
-png(filename = "max_relative_growth_rates.png",
-		width = 1000, height = 750, units = "px")
-ggplot(data = max_algae, aes(sums_algae.temp, y = rel_growth.mn, group = sums_algae.P,label=paste(growth_days_vec,'days'), color = sums_algae.P)) +
-	geom_point(size = 15) + theme_bw() + ylab("relative growth rate") + xlab('temperature') +
-	geom_text(size=10, nudge_y = 0.02)+
-	theme(axis.title=element_text(size=30),
-				axis.text=element_text(size=25),
-				legend.title=element_text(size=25),
-				legend.text=element_text(size=25))
-dev.off()
+# png(filename = "max_relative_growth_rates.png",
+# 		width = 1000, height = 750, units = "px")
+# ggplot(data = max_algae, aes(sums_algae.temp, y = rel_growth.mn, group = sums_algae.P,label=paste(growth_days_vec,'days'), color = sums_algae.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("relative growth rate") + xlab('temperature') +
+# 	geom_text(size=10, nudge_y = 0.02)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
 
 #####################################################################################################################
 #####################################################################################################################
@@ -256,27 +256,27 @@ for (i in 1:length(max_controls$growthrate.mn)){
 	growth_days_ctrl[i]<-as.character(sums_algae_controls$days[sums_algae_controls$growthrate.mn==max_controls$growthrate.mn[i]])
 	rel_growth_days_ctrl[i]<-as.character(sums_algae_controls$days[sums_algae_controls$rel_growth.mn==max_controls$rel_growth.mn[i]])
 }
-png(filename = "max_growth_rates_controls.png",
-		width = 1300, height = 750, units = "px")
-ggplot(data = max_controls, aes(sums_algae_controls.temp, y = log(growthrate.mn),label=paste(growth_days_ctrl,'days'), group = sums_algae_controls.P, color = sums_algae_controls.P)) +
-	geom_point(size = 15) + theme_bw() + ylab("log(growth rate)") + xlab('temperature') +
-	geom_text(size=8, nudge_y = 0.25)+
-	theme(axis.title=element_text(size=30),
-				axis.text=element_text(size=25),
-				legend.title=element_text(size=25),
-				legend.text=element_text(size=25))
-dev.off()
+# png(filename = "max_growth_rates_controls.png",
+# 		width = 1300, height = 750, units = "px")
+# ggplot(data = max_controls, aes(sums_algae_controls.temp, y = log(growthrate.mn),label=paste(growth_days_ctrl,'days'), group = sums_algae_controls.P, color = sums_algae_controls.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("log(growth rate)") + xlab('temperature') +
+# 	geom_text(size=8, nudge_y = 0.25)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
 
-png(filename = "max_relative_growth_rates_controls.png",
-		width = 1300, height = 750, units = "px")
-ggplot(data = max_controls, aes(sums_algae_controls.temp, y = rel_growth.mn,label=paste(rel_growth_days_ctrl,'days'), group = sums_algae_controls.P, color = sums_algae_controls.P)) +
-	geom_point(size = 15) + theme_bw() + ylab("relative growth rate") + xlab('temperature') +
-	geom_text(size=8, nudge_y = 0.02)+
-	theme(axis.title=element_text(size=30),
-				axis.text=element_text(size=25),
-				legend.title=element_text(size=25),
-				legend.text=element_text(size=25))
-dev.off()
+# png(filename = "max_relative_growth_rates_controls.png",
+# 		width = 1300, height = 750, units = "px")
+# ggplot(data = max_controls, aes(sums_algae_controls.temp, y = rel_growth.mn,label=paste(rel_growth_days_ctrl,'days'), group = sums_algae_controls.P, color = sums_algae_controls.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("relative growth rate") + xlab('temperature') +
+# 	geom_text(size=8, nudge_y = 0.02)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
 
 #####################################################################################################################
 #####################################################################################################################
@@ -289,24 +289,29 @@ for (i in 1:length(max_daphnia$growthrate.mn)){
 	growth_days_daphnia[i]<-as.character(sums_daphnia$days[sums_daphnia$growthrate.mn==max_daphnia$growthrate.mn[i]])
 	rel_growth_days_daphnia[i]<-as.character(sums_daphnia$days[sums_daphnia$rel_growth.mn==max_daphnia$rel_growth.mn[i]])
 }
-png(filename = "max_growth_rates_daphnia.png",
-		width = 1300, height = 750, units = "px")
-ggplot(data = max_daphnia, aes(sums_daphnia.temp, y = growthrate.mn,label=paste(growth_days_daphnia,'days'), group = sums_daphnia.P, color = sums_daphnia.P)) +
-	geom_point(size = 15) + theme_bw() + ylab("growth rate") + xlab('temperature') +
-	geom_text(size=8, nudge_y = .75)+
-	theme(axis.title=element_text(size=30),
-				axis.text=element_text(size=25),
-				legend.title=element_text(size=25),
-				legend.text=element_text(size=25))
-dev.off()
+# png(filename = "max_growth_rates_daphnia.png",
+# 		width = 1300, height = 750, units = "px")
+# ggplot(data = max_daphnia, aes(sums_daphnia.temp, y = growthrate.mn,label=paste(growth_days_daphnia,'days'), group = sums_daphnia.P, color = sums_daphnia.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("growth rate") + xlab('temperature') +
+# 	geom_text(size=8, nudge_y = .75)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
 
-png(filename = "max_relative_growth_rates_daphnia.png",
-		width = 1300, height = 750, units = "px")
-ggplot(data = max_daphnia, aes(sums_daphnia.temp, y = rel_growth.mn,label=paste(rel_growth_days_daphnia,'days'), group = sums_daphnia.P, color = sums_daphnia.P)) +
-	geom_point(size = 15) + theme_bw() + ylab("relative growth rate") + xlab('temperature') +
-	geom_text(size=8, nudge_y = .05)+
-	theme(axis.title=element_text(size=30),
-				axis.text=element_text(size=25),
-				legend.title=element_text(size=25),
-				legend.text=element_text(size=25))
-dev.off()
+# png(filename = "max_relative_growth_rates_daphnia.png",
+# 		width = 1300, height = 750, units = "px")
+# ggplot(data = max_daphnia, aes(sums_daphnia.temp, y = rel_growth.mn,label=paste(rel_growth_days_daphnia,'days'), group = sums_daphnia.P, color = sums_daphnia.P)) +
+# 	geom_point(size = 15) + theme_bw() + ylab("relative growth rate") + xlab('temperature') +
+# 	geom_text(size=8, nudge_y = .05)+
+# 	theme(axis.title=element_text(size=30),
+# 				axis.text=element_text(size=25),
+# 				legend.title=element_text(size=25),
+# 				legend.text=element_text(size=25))
+# dev.off()
+
+maxgrowth <- cbind(max_daphnia[,c(1:4)],max_controls[,c(3:4)],max_algae[c(3:4)])
+colnames(maxgrowth)<-c('temp','phosphate','growth_daphnia','rel_growth_daphnia','growth_controls','rel_growth_controls',
+											 'growth_algae','rel_growth_algae')
+write.csv(maxgrowth, "max_rates.csv")
