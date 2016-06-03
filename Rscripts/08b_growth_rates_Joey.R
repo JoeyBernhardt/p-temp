@@ -70,23 +70,48 @@ p_temp_Daphnia <- na.omit(p_temp_Daphnia)
 
 
 library(plotrix)
+library(broom)
 p_temp_Daphnia %>%
 	dplyr::select(rel_growth, P, temp) %>%
+	filter(rel_growth > 0) %>% 
+	filter(temp != "24") %>% 
 	select(-ID) %>%
 	group_by(P, temp) %>%
+	mutate(temp.num = as.numeric(as.character(temp))) %>% 
+	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15))) %>%
 	select(-(starts_with("ID"))) %>%
-	summarise_each(funs(mean,median, sd,std.error)) %>%
-	ggplot(data = ., aes(temp, y = mean, group = P, color = P)) +
-	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
-	geom_point(size = 6) + theme_bw() + ylab("daphnia relative growth, cm") + xlab("temperature, C") +
+	summarise_each(funs(mean,max, median, sd,std.error)) %>%
+	ggplot(data = ., aes(inverse.temp_max, y = rel_growth_mean, group = P, color = P)) +
+	geom_errorbar(aes(ymin=rel_growth_mean-rel_growth_std.error, ymax=rel_growth_mean+rel_growth_std.error), width=.2) +
+	geom_point(size = 6) + theme_bw() + ylab("daphnia relative growth/day") + xlab("temperature, C") +
 	theme(axis.text=element_text(size=16),
-				axis.title=element_text(size=16,face="bold"))
+				axis.title=element_text(size=16,face="bold")) + scale_y_log10()
 
 
+ptemp_daph_inverse <- p_temp_Daphnia %>%
+	dplyr::select(rel_growth, P, temp) %>%
+	filter(rel_growth > 0) %>% 
+	filter(temp != "24") %>% 
+	select(-ID) %>%
+	group_by(P, temp) %>%
+	mutate(temp.num = as.numeric(as.character(temp))) %>% 
+	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15))) %>%
+	select(-(starts_with("ID"))) %>%
+	mutate(log.growth = log(rel_growth)) %>% 
+	ggplot(data =., aes(x = inverse.temp, y = log.growth, group = P, color = P)) + geom_point() +
+	geom_smooth(method = "lm")
+ggsave("daph.growth.arrhenius.png")
 
+mod <- lm(log(rel_growth) ~ inverse.temp, data = ptemp_daph_inverse)
+summary(mod)
 
-
-
+ptemp_daph_inverse %>% 
+	group_by(P) %>%
+	do(tidy(lm(log(rel_growth) ~ inverse.temp, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% View
+	ggplot(data = ., aes(x = P, y = estimate)) + geom_point() + 
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, width=.2))
+ggsave("activation_energy_daph_population_growth.png")
 #relative growth rates
 #Algae
 p_temp$rel_growth <- p_temp$voldiff/p_temp$biovol
