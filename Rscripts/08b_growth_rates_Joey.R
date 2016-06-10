@@ -108,7 +108,7 @@ summary(mod)
 ptemp_daph_inverse %>% 
 	group_by(P) %>%
 	do(tidy(lm(log(rel_growth) ~ inverse.temp, data = .), conf.int = TRUE)) %>% 
-	filter(term != "(Intercept)") %>% View
+	filter(term != "(Intercept)") %>%
 	ggplot(data = ., aes(x = P, y = estimate)) + geom_point() + 
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, width=.2))
 ggsave("activation_energy_daph_population_growth.png")

@@ -47,7 +47,7 @@ Daph %>%
 	dplyr::select(Length, treatment, temperature) %>%
 	filter(temperature != "12") %>% 
 	group_by(temperature, treatment) %>%
-	summarise_each(funs(mean,median, sd,std.error)) %>% 
+	summarise_each(funs(mean,median, sd,std.error)) %>% View
 	ggplot(data = ., aes(temperature, y = mean, group = treatment, color = treatment)) +
 	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
 	geom_point(size = 6) + theme_bw() + ylab("body length, cm") + xlab("temperature, C") +
@@ -72,9 +72,11 @@ Daph25 <- Daph %>%
 	summarise(top = quantile(Length, probs = 0.75),
 						avg = mean(Length),
 						n = n())
-Daph25 <- as.data.frame(Daph25)
+Daph25 <- as.data.frame(Daph25) %>% 
+	mutate(temperature = as.numeric(as.character(temperature)))
 
 Daph25 %>% 
+	filter(temperature != "12") %>% 
 	dplyr::select(top, treatment, temperature) %>% 
 	group_by(temperature, treatment) %>%
 	summarise_each(funs(mean,median, sd,std.error)) %>%
@@ -85,23 +87,59 @@ Daph25 %>%
 				axis.title=element_text(size=16,face="bold")) +
 	scale_y_continuous(trans = "log")
 
+Daph25 %>% 
+	# filter(temperature != "12") %>% 
+	dplyr::select(top, temperature) %>% 
+	group_by(temperature) %>%
+	summarise_each(funs(mean,median, sd,std.error)) %>%
+	ggplot(data = ., aes(temperature, y = mean)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 6) + theme_bw() + ylab("ln(body length)") + xlab("temperature, C") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	scale_y_continuous(trans = "log")
+
+
 
 Daph25 %>% 
-	ggplot(data = ., aes(x = factor(temperature), y = top)) + geom_boxplot()
+	ggplot(data = ., aes(x = factor(temperature), y = top)) + geom_boxplot(aes(group = treatment, color = treatment))
 
-mod <- lm(top ~ temperature + treatment, data = Daph25)
+Daph25 %>% 
+	# filter(temperature != "12") %>% 
+	lm(top ~ temperature*treatment, data = .) %>% 
+	summary()
+
+
+mod <- lm(top ~ temperature*treatment, data = Daph25)
 summary(mod)
+
+Daph25 %>% 
+	filter(treatment == "FULL") %>% 
+	lm(top ~ temperature, data = .) %>% 
+	summary
 
 
 ### top 10
 Daphtop10 <- Daph %>% 
 	group_by(UniqueID, temperature, date, treatment) %>% 
-	# filter(temperature != "20") %>% 
+	# filter(temperature != "12") %>% 
 	arrange(desc(Length)) %>% 
-	top_n(., 10, wt = Length) %>% 
+	top_n(., 1, wt = Length) %>% 
 	summarise(top10 = mean(Length),
 						n = n()) %>% 
-	ggplot(data = ., aes(x = factor(temperature), y = top10)) + geom_boxplot()
+	ggplot(data = ., aes(x = factor(temperature), y = top10, color = treatment, group = treatment)) + geom_point()
+
+Daphtop10 %>% 
+	filter(temperature != "12") %>% 
+	group_by(temperature, treatment) %>%
+	dplyr::select(top10, treatment, temperature) %>%
+	summarise_each(funs(mean,median, sd,std.error)) %>%
+	ggplot(data = ., aes(temperature, y = mean, group = treatment, color = treatment)) +
+	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 6) + theme_bw() + ylab("ln(body length)") + xlab("temperature, C") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	scale_y_continuous(trans = "log")
 
 
 mod <- lm(top2 ~ temperature, data = Daphtop10)
