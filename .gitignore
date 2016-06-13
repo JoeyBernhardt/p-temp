@@ -1,7 +1,7 @@
 # History files
 .Rhistory
 .Rapp.history
-*.DS_Store
+.DS_Store
 
 # Session Data files
 .RData
@@ -19,8 +19,3 @@ vignettes/*.pdf
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
 .Rproj.user
-
-<<<<<<< HEAD
-=======
-.DS_Store
->>>>>>> 1ce93541cb666e8fe6653226536e9ab6a7cf9b26
