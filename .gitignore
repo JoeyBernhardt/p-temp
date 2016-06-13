@@ -20,3 +20,7 @@ vignettes/*.pdf
 .httr-oauth
 .Rproj.user
 
+<<<<<<< HEAD
+=======
+.DS_Store
+>>>>>>> 1ce93541cb666e8fe6653226536e9ab6a7cf9b26
