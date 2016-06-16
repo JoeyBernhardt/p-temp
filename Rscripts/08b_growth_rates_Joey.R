@@ -67,25 +67,72 @@ p_temp_Daphnia<-p_temp_Daphnia %>%
 p_temp_Daphnia$abu_diff <- ave(p_temp_Daphnia$dapnia_count, p_temp_Daphnia$ID, FUN=function(x) c(0, diff(x)))
 p_temp_Daphnia$growthrate <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$daydiff
 p_temp_Daphnia <- na.omit(p_temp_Daphnia)
+p_temp_Daphnia <- rename(p_temp_Daphnia, uniqueID = ID)
 
-
+	
+			 
+			
 library(plotrix)
 library(broom)
 p_temp_Daphnia %>%
 	dplyr::select(rel_growth, P, temp) %>%
 	filter(rel_growth > 0) %>% 
 	filter(temp != "24") %>% 
-	select(-ID) %>%
+	# select(-uniqueID) %>%
 	group_by(P, temp) %>%
 	mutate(temp.num = as.numeric(as.character(temp))) %>% 
-	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15))) %>%
-	select(-(starts_with("ID"))) %>%
+	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15))) %>% 
+	# select(-(starts_with("uniqueID"))) %>%
 	summarise_each(funs(mean,max, median, sd,std.error)) %>%
-	ggplot(data = ., aes(inverse.temp_max, y = rel_growth_mean, group = P, color = P)) +
-	geom_errorbar(aes(ymin=rel_growth_mean-rel_growth_std.error, ymax=rel_growth_mean+rel_growth_std.error), width=.2) +
-	geom_point(size = 6) + theme_bw() + ylab("daphnia relative growth/day") + xlab("temperature, C") +
+	ggplot(data = ., aes(x = inverse.temp_max, y = rel_growth_mean, group = P, color = P)) +
+	# geom_errorbar(aes(ymin=rel_growth_mean-rel_growth_std.error, ymax=rel_growth_mean+rel_growth_std.error), width=.2) +
+	geom_point(size = 6) + geom_smooth(method = "lm") + theme_bw() + ylab("daphnia relative growth/day") + xlab("temperature, C") +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold")) + scale_y_log10()
+
+
+hist(p_temp_Daphnia$rel_growth)
+library(dplyr)
+temporary <- p_temp_Daphnia %>%
+	# dplyr::select(rel_growth, P, temp) %>%
+	filter(rel_growth > 0) %>% 
+	filter(temp != "24") %>% 
+	# select(-uniqueID) %>%
+	# group_by(P, temp) %>%
+	mutate(temp.num = as.numeric(as.character(temp))) %>% 
+	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15)))
+	
+
+temporary <- temporary %>% 
+	group_by(uniqueID, inverse.temp, P) %>% 
+	summarise(mean.growth.rate = median(rel_growth)) %>% 
+	as.data.frame()
+
+
+mod <- lm(mean.growth.rate ~ P + inverse.temp, data = temporary)
+summary(mod)
+
+## plot the slopes of the activation energies for mean growth rate
+temporary %>% 
+	group_by(P) %>% 
+	do(tidy(lm(log(mean.growth.rate) ~ inverse.temp, data = .), conf.int = TRUE)) %>%
+	filter(term != "(Intercept)") %>%
+	ggplot(data = ., aes(y = estimate, x = P)) + geom_point() +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, width=.2))
+
+
+
+
+ggplot(aes(x = inverse.temp, y = mean.growth.rate, group = P, color = P), data = .) + geom_point() +
+	geom_smooth(method = "lm") +
+	# geom_errorbar(aes(ymin=rel_growth_mean-rel_growth_std.error, ymax=rel_growth_mean+rel_growth_std.error), width=.2) +
+ ylab("daphnia relative growth/day") + xlab("temperature, C") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) + scale_y_log10()
+
+
+
+
 
 
 ptemp_daph_inverse <- p_temp_Daphnia %>%
@@ -142,6 +189,8 @@ p_temp_Daphnia<-do.call(data.frame,lapply(p_temp_Daphnia, function(x) replace(x,
 sums_daphnia <- as.data.frame(as.list(aggregate(. ~ days+temp+P,data = p_temp_Daphnia[,c(7,13,14,18,19)],
 																								FUN=function(x) c(mn =mean(x), n=length(x), se=sd(x)/length(x)))))
 sums_daphnia <- na.omit(sums_daphnia)
+
+readr::write_csv(sums_daphnia, "data-processed/daphnia_growth_rates.csv")
 
 #plot absolute growth rates
 #plot algae without controls
