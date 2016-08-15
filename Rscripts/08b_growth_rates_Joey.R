@@ -1,41 +1,3 @@
-#-----------------------------------------------------------------------------------#
-#multiplot function for better presentation of results
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-	library(grid)
-	
-	# Make a list from the ... arguments and plotlist
-	plots <- c(list(...), plotlist)
-	
-	numPlots = length(plots)
-	
-	# If layout is NULL, then use 'cols' to determine layout
-	if (is.null(layout)) {
-		# Make the panel
-		# ncol: Number of columns of plots
-		# nrow: Number of rows needed, calculated from # of cols
-		layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-										 ncol = cols, nrow = ceiling(numPlots/cols))
-	}
-	
-	if (numPlots==1) {
-		print(plots[[1]])
-		
-	} else {
-		# Set up the page
-		grid.newpage()
-		pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-		
-		# Make each plot, in the correct location
-		for (i in 1:numPlots) {
-			# Get the i,j matrix positions of the regions that contain this subplot
-			matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-			
-			print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-																			layout.pos.col = matchidx$col))
-		}
-	}
-}
-#-----------------------------------------------------------------------------------#
 
 library(dplyr)
 library(ggplot2)
@@ -70,7 +32,16 @@ p_temp_Daphnia <- na.omit(p_temp_Daphnia)
 p_temp_Daphnia <- rename(p_temp_Daphnia, uniqueID = ID)
 
 	
-			 
+# relative growth rates ---------------------------------------------------
+
+#Algae
+p_temp$rel_growth <- p_temp$voldiff/p_temp$biovol
+
+#relative growth Daphnia
+p_temp_Daphnia$rel_growth <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$dapnia_count
+
+
+		 
 			
 library(plotrix)
 library(broom)
@@ -92,30 +63,74 @@ p_temp_Daphnia %>%
 
 
 hist(p_temp_Daphnia$rel_growth)
-library(dplyr)
+
 temporary <- p_temp_Daphnia %>%
 	# dplyr::select(rel_growth, P, temp) %>%
 	filter(rel_growth > 0) %>% 
-	filter(temp != "24") %>% 
+	# filter(temp != "24") %>% 
+	# select(-uniqueID) %>%
+	# group_by(P, temp) %>%
+	mutate(temp.num = as.numeric(as.character(temp))) %>% 
+	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15)))
+
+temporary_final_time <- p_temp_Daphnia %>%
+	# dplyr::select(rel_growth, P, temp) %>%
+	# filter(temp != "24") %>% 
+	filter(date == "MAY4") %>% 
 	# select(-uniqueID) %>%
 	# group_by(P, temp) %>%
 	mutate(temp.num = as.numeric(as.character(temp))) %>% 
 	mutate(inverse.temp = 1/(.00008617*(temp.num+273.15)))
 	
 
-temporary <- temporary %>% 
+temporary2 <- temporary %>% 
 	group_by(uniqueID, inverse.temp, P) %>% 
-	summarise(mean.growth.rate = median(rel_growth)) %>% 
+	summarise(., mean.gr = mean(rel_growth), max.gr = max(rel_growth)) %>% 
 	as.data.frame()
 
+	temporary3 <- temporary_final_time %>% 
+		group_by(uniqueID, inverse.temp, P, temp) %>% 
+		summarise(., mean.gr = mean(dapnia_count), max.gr = max(dapnia_count)) %>% 
+		as.data.frame()
+	
+	
+temporary3$max.gr[temporary3$max.gr == 0] <- "1"
+str(temporary3)
 
-mod <- lm(mean.growth.rate ~ P + inverse.temp, data = temporary)
+temporary3$max.gr <- as.numeric(as.character(temporary3$max.gr))
+
+
+biovol <- p_temp %>% 
+	filter(ID > 49) %>% 
+	group_by(ID, P, temp) %>% 
+	summarise(., mean.bv = mean(biovol), max.bv = max(biovol)) %>% 
+	as.data.frame()
+
+biovol_d <- p_temp %>% 
+	filter(ID < 49) %>% 
+	group_by(ID, P, temp) %>% 
+	summarise(., mean.bv = mean(biovol), max.bv = max(biovol)) %>% 
+	as.data.frame()
+
+biovol %>% 
+	# filter(date == "MAY4") %>% 
+	# filter(temp == "24") %>% 
+lm(log(max.bv) ~ temp, data = .) %>% 
+summary()
+
+ggplot(data = biovol, aes(y = log(max.bv), x = factor(temp), fill = P)) + geom_boxplot()
+
+mod <- lm(log(mean.bv) ~ P*temp, data = biovol)
+anova(mod)
 summary(mod)
 
+log(0)
+
+
 ## plot the slopes of the activation energies for mean growth rate
-temporary %>% 
+temporary3 %>% 
 	group_by(P) %>% 
-	do(tidy(lm(log(mean.growth.rate) ~ inverse.temp, data = .), conf.int = TRUE)) %>%
+	do(tidy(lm(log(max.gr) ~ inverse.temp, data = .), conf.int = TRUE)) %>%
 	filter(term != "(Intercept)") %>%
 	ggplot(data = ., aes(y = estimate, x = P)) + geom_point() +
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, width=.2))
@@ -123,7 +138,7 @@ temporary %>%
 
 
 
-ggplot(aes(x = inverse.temp, y = mean.growth.rate, group = P, color = P), data = .) + geom_point() +
+ggplot(aes(x = inverse.temp, y = max.gr, group = P, color = P), data = temporary3) + geom_point() +
 	geom_smooth(method = "lm") +
 	# geom_errorbar(aes(ymin=rel_growth_mean-rel_growth_std.error, ymax=rel_growth_mean+rel_growth_std.error), width=.2) +
  ylab("daphnia relative growth/day") + xlab("temperature, C") +
@@ -159,12 +174,9 @@ ptemp_daph_inverse %>%
 	ggplot(data = ., aes(x = P, y = estimate)) + geom_point() + 
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high, width=.2))
 ggsave("activation_energy_daph_population_growth.png")
-#relative growth rates
-#Algae
-p_temp$rel_growth <- p_temp$voldiff/p_temp$biovol
 
-#relative growth Daphnia
-p_temp_Daphnia$rel_growth <- p_temp_Daphnia$abu_diff/p_temp_Daphnia$dapnia_count
+
+
 
 #Plot preparation
 #Algae without controls

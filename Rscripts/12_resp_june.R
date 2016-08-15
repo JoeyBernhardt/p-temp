@@ -344,12 +344,37 @@ tidy(lm(log(mean) ~ temp.inv, data = resp.mass), conf.int = TRUE) %>%
 
 estimate.m(resp.mass$temperature.x, resp.mass$mean)
 
+resp.mass <- as.data.frame(resp.mass)
 
-ggplot(data = resp.mass, aes(x = (1/(.00008617*(resp.mass$temperature.x+ 273.15))), y = log(resp.mass$mean))) +
-			 	geom_point(size = 2) + geom_smooth(method = "lm") + theme_bw() +
+resp.mass$temperature.x <- as.numeric(resp.mass$temperature.x)
+
+str(resp.mass)
+ggplot(data = resp.mass, aes(x = (1/(.00008617*(resp.mass$temperature.x + 273.15))), y = log(resp.mass$mean))) +
+			 	geom_point(size = 4, color = "white") + geom_smooth(method = "lm", color = "white") + theme_bw() +
 	xlab("temperature, 1/kt") + ylab("log mass-normalized oxygen flux, torr") +
-	theme(axis.text=element_text(size=16),
-				axis.title=element_text(size=16,face="bold"))
+# 	theme(axis.text=element_text(size=16, color = "white"),
+# 				axis.title=element_text(size=16,face="bold", color = "white")) +
+theme_bw() +
+	theme(
+		# panel.border = element_blank(),
+		# legend.key = element_blank(),
+		axis.ticks = element_line(color = "white"),
+		# axis.text.y = element_blank(),
+		# axis.text.x = element_blank(),
+		# panel.grid = element_blank(),
+		panel.grid.minor = element_blank(), 
+		panel.grid.major = element_blank(),
+		panel.background = element_blank(),
+		panel.border = element_rect(color = "white"),
+		plot.background = element_rect(fill = "transparent",colour = NA)) + 
+	theme(axis.text=element_text(size=24, color = "white"),
+				axis.title=element_text(size=20,face="bold", color = "white")) + 
+	scale_x_reverse()
+
+ggsave("test.png", bg = "transparent")
+
+
+
 
 
 resp.mass <- resp.mass %>% 
@@ -358,10 +383,11 @@ resp.mass <- resp.mass %>%
 
 ### convert torr to mg/l
 
+library(purrr)
 resp.k <- resp.mass %>% 
 	dplyr::select(temperature.x, mean, uniqueID, temp.kelvin) %>% 
 	by_row(~ convert_torr_to_mg_per_litre(.x$temperature.x, .x$mean), .to = "oxygen_in_mg") %>%
-	mutate(oxygen_in_mg = as.numeric(as.character(oxygen_in_mg))) %>% str()
+	mutate(oxygen_in_mg = as.numeric(as.character(oxygen_in_mg))) %>%
 	ggplot(data = ., aes(x = temp.kelvin, y = log(oxygen_in_mg))) + geom_point() + geom_smooth(method = "lm")
 
 mod <- lm(log(oxygen_in_mg) ~ temp.kelvin, data = resp.k)
@@ -538,12 +564,19 @@ mresp_long %>%
 
 well_IDs <- read_csv("data-raw/microbe-resp-well-IDs-June-2-2016.csv")
 
-m_resp <- left_join(mresp_long, well_IDs, by = "well_number")
+m_resp <- left_join(mresp_long, well_IDs, by = "well_number") %>% 
+	rename(uniquewell = uniqueID) %>% 
+	rename(uniqueID = UniqueID) %>% 
+	mutate(uniqueID = as.character(uniqueID))
 
+sep_June2 <- sep_June2 %>% 
+	mutate(uniqueID = as.character(uniqueID))
 
-m_resp %>% 
+m_resp_biovol <- left_join(m_resp, sep_June2, by = "uniqueID")
+
+m_resp_biovol %>% 
 	filter(!grepl('A1|A2|A3|A4|A5', well_number)) %>% 
-	filter(!grepl('24_A6|24_B5|24_D4|20_A6|20_B3|20_B4|20_D2|20_D3|16_A6|16_B1|16_B5|16_C1|16_C3|16_C4', uniqueID)) %>% 
+	filter(!grepl('24_A6|24_B5|24_D4|20_A6|20_B3|20_B4|20_D2|20_D3|16_A6|16_B1|16_B5|16_C1|16_C3|16_C4', uniquewell)) %>% 
 	group_by(uniqueID, temperature, treatment) %>% 
 	filter(Time_in_min > 20) %>% 
 	do(tidy(lm(oxygen ~ Time_in_min, data = .), conf.int = TRUE)) %>% 
@@ -557,9 +590,35 @@ m_resp %>%
 	geom_smooth(method = "lm")
 	geom_errorbar(aes(ymin=estimate-std.error, ymax=estimate + std.error), width=.2)
 
-well_IDs <- read_csv("data-raw/microbe-resp-well-IDs-June-2-2016.csv")
+	
+	
+m_resp_biov <- m_resp_biovol %>% 
+	mutate(total_biovol_pwell = (cell_count*biovolume)/5) %>% 
+	filter(!grepl('A1|A2|A3|A4|A5', well_number)) %>% 
+	filter(!grepl('24_A6|24_B5|24_D4|20_A6|20_B3|20_B4|20_D2|20_D3|16_A6|16_B1|16_B5|16_C1|16_C3|16_C4', uniquewell)) %>% 
+	group_by(uniqueID, temperature, treatment, total_biovol_pwell) %>% 
+	filter(Time_in_min > 20) %>% 
+	do(tidy(lm(oxygen ~ Time_in_min, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	as.data.frame() %>%
+	mutate(temperature = as.numeric(as.character(temperature))) %>% 
+	mutate(mass_corr_slope = (estimate/total_biovol_pwell)*-1) %>% 
+	mutate(inverse.temp = (1/(.00008617*(temperature+273.15)))) %>%
+	# group_by(inverse.temp, treatment) %>% 
+	# summarise(mean.slope = mean(mass_corr_slope), std.err.slope = std.error(mass_corr_slope)) %>% 
+	ggplot(data = ., aes(x = inverse.temp, y = log(mass_corr_slope), group = treatment, color = treatment)) +
+	geom_point() +
+	geom_smooth(method = "lm")
+geom_errorbar(aes(ymin=mean.slope - std.err.slope, ymax = mean.slope + std.err.slope), width=.2)
 
-m_resp <- left_join(mresp_long, well_IDs, by = "well_number")
+
+m_resp_biov %>% 
+	group_by(treatment) %>% 
+	summarise(mean = mean(total_biovol_pwell), std.err = std.error(total_biovol_pwell)) %>% 
+	ggplot(data = ., aes(x = treatment, y = mean)) + geom_point() +
+	geom_errorbar(aes(ymin=mean- std.err, ymax = mean + std.err), width=.2)
+
+
 
 library(purrr)
 str(m_resp)

@@ -11,27 +11,36 @@ library(ggplot2)
 ## cp **/*summary.csv /Users/Joey/Desktop/run-summaries
 
 #### Step 2: create a list of file names for each of the summaries ####
-fnams <- list.files("/Users/Joey/Documents/p-temp/run-summaries-March29", full.names = TRUE) ## find out the names of all the files in data-summary, use full.names to get the relative path for each file
+fnams <- list.files("/Users/Joey/Documents/p-temp/data-processed/run-summaries-June2", full.names = TRUE) ## find out the names of all the files in data-summary, use full.names to get the relative path for each file
+fnams <- list.files("/Users/Joey/Desktop/PK-TEMP-JUNE2016/JULY6-MORNING_processed/summaries", full.names = TRUE) ## find out the names of all the files in data-summary, use full.names to get the relative path for each file
+
+
 
 #### Step 3: create a df with the dataset ID and the cell count ####
-ptemp_summaries_march29 <- fnams %>%  
-	lapply(FUN = function(p) read.csv(p)) %>% 
-	as.data.frame(.) %>% 
-	filter(List.File == "Particles / ml") %>% 
+ptemp_summaries_July9 <- fnams %>% 
+	lapply(FUN = function(p) read.csv(p)) %>%
+	as.data.frame(.) %>% View
+	filter(List.File == "Particles / ml" | List.File == "Volume (ABD)") %>%
 	select(- starts_with("List")) %>%
 	t(.) %>%
 	as.data.frame() %>%
 	mutate(dataset = rownames(.)) %>%
 	mutate(cell_count = as.numeric(as.character(V1))) %>%
-	select(-V1)
+	mutate(biovolume = as.numeric(as.character(V2))) %>% 
+	select(-V1) %>%
+	select(-V2)
 
-View(ptemp_summaries)
+View(ptemp_summaries_June2)
 
-ptemp_sep_29 <- separate(ptemp_summaries_march29, dataset, c("treatment", "temperature", "replicate", "date"), extra = "drop")
+ptemp_sep_June2 <- separate(ptemp_summaries_June2, dataset, c("uniqueID", "date", "replicate", "type"), extra = "drop")
+
+sep_June2 <- separate(ptemp_sep_June2, uniqueID, c("x", "uniqueID"), sep = 1) %>% 
+	select(-1)
+
 
 
 #### Step 4: write out the df to a csv ####
-write_csv(ptemp_sep_29, "ptemp_summaries_March29.csv")
+write_csv(sep_June2, "data-processed/ptemp_summaries_June2.csv")
 
 
 
