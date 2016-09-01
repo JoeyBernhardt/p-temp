@@ -1,10 +1,10 @@
 # p-temp
 
-How does nutrient limitation affect the temperature dependence of consumer-resource dynamics?
+Research question: How does nutrient limitation affect the temperature dependence of consumer-resource dynamics?
 
-A consumer-resource mesocosm experiment run from March-May 2016 in the O'Connor lab at UBC.
+ - A consumer-resource mesocosm experiment run from March-May 2016 in the O'Connor lab at UBC.
 
-Mesocosms were innoculated with Chlamydomonas reinhardtii (algal resource) and Daphnia pulex (consumer) in COMBO medium with high (50uM P) and low (5 uMP) concentrations. Six replicate mesocosms were held at four temperatures (12C, 16C, 20C, and 24C) and sampled twice a week for 6 weeks.
+ - Mesocosms were innoculated with Chlamydomonas reinhardtii (algal resource) and Daphnia pulex (consumer) in COMBO medium with high (50uM P) and low (5 uMP) concentrations. Six replicate mesocosms were held at four temperatures (12C, 16C, 20C, and 24C) and sampled twice a week for 6 weeks.
 
 ### Documents
 
