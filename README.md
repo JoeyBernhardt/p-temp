@@ -8,6 +8,9 @@ Research question: How does nutrient limitation affect the temperature dependenc
 
 ### Documents
 
+[Experiment summary](https://docs.google.com/document/d/1JIvn3PInJuZ5pRlHiCSZ0audXD4rKHxSTBp070k7Eb4/edit)
+
+
 [Experiment notes in the issues](https://github.com/JoeyBernhardt/p-temp/issues)
 
 
