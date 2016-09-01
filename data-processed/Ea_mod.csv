@@ -1,0 +1,16 @@
+Ptreatment,Consumer_treatment,estimate,conf.low,conf.high,rate,P
+Nutrient limited,consumer_absent,-0.9360222782,-1.783624981,-0.08841957527,6. resource max abundance,NA
+Nutrient limited,consumer_present,0.6584885045,-0.05237867046,1.36935568,6. resource max abundance,NA
+Nutrient replete,consumer_absent,-1.737191742,-2.252503081,-1.221880404,6. resource max abundance,NA
+Nutrient replete,consumer_present,0.1270458339,-0.593139472,0.8472311399,6. resource max abundance,NA
+Nutrient replete,consumer_present,-0.199119544,-0.8442380331,0.4459989451,5. resource growth rate,NA
+Nutrient replete,consumer_absent,-1.27325635,-1.912433214,-0.6340794862,5. resource growth rate,NA
+Nutrient limited,consumer_present,-0.2453941385,-1.185228179,0.6944399017,5. resource growth rate,NA
+Nutrient limited,consumer_absent,-0.7390428176,-1.303234718,-0.1748509173,5. resource growth rate,NA
+Nutrient replete,consumer_present,-0.7114566,-0.9710273,-0.4518859,1. consumer metabolic rate,NA
+Nutrient limited,consumer_present,-1.277201754,-1.7782614,-0.7761421082,2. consumer max abundance,Nutrient limited
+Nutrient replete,consumer_present,-1.519297767,-2.026541863,-1.012053672,2. consumer max abundance,Nutrient replete
+Nutrient limited,consumer_present,-1.057857555,-1.611643153,-0.5040719574,3. consumer population growth rate,DEF
+Nutrient replete,consumer_present,-1.402304759,-2.179263306,-0.6253462124,3. consumer population growth rate,FULL
+Nutrient limited,consumer_present,-2.213403253,-3.033987832,-1.392818674,4. consumer final abundance,Nutrient limited
+Nutrient replete,consumer_present,-1.85187875,-2.382740314,-1.321017186,4. consumer final abundance,Nutrient replete
