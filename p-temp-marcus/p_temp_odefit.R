@@ -54,12 +54,13 @@ yobs <- select(pdata, P, H)
 # tweaking.
 
 # Create an Arrhenius function to transform metabolic rates based on
-# temperature. Its structure is identical to the one used in Mary's paper.
+# temperature. Its structure is identical to the one used in O'Connor et al. 2011
 
 boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 temperature <- 25 + 273.15 # the temperature of the modelled system
 btemperature <- 21 + 273.15 # the "base temperature" that determines the basal metabolic rate
 
+# Here "E" is the activation energy constant
 arrhenius <- function(E){
 	output <- exp(E * (temperature - btemperature) / (boltz * temperature * btemperature))
 return(output)
