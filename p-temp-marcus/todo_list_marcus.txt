@@ -1,0 +1,12 @@
+### TO DO LIST ###
+Last updated Sep 30 2016 
+
+1. Email Ben Gilbert.
+2. Fix script w/ theoretical predictions for fig 1 and commit to Joey's repo.
+3. Write script similar to (2.), but for short term predictions.
+3. Optimize the data-grabbing component of the model fitting workflow.
+4. Fix the model fitting process itself.
+5. Fit models to the data. Efficiently.
+
+The validity of the results produced by (2.) and (3.) depend on (5.) being
+complete, but the base code can still be written ahead of time.
