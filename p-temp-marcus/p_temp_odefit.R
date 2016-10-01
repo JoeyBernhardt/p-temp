@@ -66,7 +66,7 @@ arrhenius <- function(E){
 return(output)
 }
 
-# Create new odeModel object. This represents the "base" Lotka-Volterra
+# Create a new odeModel object. This represents the "base" Lotka-Volterra
 # consumer resource dynamics model that we would like to eventually fit, with
 # added metabolic effects due to temperature.
 
@@ -92,7 +92,7 @@ hp <- new("odeModel",
 	parms = c(r = 1, K = 10000000, a = 3, b = 500000, eps = 0.1, m = 0.2, Er = 0.32, EK = -0.32, Ea = 0.65, Em = 0.65),
 	times = c(from = 0, to = 400, by = 0.1),
 	init = c(P = initial_algal_biovolume, H = 10),
-	solver = "rk4"
+	solver = "lsoda" # We use lsoda here because it was used in the O'Connor paper. Are there better methods?
 )
 
 ### Model fitting ###
