@@ -21,7 +21,7 @@ library(tidyverse)
 # At each step i of the for-loop, the following happens:
 # 1. Simulate CR dynamics using the temperature i.
 # 2. Output the simulation results as a dataframe
-# 3. Subset the dataframe corresponding to the population densities on "day" 30.
+# 3. Subset the above dataframe to obtain a smaller one corresponding to the population densities on "day" 30.
 # 4. Merge this dataframe into the master data frame.
 
 # Post-loop
@@ -73,11 +73,11 @@ CRmodel <- new("odeModel",
 	init = c(P = 500000, H = 10),
 	solver = "lsoda" # We use lsoda here because it was used in the O'Connor paper. Are there better methods?
 )
-CRmodeloutput <- out(sim(CRmodel))
-CRmodeloutput <- filter(CRmodeloutput, time == 30)
-CRmodeloutput <- select(CRmodeloutput, P:H)
-CRmodeloutput <- mutate(CRmodeloutput, temp = i)
-CRframe <- rbind(CRframe, CRmodeloutput)
+CRmodeloutput <- out(sim(CRmodel)) # Output the simulated dynamics of the above model as a dataframe
+CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
+CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
+CRmodeloutput <- mutate(CRmodeloutput, temp = i) # Add a column corresponding to the temperature i
+CRframe <- rbind(CRframe, CRmodeloutput) # Merge dataframe into master dataframe
 }
 
 # Generate plot of the data
