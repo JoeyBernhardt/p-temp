@@ -8,12 +8,26 @@ library(tidyverse)
 ### Objectives ###
 
 # Here we use a for-loop in order to iteratively model the short-term
-# population dynamics at different temperatures. First the Arrhenius function
-# is declared, and it is then used in the creation of the dynamical model. The
-# resulting system of equations, called "hp", can be used to produce
-# theoretical predictions. It has been seeded with some parameters in an effort
-# to resemble the initial state of your experimental setup, but these need
-# tweaking.
+# population dynamics at different temperatures. This script can be
+# conceptually broken down into three sections:
+
+# Pre-loop
+# 1. Declare Arrhenius function
+# 2. Generate an empty "master" dataframe
+# 3. Declare parameters used in simulated models
+# 4. Declare temperature range that the for-loop will iterate over
+
+# For-loop
+# At each step i of the for-loop, the following happens:
+# 1. Simulate CR dynamics using the temperature i.
+# 2. Output the simulation results as a dataframe
+# 3. Subset the dataframe corresponding to the population densities on "day" 30.
+# 4. Merge this dataframe into the master data frame.
+
+# Post-loop
+# Generate plot using ggplot2.
+
+## Setup ##
 
 # Create an Arrhenius function to transform metabolic rates based on
 # temperature. Here, "T" is the temperature. "E" is the activation energy
