@@ -124,7 +124,6 @@ HighResourceDF <- rbind(HighResourceDF, CRmodeloutput) # Merge dataframe into "H
 low_resource_short_term_plot <- ggplot(data = LowResourceDF) + # declare dataframe
 	geom_point(aes(x = temp, y = P, colour = "Producer")) +
 	geom_point(aes(x = temp, y = H, colour = "Heterotroph")) +
-	scale_y_log10() +
 	ggtitle("Theoretical Consumer Resource Density at 30 Days; Low Resources") +
 	labs(x = "Temperature", y = "Density")
 
