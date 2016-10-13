@@ -9,9 +9,9 @@ library(gridExtra)
 
 ### Objectives ###
 
-# Here we use a for-loop in order to iteratively model the short-term
-# population dynamics at different temperatures. This script can be
-# conceptually broken down into three sections:
+# Here we use for-loops in order to iteratively model the short-term population
+# dynamics at different temperatures, under two different resource conditions.
+# This script can be conceptually broken down into three sections:
 
 # Pre-loop
 # 1. Declare Arrhenius function
@@ -20,7 +20,7 @@ library(gridExtra)
 # 4. Declare temperature range that the for-loop will iterate over
 
 # For-loop
-# At each step i of the for-loop, the following happens:
+# At each step i of each for-loop, the following happens:
 # 1. Simulate CR dynamics using the temperature i.
 # 2. Output the simulation results as a dataframe
 # 3. Subset the above dataframe to obtain a smaller one corresponding to the population densities on "day" 30.
@@ -63,7 +63,8 @@ HighResourceDF <- data.frame(temp = double(),
 # Declare the parameters to be used in the dynamical models 
 LowResourceParameters <- c(r = 1, K = 10000000, a = 3, b = 500000, eps = 0.2, m = 0.2, Er = 0.32, EK = -0.32, Ea = 0.65, Em = 0.65)
 
-HighResourceParameters <- replace(LowResourceParameters, "K", LowResourceParameters["K"] * 10)
+# In the high resource case, the carrying capacity is simply 10 times what was used in the low resource case
+HighResourceParameters <- replace(LowResourceParameters, "K", LowResourceParameters["K"] * 10) 
 
 # Declare the temperatures over which we will be simulating our consumer-resource model.
 TempRange <- seq(12, 24, 0.5) # We are principally interested in these temperatures: 12, 16, 20, 24
