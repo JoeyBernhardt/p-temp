@@ -136,7 +136,7 @@ parms(displayfittedhp)[fittedparms] <- coef(fittedhp)
 
 # set model parameters to fitted values and simulate again
 times(displayfittedhp) <- c(from=0, to=40, by=1)
-ysim <- out(sim(displayfittedhp))
+ysim <- out(sim(displayfittedhp, rtol = 1e-9, atol = 1e-9))
 
 # Plot the results of our model fitting. If you're reading this, sorry for the
 # shitty plots. I'll use ggplot2 next time!
