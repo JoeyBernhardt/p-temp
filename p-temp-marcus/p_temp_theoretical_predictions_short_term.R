@@ -87,7 +87,7 @@ CRmodel <- new("odeModel",
 	parms = LowResourceParameters,
 	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 500000, H = 10),
-	solver = "lsoda" # We use lsoda here because it was used in the O'Connor paper. Are there better methods?
+	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 )
 CRmodeloutput <- out(sim(CRmodel, rtol = 1e-9, atol = 1e-9)) # Output the simulated dynamics of the above model as a dataframe
 CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
@@ -110,7 +110,7 @@ CRmodel <- new("odeModel",
 	parms = HighResourceParameters,
 	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 500000, H = 10),
-	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower = more accurate.
+	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 )
 CRmodeloutput <- out(sim(CRmodel, rtol = 1e-9, atol = 1e-9)) # Output the simulated dynamics of the above model as a dataframe
 CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
