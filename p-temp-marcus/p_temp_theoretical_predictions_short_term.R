@@ -60,8 +60,8 @@ HighResourceDF <- data.frame(temp = double(),
                 	   H = double(), 
                 	   stringsAsFactors = FALSE)
 
-# Declare the parameters to be used in the dynamical models 
-LowResourceParameters <- c(r = 1, K = 10000000, a = 3, b = 500000, eps = 0.2, m = 0.2, Er = 0.32, EK = -0.32, Ea = 0.65, Em = 0.65)
+# Declare the parameters to be used in the dynamical models
+LowResourceParameters <- c(r = 1, K = 10000000, a = 15, b = 500000, eps = 0.01, m = 0.11, Er = 0.32, EK = -0.32, Ea = 0.65, Em = 0.65)
 
 # In the high resource case, the carrying capacity is simply 10 times what was used in the low resource case
 HighResourceParameters <- replace(LowResourceParameters, "K", LowResourceParameters["K"] * 10) 
