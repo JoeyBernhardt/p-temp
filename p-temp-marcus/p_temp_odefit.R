@@ -7,8 +7,14 @@ library(tidyverse)
 
 ### Data frame
 
-# Read the data and store them as an object
-pdata <- read.csv("C:\\Users\\Matt\\Google Drive\\Work\\joey_project\\raw_data\\p_temp_processed.csv",
+# Read the data from the consumer free controls, and store as object
+controldata <- read.csv("C:\\Users\\Matt\\My Documents\\repo\\p-temp\\data-processed\\p_temp_algae.csv",
+	stringsAsFactors = FALSE,
+	strip.white = TRUE,
+	na.strings = c("NA","") )
+
+# Read the data from the consumer-resource treatments, and store them as an object
+expdata <- read.csv("C:\\Users\\Matt\\My Documents\\repo\\p-temp\\data-processed\\p_temp_processed.csv",
 	stringsAsFactors = FALSE,
 	strip.white = TRUE,
 	na.strings = c("NA","") )
@@ -24,25 +30,25 @@ pdata <- read.csv("C:\\Users\\Matt\\Google Drive\\Work\\joey_project\\raw_data\\
 # the value of unique_ID
 
 uniqueid <- 1
-pdata <- filter(pdata, unique_ID == uniqueid)
+expdata <- filter(expdata, unique_ID == uniqueid)
 
 # Arrange data by sampling day, in ascending order
-pdata <- arrange(pdata, days)
+expdata <- arrange(expdata, days)
 
 # Insert a new row into our data frame, representing the initial conditions for each mesocosm.
-day_three_cell_volume <- pdata$volume_cell[1]
+day_three_cell_volume <- expdata$volume_cell[1]
 day_one_cell_concentration <- 10 ^ 5
 initial_algal_biovolume <- day_three_cell_volume * day_one_cell_concentration
-add_row(pdata, unique_ID = uniqueid, daphnia_total = 10, algal_biovolume = initial_algal_biovolume, days = 1, .before = 1)
+add_row(expdata, unique_ID = uniqueid, daphnia_total = 10, algal_biovolume = initial_algal_biovolume, days = 1, .before = 1)
 
 # Rename columns in data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary to invoke the fitOdeModel function.
-pdata <- rename(pdata, P = algal_biovolume)
-pdata <- rename(pdata, H = daphnia_total)
+expdata <- rename(expdata, P = algal_biovolume)
+expdata <- rename(expdata, H = daphnia_total)
 
 # Extract from the above subset only what we require to fit our model
-obstime <- pdata$days # this is the time interval over which we are fitting our model
-yobs <- select(pdata, P, H)
+obstime <- expdata$days # this is the time interval over which we are fitting our model
+yobs <- select(expdata, P, H)
 
 ### Model Construction ###
 
@@ -54,15 +60,18 @@ yobs <- select(pdata, P, H)
 # tweaking.
 
 # Create an Arrhenius function to transform metabolic rates based on
-# temperature. Its structure is identical to the one used in O'Connor et al. 2011
+# temperature. Here, "T" is the temperature. "E" is the activation energy
+# constant. Its structure is identical to the one used in O'Connor et al.
+# 2011
 
-boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
-temperature <- 16 + 273.15 # the temperature of the modelled system
-btemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate
+# Declare constants for Arrhenius function
 
-# Here "E" is the activation energy constant
-arrhenius <- function(E){
-	output <- exp(E * (temperature - btemperature) / (boltz * temperature * btemperature))
+Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
+BasalTemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate; 12 was the lowest temp used during the experiment.
+
+# Declare Arrhenius function
+arrhenius <- function(T,E){
+	output <- exp(E * ((T + 273.15) - BasalTemperature) / (Boltz * (T + 273.15) * BasalTemperature))
 return(output)
 }
 
@@ -81,11 +90,12 @@ return(output)
 # hp <- sim(hp)
 # plot(hp)
 
-hp <- new("odeModel",
+temp <- 16 # 16 degrees C is a simple "midpoint"
+CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 		with(as.list(c(init, parms)), {
-	dp <- arrhenius(Er) * r * P * (1 - (P / (arrhenius(EK) * K))) - arrhenius(Ea) * a * H * (P / (P + b))
-	dh <- arrhenius(Ea) * a * eps * H * (P / (P + b)) - arrhenius(Em) * m * H
+	dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * K))) - arrhenius(temp, Ea) * a * H * (P / (P + b))
+	dh <- arrhenius(temp, Ea) * a * eps * H * (P / (P + b)) - arrhenius(temp, Em) * m * H
 	list(c(dp, dh))
 	})
 	},
@@ -104,21 +114,13 @@ hp <- new("odeModel",
 
 # The optimization criterion used here is the minimization of the sum of
 # squared differences between the experimental data and our modelled data. This
-# is fairly standard, although alternatives do exist. The specific algorithm we
-# are using to do this is called PORT. This is a poor choice for fitting this
-# particular model, but it evaluates quickly and is thus useful for debugging
-# the code.
-
-# The authors of the 2011 O'Connor et al. Am Nat paper used the BOBYQA
-# algorithm. Currently, this algorithm doesn't function correctly!!! I have
-# contacted Ben Gilbert to discuss this issue, but I have a number of ideas
-# why.
+# is fairly standard, although alternatives do exist.
 
 # Declare a vector containing the parameters we would like to fit.
 fittedparms <- c("r", "K", "a", "b", "eps", "m")
 
 # Call fitOdeModel using the PORT algorithm.
-fittedhp <- fitOdeModel(hp, whichpar = fittedparms, obstime, yobs,
+fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
   debuglevel = 0, fn = ssqOdeModel,
   method = "PORT", lower = 0,
   control = list()
@@ -130,9 +132,9 @@ fittedhp <- fitOdeModel(hp, whichpar = fittedparms, obstime, yobs,
 ### Display model fitting results ###
 
 # To display the fitted results we need to create a new OdeModel object. Here
-# we duplicate hp and then alter it to use our new fitted parameters.
-displayfittedhp <- hp
-parms(displayfittedhp)[fittedparms] <- coef(fittedhp)
+# we duplicate CRmodel and then alter it to use our new fitted parameters.
+plotfittedCRmodel <- CRmodel
+parms(plotfittedCRmodel)[fittedparms] <- coef(fittedCRmodel)
 
 # set model parameters to fitted values and simulate again
 times(displayfittedhp) <- c(from=0, to=40, by=1)

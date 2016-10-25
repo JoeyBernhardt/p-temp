@@ -39,7 +39,7 @@ library(gridExtra)
 # Declare constants for Arrhenius function
 
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
-BasalTemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate
+BasalTemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate; 12 was the lowest temp used during the experiment.
 
 # Declare Arrhenius function
 arrhenius <- function(T,E){
