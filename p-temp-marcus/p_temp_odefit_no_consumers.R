@@ -15,7 +15,8 @@ controldata <- read.csv("C:\\Users\\Matt\\My Documents\\repo\\p-temp\\data-proce
 
 ### Data manipulation ###
 
-# Rename column "P" in data frame to "Phosphorus". This is necessary for the next step.
+# Rename column "P" in data frame to "Phosphorus". This is necessary to avoid
+# confusion in the next step.
 controldata <- rename(controldata, Phosphorus = P)
 
 # Rename columns in data frame to correspond to the names of the stocks in our
@@ -55,65 +56,82 @@ return(output)
 # Declare the parameters to be used in the dynamical models
 LowResourceParameters <- c(r = 1, K = 5, Er = 0.32, EK = -0.32)
 
-# In the high resource case, the carrying capacity is simply 10 times what was used in the low resource case
-HighResourceParameters <- replace(LowResourceParameters, "K", LowResourceParameters["K"] * 10)
+# MAKE TEMP A PARAMETER!!!
 
-## Declare Consumer Resource Model ##
-
-# Declare the replicate of interest
-
-repnumber <- 2
-initial_biol <- controldata[[repnumber]]$P[1]
-temp <- 12 
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 		with(as.list(c(init, parms)), {
-	dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * 10^K)))
-	list(c(dp))
-	})
+			dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * 10^K))) # K is scaled exponentially to assist the PORT algorithm
+		list(c(dp))
+		})
 	},
 	parms = LowResourceParameters,
 	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
-	init = c(P = initial_biol),
+	init = c(P = 100000),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
-)
+		)
 
-### Model Fitting ###
-
-# The optimization criterion used here is the minimization of the sum of
-# squared differences between the experimental data and our modelled data. This
-# is fairly standard, although alternatives do exist.
-
-# Extract from the above subset only what we require to fit our model
-obstime <- controldata[[repnumber]]$days # this is the time interval over which we are fitting our model
-yobs <- select(controldata[[repnumber]], P)
-
-# Declare a vector containing the parameters we would like to fit.
 fittedparms <- c("r", "K")
+temp <- 10
+controlfit <- function(data){
+		
+		CRmodel <- CRmodel
+		init(CRmodel) <- c(P = data$P[1])
+		obstime <- data$days
+		yobs <- select(data, P)
+		temp <- data$temp[1]
 
-# Call fitOdeModel using the PORT algorithm.
-fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
-  debuglevel = 1, fn = ssqOdeModel,
-  method = "PORT", lower = c(r = 0.1, K = 3),
-  control = list(trace = T)
-)
+		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
+ 		debuglevel = 0, fn = ssqOdeModel,
+   		method = "PORT", lower = c(r = 0.1, K = 3),
+  		control = list(trace = T)
+		)
+		
+		Phosphorus <- data$Phosphorus[1]
+		r <- coef(fittedCRmodel)[1]
+		K <- coef(fittedCRmodel)[2]
+		ID <- data$ID[1]
+		output <- data.frame(ID, Phosphorus, temp, r, K)
+		return(output)
+}
 
-# To display the fitted results we need to create a new OdeModel object. Here
-# we duplicate CRmodel and then alter it to use our new fitted parameters.
-plotfittedCRmodel <- CRmodel
-parms(plotfittedCRmodel)[fittedparms] <- coef(fittedCRmodel)
+# If you would like to fit parameters for all of the control replicates, and
+# output all of the results together as a dataframe, use:
+# map_df(controldata, controlfit)
 
-# set model parameters to fitted values and simulate again
-times(plotfittedCRmodel) <- c(from=0, to=40, by=1)
-ysim <- out(sim(plotfittedCRmodel, rtol = 1e-9, atol = 1e-9))
+# If you would like to plot the model fit for a single replicate X, please use:
+# plotsinglefit(controldata[['X']]
 
-observeddata <- data.frame(obstime, yobs)
-simulateddata <- ysim
+plotsinglefit <- function(data){
+		
+		CRmodel <- CRmodel
+		init(CRmodel) <- c(P = data$P[1])
+		obstime <- data$days
+		yobs <- select(data, P)
+		temp <- data$temp[1]
 
-# Plot the results of our model fitting.
-biol_plot <- ggplot() +
-	geom_point(data = observeddata, aes(x = obstime, y = yobs, color = "observed")) +
-	geom_line(data = simulateddata, aes(x = time, y = P, color = "simulated")) +
-	labs(x = "Time (days)", y = "Algal Biovolume")
+		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
+ 		debuglevel = 0, fn = ssqOdeModel,
+   		method = "PORT", lower = c(r = 0.1, K = 3),
+  		control = list(trace = T)
+		)
 
-biol_plot
+	plotfittedCRmodel <- CRmodel
+	parms(plotfittedCRmodel)[fittedparms] <- coef(fittedCRmodel)
+
+	# set model parameters to fitted values and simulate again
+	times(plotfittedCRmodel) <- c(from=0, to=40, by=1)
+	ysim <- out(sim(plotfittedCRmodel, rtol = 1e-9, atol = 1e-9))
+
+	observeddata <- data.frame(obstime, yobs)
+	simulateddata <- ysim
+
+	# Plot the results of our model fitting.
+	biol_plot <- ggplot() +
+		geom_point(data = observeddata, aes(x = obstime, y = yobs, color = "observed")) +
+		geom_line(data = simulateddata, aes(x = time, y = P, color = "simulated")) +
+		labs(x = "Time (days)", y = "Algal Biovolume")
+
+	output <- biol_plot
+	return(output)
+}
