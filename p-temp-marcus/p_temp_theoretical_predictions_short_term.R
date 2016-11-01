@@ -6,7 +6,7 @@ library(simecol)
 library(tidyverse)
 # Load the gridExtra package for conveniently arranging ggplot objects
 library(gridExtra)
-
+library(stringr)
 ### Objectives ###
 
 # Here we use for-loops in order to iteratively model the short-term population
@@ -52,12 +52,14 @@ return(output)
 LowResourceDF <- data.frame(temp = double(),
 			   P = double(), 
                 	   H = double(), 
+			   Time = double(),
                 	   stringsAsFactors = FALSE)
 
 # Here we do the same as above, only for the high-resource dynamics.
 HighResourceDF <- data.frame(temp = double(),
 			   P = double(), 
-                	   H = double(), 
+                	   H = double(),
+			   Time = double(),
                 	   stringsAsFactors = FALSE)
 
 # Declare the parameters to be used in the dynamical models
@@ -85,13 +87,13 @@ CRmodel <- new("odeModel",
 	})
 	},
 	parms = LowResourceParameters,
-	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
+	times = c(from = 0, to = 30, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 500000, H = 10),
 	solver = "lsoda" # We use lsoda here because it was used in the O'Connor paper. Are there better methods?
 )
 CRmodeloutput <- out(sim(CRmodel)) # Output the simulated dynamics of the above model as a dataframe
-CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
-CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
+# CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
+# CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
 CRmodeloutput <- mutate(CRmodeloutput, temp = i) # Add a column corresponding to the temperature i
 LowResourceDF <- rbind(LowResourceDF, CRmodeloutput) # Merge dataframe into "LowResourceDF" dataframe
 }
@@ -108,42 +110,67 @@ CRmodel <- new("odeModel",
 	})
 	},
 	parms = HighResourceParameters,
-	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
+	times = c(from = 0, to = 30, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 500000, H = 10),
 	solver = "lsoda" # We use lsoda here because it was used in the O'Connor paper. Are there better methods?
 )
 CRmodeloutput <- out(sim(CRmodel)) # Output the simulated dynamics of the above model as a dataframe
-CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
-CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
+# CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
+# CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
 CRmodeloutput <- mutate(CRmodeloutput, temp = i) # Add a column corresponding to the temperature i
 HighResourceDF <- rbind(HighResourceDF, CRmodeloutput) # Merge dataframe into "HighResourceDF" dataframe
 }
 
 ### Plotting ###
 
-# Generate plot of the simulated data under low-resource conditions
-low_resource_short_term_plot <- ggplot(data = LowResourceDF) + # declare dataframe
-	geom_point(aes(x = temp, y = P, colour = "Producer")) +
-	geom_point(aes(x = temp, y = H, colour = "Heterotroph")) +
-	ggtitle("Theoretical Consumer Resource Density at 30 Days; Low Resources") +
-	labs(x = "Temperature", y = "Density")
+# # Generate plot of the simulated data under low-resource conditions
+# low_resource_short_term_plot <- ggplot(data = LowResourceDF) + # declare dataframe
+# 	geom_point(aes(x = temp, y = P, colour = "Producer")) +
+# 	geom_point(aes(x = temp, y = H, colour = "Heterotroph")) +
+# 	ggtitle("Theoretical Consumer Resource Density at 30 Days; Low Resources") +
+# 	labs(x = "Temperature", y = "Density")
+# 
+# # Generate plot of the simulated data under high-resource conditions
+# high_resource_short_term_plot <- ggplot(data = HighResourceDF) + # declare dataframe
+# 	geom_point(aes(x = temp, y = P, colour = "Producer")) +
+# 	geom_point(aes(x = temp, y = H, colour = "Heterotroph")) +
+# 	ggtitle("Theoretical Consumer Resource Density at 30 Days; High Resources") +
+# 	labs(x = "Temperature", y = "Density")
+# 
+# # Display both plots
+# grid.arrange(low_resource_short_term_plot, high_resource_short_term_plot, ncol = 2)
+# 
+# 
+# #### Joey's plots (just playing around here!)
+# library(stringr)
+# LowResourceDF %>% 
+# 	# filter(temp == ) %>% 
+# ggplot(data = .,  aes(x = time, y = H, color = temp)) + geom_point() +
+# 	scale_y_log10()
+# ggplot(data = HighResourceDF, aes(x = temp, y = H)) + geom_point() +
+# 	scale_y_log10()
+# 
+# 
 
-# Generate plot of the simulated data under high-resource conditions
-high_resource_short_term_plot <- ggplot(data = HighResourceDF) + # declare dataframe
-	geom_point(aes(x = temp, y = P, colour = "Producer")) +
-	geom_point(aes(x = temp, y = H, colour = "Heterotroph")) +
-	ggtitle("Theoretical Consumer Resource Density at 30 Days; High Resources") +
-	labs(x = "Temperature", y = "Density")
+all_times <- bind_rows(LowResourceDF, HighResourceDF, .id = "resource_level") %>% 
+	mutate(resource_level = str_replace(resource_level, "1", "low nutrient supply"),
+				 resource_level = str_replace(resource_level, "2", "high nutrient supply")) %>% 
+	rename(temperature = temp)
 
+p_plot <-	ggplot(data = all_times, aes(x = time, y = P, color = temperature)) +geom_point() +
+	facet_wrap( ~ resource_level) +
+	ggtitle("resource density") + scale_y_log10()
+
+h_plot <-	ggplot(data = all_times, aes(x = time, y = H, color = temperature)) +geom_point() +
+	facet_wrap( ~ resource_level) +
+ggtitle("consumer density")
 # Display both plots
-grid.arrange(low_resource_short_term_plot, high_resource_short_term_plot, ncol = 2)
+grid.arrange(p_plot, h_plot, nrow = 2)
 
 
-#### Joey's plots (just playing around here!)
-
-HighResourceDF %>% 
-	filter(temp < 15) %>% 
-ggplot(data = .,  aes(x = temp, y = P)) + geom_point() +
-	scale_y_log10()
-ggplot(data = HighResourceDF, aes(x = temp, y = H)) + geom_point() +
-	scale_y_log10()
+# all_times %>% 
+# 	filter(time == 30) %>% 
+# ggplot(data = .) +
+# 	# geom_point(aes(x = temp, y = P, colour = "producer", shape = factor(resource_level))) +
+# 	geom_line(aes(x = temp, y = H, color = factor(resource_level))) +
+# 	scale_y_log10()
