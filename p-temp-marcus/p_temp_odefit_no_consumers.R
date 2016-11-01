@@ -34,7 +34,7 @@ controldata <- split(controldata, f = controldata$ID)
 
 ### Model Construction ###
 
-## Declare Arrhenius Function ##
+## Arrhenius Function ##
 
 # Create an Arrhenius function to transform metabolic rates based on
 # temperature. Here, "T" is the temperature. "E" is the activation energy
@@ -51,12 +51,19 @@ arrhenius <- function(T,E){
 return(output)
 }
 
-## Declare parameters ##
+## Consumer Resource Model ##
+
+# Create a new odeModel object. This represents the "base" Lotka-Volterra
+# consumer resource dynamics model that we would like to eventually fit, with
+# added metabolic effects due to temperature.
+
+# dp is the differential equation for the phytoplankton population dynamics. P
+# refers to the population density. Both the intrinsic growth rate r and the
+# carrying capacity K are subject to metabolic scaling by the Arrhenius
+# function defined above
 
 # Declare the parameters to be used in the dynamical models
-LowResourceParameters <- c(r = 1, K = 5, Er = 0.32, EK = -0.32)
-
-# MAKE TEMP A PARAMETER!!!
+Parameters <- c(r = 1, K = 5, Er = 0.32, EK = -0.32, temp = 12)
 
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
@@ -65,21 +72,42 @@ CRmodel <- new("odeModel",
 		list(c(dp))
 		})
 	},
-	parms = LowResourceParameters,
+	parms = Parameters,
 	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 100000),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
 
-fittedparms <- c("r", "K")
-temp <- 10
+# These vectors simply contain strings, which are used to facilitate parameter
+# assignment in the below code. While seemingly clumsy, it appears to be a
+# necessary step.
+TempName <- c("temp") # for assigning temperature values to CRmodel
+fittedparms <- c("r", "K") # for assigning fitted parameter values to fittedCRmodel
+
+## Model Fitting Function ##
+
+# The following function is intended to be used with map_df() on the nested
+# dataframe called "controldata". It takes a single dataframe of various
+# observations for a control replicate, and outputs a dataframe consisting of
+# the replicate ID, the Phosphorus treatment, the temperature, and the
+# parameter estimates for r and K. It can also be used to output parameter
+# values for a single replicate. To do this call controlfit(controldata[['X']],
+# where "X" is the replicate's ID number.
+
 controlfit <- function(data){
 		
-		CRmodel <- CRmodel
-		init(CRmodel) <- c(P = data$P[1])
-		obstime <- data$days
-		yobs <- select(data, P)
-		temp <- data$temp[1]
+		init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
+		obstime <- data$days # The X values of the observed data points we are fitting our model to
+		yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
+		parms(CRmodel)[TempName] <- data$temp[1] # Set the temperature parameter in CRmodel to whatever our control replicate used.
+		
+		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
+		# squared differences between the experimental data and our modelled data. This
+		# is fairly standard, although alternatives do exist.
+		
+		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
+		# "lower" is a vector containing the lower bound constraints
+		# for the parameter values. This may need tweaking.
 
 		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
@@ -87,10 +115,14 @@ controlfit <- function(data){
   		control = list(trace = T)
 		)
 		
+		# Here we create vectors to be used to output a dataframe of
+		# the replicates ID, Phosphorus level, temperature, and the
+		# fitted parameters.	
 		Phosphorus <- data$Phosphorus[1]
 		r <- coef(fittedCRmodel)[1]
 		K <- coef(fittedCRmodel)[2]
 		ID <- data$ID[1]
+		temp <- tail(parms(CRmodel), n=1)
 		output <- data.frame(ID, Phosphorus, temp, r, K)
 		return(output)
 }
@@ -99,16 +131,23 @@ controlfit <- function(data){
 # output all of the results together as a dataframe, use:
 # map_df(controldata, controlfit)
 
-# If you would like to plot the model fit for a single replicate X, please use:
+# If you would like to plot the model fit for a single replicate with ID = X, please use:
 # plotsinglefit(controldata[['X']]
 
 plotsinglefit <- function(data){
+	
+init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
+		obstime <- data$days # The X values of the observed data points we are fitting our model to
+		yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
+		parms(CRmodel)[TempName] <- data$temp[1] # Set the temperature parameter in CRmodel to whatever our control replicate used.
 		
-		CRmodel <- CRmodel
-		init(CRmodel) <- c(P = data$P[1])
-		obstime <- data$days
-		yobs <- select(data, P)
-		temp <- data$temp[1]
+		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
+		# squared differences between the experimental data and our modelled data. This
+		# is fairly standard, although alternatives do exist.
+		
+		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
+		# "lower" is a vector containing the lower bound constraints
+		# for the parameter values. This may need tweaking.
 
 		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
@@ -116,6 +155,8 @@ plotsinglefit <- function(data){
   		control = list(trace = T)
 		)
 
+	# To display the fitted results we need to create a new OdeModel object. Here
+	# we duplicate CRmodel and then alter it to use our new fitted parameters.
 	plotfittedCRmodel <- CRmodel
 	parms(plotfittedCRmodel)[fittedparms] <- coef(fittedCRmodel)
 
@@ -123,15 +164,17 @@ plotsinglefit <- function(data){
 	times(plotfittedCRmodel) <- c(from=0, to=40, by=1)
 	ysim <- out(sim(plotfittedCRmodel, rtol = 1e-9, atol = 1e-9))
 
+	# Form observed data into a dataframe; the simulated data are already in a dataframe
 	observeddata <- data.frame(obstime, yobs)
 	simulateddata <- ysim
 
 	# Plot the results of our model fitting.
 	biol_plot <- ggplot() +
-		geom_point(data = observeddata, aes(x = obstime, y = yobs, color = "observed")) +
-		geom_line(data = simulateddata, aes(x = time, y = P, color = "simulated")) +
+		geom_point(data = observeddata, aes(x = obstime, y = yobs, color = "observed")) + # Observed data are points
+		geom_line(data = simulateddata, aes(x = time, y = P, color = "simulated")) + # Simulated data are in a continuous line
 		labs(x = "Time (days)", y = "Algal Biovolume")
-
+	
+	# Output the results as a ggplot2 object
 	output <- biol_plot
 	return(output)
 }
