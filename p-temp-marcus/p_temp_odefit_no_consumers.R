@@ -127,11 +127,10 @@ controlfit <- function(data){
 		return(output)
 }
 
-# If you would like to fit parameters for all of the control replicates, and
-# output all of the results together as a dataframe, use:
-# map_df(controldata, controlfit)
+## Plotting Function ##
 
-# If you would like to plot the model fit for a single replicate with ID = X, please use:
+# The following function is used to plot the fitted model to the observed data
+# for a single replicate. For a replicate with ID = X, please use:
 # plotsinglefit(controldata[['X']]
 
 plotsinglefit <- function(data){
