@@ -64,11 +64,18 @@ return(output)
 
 # Declare the parameters to be used in the dynamical models
 Parameters <- c(r = 1, K = 5, Er = 0.32, EK = -0.32, temp = 12)
+# Declare the parameters to be used as the bounds for the fitting algorithm
+LowerBound <- c(r = 0.15, K = 10 ^ 6)
+UpperBound <- c(r = 2, K = 10 ^ 11) 
+
+# Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
+# by the simecol documentation.
+ParamScaling <- 1 / UpperBound
 
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 		with(as.list(c(init, parms)), {
-			dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * 10^K))) # K is scaled exponentially to assist the PORT algorithm
+			dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * K)))
 		list(c(dp))
 		})
 	},
@@ -111,19 +118,23 @@ controlfit <- function(data){
 
 		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
-   		method = "PORT", lower = c(r = 0.1, K = 3),
+   		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = T)
 		)
 		
 		# Here we create vectors to be used to output a dataframe of
-		# the replicates ID, Phosphorus level, temperature, and the
-		# fitted parameters.	
+		# the replicates' ID, Phosphorus level, temperature, and the
+		# fitted parameters. "truer" and "trueK" are the fitted
+		# parameters, but scaled using the appropriate arrhenius
+		# transform.	
 		Phosphorus <- data$Phosphorus[1]
 		r <- coef(fittedCRmodel)[1]
 		K <- coef(fittedCRmodel)[2]
 		ID <- data$ID[1]
 		temp <- tail(parms(CRmodel), n=1)
-		output <- data.frame(ID, Phosphorus, temp, r, K)
+		trueK <- arrhenius(temp, -0.32) * K
+		truer <- arrhenius(temp, 0.32) * r
+		output <- data.frame(ID, Phosphorus, temp, r, K, truer, trueK)
 		return(output)
 }
 
@@ -150,7 +161,7 @@ init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolum
 
 		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
-   		method = "PORT", lower = c(r = 0.1, K = 3),
+   		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = T)
 		)
 
