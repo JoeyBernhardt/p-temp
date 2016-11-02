@@ -60,12 +60,14 @@ temp <- seq(285.15, 297.15, 0.5)
 scaledtemp <- sapply(temp, boltzscale)
 logPhat <- rep(Pfunc(290.15), length(temp))
 logHhat <- sapply(temp, Hfunc)
+logPhat <- sapply(temp, Pfunc)
+
 
 predictdata <- data.frame(temp, scaledtemp, logPhat, logHhat)
 
 predict_plot <- ggplot(data = predictdata) + # declare data
 	geom_line(aes(x = temp, y = logPhat, colour = "Producer")) + 
-	geom_line(aes(x = temp, y = logHhat, colour = "Heterotroph")) +
+	# geom_line(aes(x = temp, y = logHhat, colour = "Heterotroph")) +
 	ggtitle("Theoretical Consumer-Resource Density") +
 	labs(x="Temperature",y="Density") 
 predict_plot

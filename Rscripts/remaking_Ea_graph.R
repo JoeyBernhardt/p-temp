@@ -5,8 +5,8 @@ library(readr)
 library(broom)
 
 
-algae <- read_csv("p_temp_algae.csv")
-daphnia <- read_csv("p_temp_daphnia_algae.csv")
+algae <- read_csv("data-processed/p_temp_algae.csv")
+daphnia <- read_csv("data-processed/p_temp_daphnia_algae.csv")
 algae$P[algae$P == "DEF"] <- "Nutrient limited"
 algae$P[algae$P == "FULL"] <- "Nutrient replete"
 daphnia$P[daphnia$P == "DEF"] <- "Nutrient limited"
