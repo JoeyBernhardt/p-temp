@@ -8,7 +8,7 @@ library(tidyverse)
 ### Data frame ###
 
 # Read the data from the consumer free controls, and store as object
-controldata <- read.csv("C:\\Users\\Matt\\My Documents\\repo\\p-temp\\data-processed\\p_temp_algae.csv",
+controldata_raw <- read.csv("data-processed/p_temp_algae.csv",
 	stringsAsFactors = FALSE,
 	strip.white = TRUE,
 	na.strings = c("NA","") )
@@ -127,9 +127,33 @@ controlfit <- function(data){
 		return(output)
 }
 
+str(controldata)
+output4 <- controlfit(controldata[["49"]])
+
+
 # If you would like to fit parameters for all of the control replicates, and
 # output all of the results together as a dataframe, use:
-# map_df(controldata, controlfit)
+output <-  map_df(controldata, controlfit)
+write_csv(output, "data-processed/control_jars_r_k.csv")
+
+
+library(plotrix)
+output %>% 
+	filter(ID != "57") %>% 
+	group_by(temp, Phosphorus) %>% 
+	summarise_each(funs(mean, std.error), r, K) %>%
+ggplot(data = ., aes(x = Phosphorus, y = r_mean, group = factor(temp), color = factor(temp))) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = r_mean - r_std.error, ymax = r_mean + r_std.error))
+
+
+output %>% 
+	filter(ID != "57") %>% 
+	group_by(temp, Phosphorus) %>% 
+	summarise_each(funs(mean, std.error), r, K) %>%
+	ggplot(data = ., aes(x = Phosphorus, y = K_mean, group = factor(temp), color = factor(temp))) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = K_mean - K_std.error, ymax = K_mean + K_std.error))
+
+
 
 # If you would like to plot the model fit for a single replicate with ID = X, please use:
 # plotsinglefit(controldata[['X']]
@@ -178,3 +202,13 @@ init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolum
 	output <- biol_plot
 	return(output)
 }
+
+length(controldata)
+str(controldata, max.level = 2)
+
+plotsinglefit(controldata[["54"]])
+controlfit(controldata[["49"]])
+
+## view the control data list
+library(listviewer)
+jsonedit(controldata)
