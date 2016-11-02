@@ -138,37 +138,12 @@ controlfit <- function(data){
 		return(output)
 }
 
-<<<<<<< HEAD
-str(controldata)
-output4 <- controlfit(controldata[["49"]])
-
 
 # If you would like to fit parameters for all of the control replicates, and
 # output all of the results together as a dataframe, use:
-output <-  map_df(controldata, controlfit)
-write_csv(output, "data-processed/control_jars_r_k.csv")
 
-
-library(plotrix)
-output %>% 
-	filter(ID != "57") %>% 
-	group_by(temp, Phosphorus) %>% 
-	summarise_each(funs(mean, std.error), r, K) %>%
-ggplot(data = ., aes(x = Phosphorus, y = r_mean, group = factor(temp), color = factor(temp))) + geom_point(size = 4) +
-	geom_errorbar(aes(ymin = r_mean - r_std.error, ymax = r_mean + r_std.error))
-
-
-output %>% 
-	filter(ID != "57") %>% 
-	group_by(temp, Phosphorus) %>% 
-	summarise_each(funs(mean, std.error), r, K) %>%
-	ggplot(data = ., aes(x = Phosphorus, y = K_mean, group = factor(temp), color = factor(temp))) + geom_point(size = 4) +
-	geom_errorbar(aes(ymin = K_mean - K_std.error, ymax = K_mean + K_std.error))
-
-
-=======
 ## Plotting Function ##
->>>>>>> 219fa230d8c3f90730faccbb22198a6053b07773
+
 
 # The following function is used to plot the fitted model to the observed data
 # for a single replicate. For a replicate with ID = X, please use:
@@ -219,11 +194,6 @@ init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolum
 	return(output)
 }
 
-length(controldata)
-str(controldata, max.level = 2)
-
-plotsinglefit(controldata[["54"]])
-controlfit(controldata[["49"]])
 
 ## view the control data list
 library(listviewer)
