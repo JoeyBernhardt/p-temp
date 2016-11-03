@@ -63,6 +63,10 @@ return(output)
 
 # Declare the parameters to be used in the dynamical models
 Parameters <- c(r = 1, K = 5, Er = 0.32, EK = -0.32, temp = 12)
+# Activation energies using Joey's empirical result that "Er" is approximately 1. Sorry
+# for the lame pun.
+NewErParameters <- c(r = 1, K = 5, Er = 1, EK = -0.32, temp = 12)
+
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.15, K = 10 ^ 6)
 UpperBound <- c(r = 2, K = 10 ^ 11) 
@@ -78,7 +82,7 @@ CRmodel <- new("odeModel",
 		list(c(dp))
 		})
 	},
-	parms = Parameters,
+	parms = NewErParameters, # Trying Joey's empirically estimated parameters here.
 	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 100000),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
