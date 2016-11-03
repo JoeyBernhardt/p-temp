@@ -94,8 +94,8 @@ CRmodel <- new("odeModel",
 
 CRmodeloutput <- out(sim(CRmodel)) # Output the simulated dynamics of the above model as a dataframe
 CRmodeloutput <- out(sim(CRmodel, rtol = 1e-9, atol = 1e-9)) # Output the simulated dynamics of the above model as a dataframe
-CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
-CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
+# CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
+# CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
 CRmodeloutput <- mutate(CRmodeloutput, temp = i) # Add a column corresponding to the temperature i
 LowResourceDF <- rbind(LowResourceDF, CRmodeloutput) # Merge dataframe into "LowResourceDF" dataframe
 }
@@ -118,8 +118,8 @@ CRmodel <- new("odeModel",
 )
 CRmodeloutput <- out(sim(CRmodel)) # Output the simulated dynamics of the above model as a dataframe
 CRmodeloutput <- out(sim(CRmodel, rtol = 1e-9, atol = 1e-9)) # Output the simulated dynamics of the above model as a dataframe
-CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
-CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
+# CRmodeloutput <- filter(CRmodeloutput, time == 30) # Select only the row corresponding to "day" 30
+# CRmodeloutput <- select(CRmodeloutput, P:H) # Remove the "time" column
 CRmodeloutput <- mutate(CRmodeloutput, temp = i) # Add a column corresponding to the temperature i
 HighResourceDF <- rbind(HighResourceDF, CRmodeloutput) # Merge dataframe into "HighResourceDF" dataframe
 }
@@ -158,18 +158,23 @@ HighResourceDF <- rbind(HighResourceDF, CRmodeloutput) # Merge dataframe into "H
 all_times <- bind_rows(LowResourceDF, HighResourceDF, .id = "resource_level") %>% 
 	mutate(resource_level = str_replace(resource_level, "1", "low nutrient supply"),
 				 resource_level = str_replace(resource_level, "2", "high nutrient supply")) %>% 
-	rename(temperature = temp)
+	rename(temperature = temp) %>% 
+	filter(temperature %in% c("12", "16", "20", "24"))
 
-p_plot <-	ggplot(data = all_times, aes(x = time, y = P, color = temperature)) +geom_point() +
+p_plot <-	ggplot(data = all_times, aes(x = time, y = P, color = factor(temperature))) +geom_point() +
 	facet_wrap( ~ resource_level) +
-	ggtitle("resource density") + scale_y_log10()
+	ggtitle("resource density") +
+	# scale_y_log10() +
+	theme_minimal()
 
-h_plot <-	ggplot(data = all_times, aes(x = time, y = H, color = temperature)) +geom_point() +
+h_plot <-	ggplot(data = all_times, aes(x = time, y = H, color = factor(temperature))) +geom_point() +
 	facet_wrap( ~ resource_level) +
-ggtitle("consumer density")
+ggtitle("consumer density") +
+	# scale_y_log10() +
+	theme_minimal()
 # Display both plots
 grid.arrange(p_plot, h_plot, nrow = 2)
-
+ggsave("p-temp-figures_files/CR-densities-over30days.png")
 
 # all_times %>% 
 # 	filter(time == 30) %>% 
