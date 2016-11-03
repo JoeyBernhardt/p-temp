@@ -155,6 +155,11 @@ rKfit <- function(data){
 		return(output)
 }
 
+# Here we fit the values for r and K, using the 12C replicates, and then
+# prepare these data to be used to fit the activation energies further below in
+# the code.
+
+# Fit r and K for 12C replicates
 rKdefdata <- map_df(TwelveDefPdata, rKfit)
 rKfulldata <- map_df(TwelveFullPdata, rKfit)
 
@@ -162,7 +167,7 @@ rKfulldata <- map_df(TwelveFullPdata, rKfit)
 rKdefdata <- filter(rKdefdata, ID != 51)
 rKfulldata <- filter(rKfulldata, ID != 54)
 
-# Extract fitted population parameters
+# Extract fitted values for r and K, and take their arithmetic means
 defr <- mean(rKdefdata$r)
 defK <- mean(rKdefdata$K)
 
@@ -171,8 +176,9 @@ fullK <- mean(rKfulldata$K)
 
 ## Declare function for fitting Er and EK ##
 
-# Activation energies used in O'Connor et al.
-defParameters <- c(r = defr, K = defK, Er = 0.1, EK = 0.1, temp = 12)
+# Declare parameters to be used for fitting Er and EK. r and K taken from above steps. We investigate the Phosphorus "FULL" and
+# "DEF" cases separately.
+defParameters <- c(r = defr, K = defK, Er = 0.2, EK = 0.2, temp = 12)
 fullParameters <- c(r = fullr, K = fullK, Er = 0.1, EK = 0.1, temp = 12)
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
@@ -210,7 +216,7 @@ ErEKfit <- function(data){
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
 		# fitted parameters. "truer" and "trueK" are the fitted
-		# parameters, but scaled using the appropriate arrhenius
+		# activation energies, but scaled using the appropriate arrhenius
 		# transform.
 		Phosphorus <- data$Phosphorus[1]
 		Er <- coef(fittedCRmodel)[1]
@@ -221,7 +227,7 @@ ErEKfit <- function(data){
 		return(output)
 }
 
-# Fitting Er and EK #
+# Generating dataframes with fitted Er and EK #
 
 # Phosphorus deficient case #
 
@@ -234,11 +240,12 @@ parms(CRmodel) <- fullParameters
 
 fittedErEKfulldata <- map_df(FullPdata, ErEKfit)
 
-## Plotting Function ##
+## Plotting Functions ##
 
-# The following function is used to plot the fitted model to the observed data
-# for a single replicate. For a replicate with ID = X, please use:
-# plotsinglefit(controldata[['X']])
+# Here, intErEKfit is just an intermediate "helper function" - please do not
+# call it. It is used by plotErEKfit for visualizing the model fit of a single
+# replicate. To plot something with ID "X", please call:
+# plotErEKfit(controldata[['X']])
 
 intErEKfit <- function(data){
 
@@ -297,8 +304,22 @@ plotErEKfit <- function(data){
 		}
 }
 
-# data of interest
+###!! HOW TO USE THIS SCRIPT: !!###
+
+# 1. Simply run all of the code, and it will produce four dataframes of interest. 
+
+# Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
+
 # rKdefdata
 # rKfulldata
+
+# dataframes of the fitted Er's and EK's, grouped by phosphorus treatment:
+
 # fittedErEKdefdata
 # fittedErEKfulldata
+
+# 2. To visually investigate the fit of a single replicate with ID = "X", please use:
+# plotErEKfit(controldata[['X']])
+
+# Please keep in mind that step (2.) above is only designed to fit THE ACTIVATION
+# ENERGIES of single replicates, and then plot the fitting result.
