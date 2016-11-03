@@ -124,6 +124,8 @@ CRmodeloutput <- mutate(CRmodeloutput, temp = i) # Add a column corresponding to
 HighResourceDF <- rbind(HighResourceDF, CRmodeloutput) # Merge dataframe into "HighResourceDF" dataframe
 }
 
+
+
 ### Plotting ###
 
 # # Generate plot of the simulated data under low-resource conditions
@@ -158,27 +160,8 @@ HighResourceDF <- rbind(HighResourceDF, CRmodeloutput) # Merge dataframe into "H
 all_times <- bind_rows(LowResourceDF, HighResourceDF, .id = "resource_level") %>% 
 	mutate(resource_level = str_replace(resource_level, "1", "low nutrient supply"),
 				 resource_level = str_replace(resource_level, "2", "high nutrient supply")) %>% 
-	rename(temperature = temp) %>% 
-	filter(temperature %in% c("12", "16", "20", "24"))
+	rename(temperature = temp) 
+	# filter(temperature %in% c("12", "16", "20", "24"))
 
-p_plot <-	ggplot(data = all_times, aes(x = time, y = P, color = factor(temperature))) +geom_point() +
-	facet_wrap( ~ resource_level) +
-	ggtitle("resource density") +
-	# scale_y_log10() +
-	theme_minimal()
+write_csv(all_times, "data-processed/CR_abundances_30days.csv")
 
-h_plot <-	ggplot(data = all_times, aes(x = time, y = H, color = factor(temperature))) +geom_point() +
-	facet_wrap( ~ resource_level) +
-ggtitle("consumer density") +
-	# scale_y_log10() +
-	theme_minimal()
-# Display both plots
-grid.arrange(p_plot, h_plot, nrow = 2)
-ggsave("p-temp-figures_files/CR-densities-over30days.png")
-
-# all_times %>% 
-# 	filter(time == 30) %>% 
-# ggplot(data = .) +
-# 	# geom_point(aes(x = temp, y = P, colour = "producer", shape = factor(resource_level))) +
-# 	geom_line(aes(x = temp, y = H, color = factor(resource_level))) +
-# 	scale_y_log10()
