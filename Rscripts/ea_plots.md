@@ -1,28 +1,24 @@
----
-title: "plots_fun"
-output: 
-  html_document: 
-    keep_md: yes
----
+# plots_fun
 
 
-```{r warning=FALSE, message=FALSE}
+
+```r
 # load libraries ----------------------------------------------------------
 library(tidyverse)
 library(gridExtra)
 library(broom)
-
 ```
 
 
-```{r warning=FALSE, message=FALSE}
+
+```r
 # read in data ------------------------------------------------------------
 
 all_times <- read_csv("CR_abundances_30days.csv")
-
 ```
 
-```{r}
+
+```r
 all_times %>% 
 	filter(temperature %in% c("12", "16", "20", "24")) %>% 
 	ggplot(data = ., aes(x = time, y = P, color = factor(temperature))) +geom_point() +
@@ -32,8 +28,11 @@ all_times %>%
 	theme_minimal()
 ```
 
+![](ea_plots_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
-```{r}
+
+
+```r
 all_times %>% 
 	filter(temperature %in% c("12", "16", "20", "24")) %>% 
 	ggplot(data = ., aes(x = time, y = H, color = factor(temperature))) +geom_point() +
@@ -43,7 +42,10 @@ all_times %>%
 	theme_minimal()
 ```
 
-```{r}
+![](ea_plots_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+
+```r
 all_times %>% 
 	filter(time == 30) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
@@ -58,7 +60,10 @@ all_times %>%
 	theme(legend.position="top")
 ```
 
-```{r}
+![](ea_plots_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+
+```r
 all_times %>% 
 	filter(time == 30) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
@@ -72,3 +77,5 @@ all_times %>%
 				legend.text = element_text(size = 18)) +
 	theme(legend.position="top")
 ```
+
+![](ea_plots_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
