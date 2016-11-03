@@ -322,4 +322,5 @@ plotErEKfit <- function(data){
 # plotErEKfit(controldata[['X']])
 
 # Please keep in mind that step (2.) above is only designed to fit THE ACTIVATION
-# ENERGIES of single replicates, and then plot the fitting result.
+# ENERGIES of single replicates, and then plot the fitting result. It won't
+# make any sense to call it on data from any of the 12C replicates.
