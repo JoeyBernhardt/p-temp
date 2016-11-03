@@ -8,13 +8,13 @@ library(tidyverse)
 ### Data frame
 
 # Read the data from the consumer free controls, and store as object
-controldata <- read.csv("p_temp_algae.csv",
+controldata <- read.csv(file = file.path("data-processed", "p_temp_algae.csv"),
 	stringsAsFactors = FALSE,
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
 # Read the data from the consumer-resource treatments, and store them as an object
-expdata <- read.csv("p_temp_processed.csv",
+expdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"),
 	stringsAsFactors = FALSE,
 	strip.white = TRUE,
 	na.strings = c("NA","") )
