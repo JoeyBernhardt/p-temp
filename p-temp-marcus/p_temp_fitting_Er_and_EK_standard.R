@@ -4,6 +4,8 @@
 library(simecol)
 # Load the tidyverse package for improved data manipulation and plotting functions
 library(tidyverse)
+# Load the gridExtra package for conveniently arranging ggplot objects
+library(gridExtra)
 
 ### Data frame ###
 
@@ -203,15 +205,17 @@ plotsinglefit <- function(data){
 
 r_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
-		geom_smooth(method = lm, col = "red")
-
-r_plot
+		geom_smooth(method = lm, col = "red") +
+		ggtitle("Fitted r Values") +
+		labs(x = "-1/kT", y = "r")
 
 K_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
 		geom_point() +
-		geom_smooth(method = lm, col = "red")
+		geom_smooth(method = lm, col = "red") +
+		ggtitle("Fitted K Values") +
+		labs(x = "-1/kT", y = "K")
 
-K_plot
+grid.arrange(r_plot, K_plot, nrow = 2)
 
 r_model <- lm(log(r) ~ transformedtemp, data = rKdata)
 summary(r_model)
