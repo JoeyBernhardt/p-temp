@@ -138,6 +138,8 @@ def_est <- tidy(schoolfield_nls_def) %>%
 	mutate(phosphorus = "deficient")
 
 all_estimates <- bind_rows(full_est, def_est)
+
+## plot the activation energy estimates for the P replete and deficient treatments
 all_estimates %>% 	
 filter(term == "E") %>%
 ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point() +
@@ -145,19 +147,15 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point() +
 
 
 ### bootstrapping
-bootnls1_aug <- current_dataset_full %>% 
-	bootstrap(50) %>%
-do(augment(nlsLM(
+bootstrapped_estimates <- current_dataset_full %>% 
+	bootstrap(100) %>%
+do(tidy(nlsLM(
 	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
 	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
 	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
 	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
 	data=., control=list(minFactor=1 / 2^16, maxiter=1024)))) 
 
-ggplot(bootnls1_aug, aes(K, OriginalTraitValue)) + geom_point() +
-	geom_line(aes(y=.fitted, group=replicate), alpha=.2)
-
-bootstrapped_estimates <- bootnls1
 
 ## plot these babies!
 
@@ -166,8 +164,6 @@ tmp_temps <- seq(min(
 	ceiling(max(current_dataset$K)
 	), length = 200)
 
-
-	
 	plot_sf <- function(df) {
 		exp(Schoolfield(
 		df$estimate[df$term == "E"],
@@ -176,7 +172,6 @@ tmp_temps <- seq(min(
 		df$estimate[df$term == "T_h"],
 		tmp_temps))
 	}
-
 
 	tmp_model_boot <- bootstrapped_estimates %>% 
 		split(.$replicate) %>% 
@@ -210,7 +205,7 @@ ggplot(bootnls, aes(estimate)) + geom_histogram() + facet_wrap(~ term, scales="f
 
 
 
-# Generate predictions from the model fit ---------------------------------
+# Generate predictions from the model fit (non bootstrapped) ---------------------------------
 
 tmp_temps <- seq(min(
 	floor(current_dataset$K)), 
@@ -225,7 +220,6 @@ tmp_model <- exp(Schoolfield(
 	tmp_temps
 ))
 
-tmp_model
 
 ModelToPlotS <- data.frame(
 	Temperature = tmp_temps - 273.15, 
