@@ -143,7 +143,7 @@ rKfit <- function(data){
 		r <- coef(fittedCRmodel)[1]
 		K <- coef(fittedCRmodel)[2]
 		ID <- data$ID[1]
-		transformedtemp <- -1/(Boltz * temp)
+		transformedtemp <- -1/(Boltz * (temp + 273.15))
 		output <- data.frame(ID, Phosphorus, temp, transformedtemp, r, K)
 		return(output)
 }
@@ -206,14 +206,14 @@ plotsinglefit <- function(data){
 r_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
 		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted r Values") +
-		labs(x = "-1/kT", y = "r")
+		ggtitle("Fitted log(r) Values") +
+		labs(x = "-1/kT", y = "log(r)")
 
 K_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
 		geom_point() +
 		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted K Values") +
-		labs(x = "-1/kT", y = "K")
+		ggtitle("Fitted log(K) Values") +
+		labs(x = "-1/kT", y = "log(K)")
 
 grid.arrange(r_plot, K_plot, nrow = 2)
 
