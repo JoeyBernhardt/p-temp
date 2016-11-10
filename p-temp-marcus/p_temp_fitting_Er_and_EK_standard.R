@@ -1,3 +1,10 @@
+###!! HOW TO USE THIS SCRIPT: !!###
+
+# 1. Simply run all of the code, and it will produce three dataframes of interest.
+
+# 2. To visually investigate the fit of a single replicate with ID = "X", please use:
+# plotsinglefit(controldata[['X']])
+
 ### R Packages ###
 
 # Load the simecol package for fitting ordinary differential equation models
@@ -67,18 +74,16 @@ return(output)
 ## Consumer Resource Model ##
 
 # Create a new odeModel object. This represents the "base" Lotka-Volterra
-# consumer resource dynamics model that we would like to eventually fit, with
-# added metabolic effects due to temperature.
+# consumer resource dynamics model that we would like to eventually fit. Metabolic effects 
+# due to temperature have been removed!!!
 
 # dp is the differential equation for the phytoplankton population dynamics. P
-# refers to the population density. Both the intrinsic growth rate r and the
-# carrying capacity K are subject to metabolic scaling by the Arrhenius
-# function defined above
+# refers to the population density.
 
 # Declare the parameters to be used in the dynamical models
 
-# Activation energies used in O'Connor et al.
-Parameters <- c(r = 1, K = 5, Er = 0.32, EK = -0.32)
+# These parameters do not need to contain infor on the activation energies.
+Parameters <- c(r = 1, K = 5)
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.15, K = 10 ^ 6)
@@ -152,13 +157,6 @@ rKfit <- function(data){
 		return(output)
 }
 
-# Here we fit the values for r and K
-
-# Fit r and K
-rKdefdata <- map_df(DefPdata, rKfit)
-rKfulldata <- map_df(FullPdata, rKfit)
-rKdata <- rbind(rKdefdata, rKfulldata)
-
 ## Plotting Functions ##
 
 plotsinglefit <- function(data){
@@ -204,6 +202,14 @@ plotsinglefit <- function(data){
 	return(output)
 }
 
+### Output data ###
+
+# Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
+rKdefdata <- map_df(DefPdata, rKfit)
+rKfulldata <- map_df(FullPdata, rKfit)
+
+# rKdata
+rKdata <- rbind(rKdefdata, rKfulldata)
 
 r_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
@@ -225,7 +231,7 @@ summary(r_model)
 K_model <- lm(log(K) ~ transformedtemp, data = rKdata)
 summary(K_model)
 
-## Strange replicates
+## Strange replicates ##
 
 # EXCLUDED
 # 49: either bizarre measurement error or severe demographic noise
@@ -235,19 +241,3 @@ summary(K_model)
 
 # INCLUDED FOR NOW - they could still be useful for estimating r
 # 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
-
-###!! HOW TO USE THIS SCRIPT: !!###
-
-# 1. Simply run all of the code, and it will produce three dataframes of interest. 
-
-# Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
-
-# rKdefdata
-# rKfulldata
-
-# Dataframe consisting of the above two, but combined.
-
-# rKdata
-
-# 2. To visually investigate the fit of a single replicate with ID = "X", please use:
-# plotsinglefit(controldata[['X']])
