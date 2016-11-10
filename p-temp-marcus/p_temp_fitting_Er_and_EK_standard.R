@@ -30,6 +30,10 @@ controldata <- filter(controldata, grepl("C", replicate))
 # Reorder rows in data frame by resource treatment, temperature, and ID
 controldata <- arrange(controldata, Phosphorus, temp, ID)
 
+# Remove "weird" replicates
+
+controldata <- filter(controldata, ID != 49 & ID != 51 & ID != 54 & ID != 57)
+
 # Divide the data by their different resource treatments.
 DefPdata <- filter(controldata, Phosphorus == "DEF")
 FullPdata <- filter(controldata, Phosphorus == "FULL")
@@ -222,6 +226,14 @@ summary(r_model)
 
 K_model <- lm(log(K) ~ transformedtemp, data = rKdata)
 summary(K_model)
+
+## Strange replicates
+
+# 49: either bizarre measurement error or severe demographic noise
+# 51: appears to be measurement error at t=20 days. Impossible to fit logistic growth to resulting pattern.
+# 54: dynamics appear to undergo strange bifurcation. Chaos?
+# 57: dynamics appear periodic with high amplitude; possibly chaotic
+# 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
 
 ###!! HOW TO USE THIS SCRIPT: !!###
 
