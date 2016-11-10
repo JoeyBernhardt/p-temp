@@ -140,9 +140,9 @@ rKfit <- function(data){
 		
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
-		# fitted parameters. "truer" and "trueK" are the fitted
-		# parameters, but scaled using the appropriate arrhenius
-		# transform.	
+		# fitted parameters. "transformedtemp" is simply -1/kT, where
+		# k is the Boltzmann constant and T is temperature. This measure
+		# will be used for plotting purposes.
 		Phosphorus <- data$Phosphorus[1]
 		r <- coef(fittedCRmodel)[1]
 		K <- coef(fittedCRmodel)[2]
@@ -152,9 +152,7 @@ rKfit <- function(data){
 		return(output)
 }
 
-# Here we fit the values for r and K, using the 12C replicates, and then
-# prepare these data to be used to fit the activation energies further below in
-# the code.
+# Here we fit the values for r and K
 
 # Fit r and K
 rKdefdata <- map_df(DefPdata, rKfit)
@@ -245,4 +243,4 @@ summary(K_model)
 # rKfulldata
 
 # 2. To visually investigate the fit of a single replicate with ID = "X", please use:
-# plotErEKfit(controldata[['X']])
+# plotsinglefit(controldata[['X']])
