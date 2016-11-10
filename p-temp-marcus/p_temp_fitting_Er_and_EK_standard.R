@@ -1,9 +1,19 @@
 ###!! HOW TO USE THIS SCRIPT: !!###
 
-# 1. Simply run all of the code, and it will produce three dataframes of interest.
+# 1. Simply run all of the code, and it will produce two dataframes of interest:
 
-# 2. To visually investigate the fit of a single replicate with ID = "X", please use:
-# plotsinglefit(controldata[['X']])
+# The first dataframe is "rkdata". This contains information for each control
+# replicate (with some replicates removed; see further below).  The information
+# included for each replicate is: (1) info to identify each replicate and its
+# treatment effects, (2) the fitted parameters for r and K, and (3), an output
+# that is used for plotting purposes.
+
+# The second dataframe is "Eadata". This contains the two estimated activation
+# energies for both r and K. An explanation of how this is accomplished can be
+# found further down in the code.
+
+# 2. To visually investigate the fit of a single replicate with ID = "X",
+# please use: plotsinglefit(controldata[['X']])
 
 ### R Packages ###
 
@@ -49,22 +59,14 @@ controldata <- arrange(controldata, Phosphorus, temp, ID)
 # 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
 controldata <- filter(controldata, ID != 49 & ID != 51 & ID != 54 & ID != 57)
 
-# Divide the data by their different resource treatments.
-DefPdata <- filter(controldata, Phosphorus == "DEF")
-FullPdata <- filter(controldata, Phosphorus == "FULL")
-
-# Split the above two dataframes into two indexed lists of data frames based on their ID
-DefPdata <- split(DefPdata, f = DefPdata$ID)
-FullPdata <- split(FullPdata, f = FullPdata$ID)
-
 # Split entire control dataset into multiple indexed data frames based on their ID
 controldata <- split(controldata, f = controldata$ID)
 
 ### Constructing the Consumer Resource Model ###
 
 # Create a new odeModel object. This represents the "base" Lotka-Volterra
-# consumer resource dynamics model that we would like to eventually fit. Metabolic effects 
-# due to temperature have been removed!!!
+# consumer resource dynamics model that we would like to eventually fit.
+# Metabolic effects due to temperature have been removed!!!
 
 # dp is the differential equation for the phytoplankton population dynamics. P
 # refers to the population density.
@@ -100,7 +102,12 @@ CRmodel <- new("odeModel",
 # necessary step.
 fittedparms <- c("r", "K") # for assigning fitted parameter values to fittedCRmodel
 
-## Model Fitting Function ##
+### FUNCTIONS ###
+
+# This section contains two functions, one for fitting, and one for plotting
+# the fit of a single replicate.
+
+## 1. Model Fitting Function ##
 
 # The following function is intended to be used with map_df() on nested
 # dataframes like "rKdefdata". It takes a single dataframe of various
@@ -110,6 +117,7 @@ fittedparms <- c("r", "K") # for assigning fitted parameter values to fittedCRmo
 # values for a single replicate. To do this call rKfit(controldata[['X']],
 # where "X" is the replicate's ID number.
 
+Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 rKfit <- function(data){
 		
 		init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
@@ -146,7 +154,7 @@ rKfit <- function(data){
 		return(output)
 }
 
-## Plotting Functions ##
+## 2. Plotting Function ##
 
 plotsinglefit <- function(data){
 
@@ -194,11 +202,7 @@ plotsinglefit <- function(data){
 ### Output data ###
 
 # Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
-rKdefdata <- map_df(DefPdata, rKfit)
-rKfulldata <- map_df(FullPdata, rKfit)
-
-# rKdata
-rKdata <- rbind(rKdefdata, rKfulldata)
+rKdata <- map_df(controldata, rKfit)
 
 ### Output activation energies ###
 
@@ -215,14 +219,14 @@ Eadata <- data.frame(r, K)
 
 ### Plot results of entire dataset ###
 
-# Plot for fitted r values
+# Plot for fitted r values for all temperature treatments
 r_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
 		geom_smooth(method = lm, col = "red") +
 		ggtitle("Fitted log(r) Values") +
 		labs(x = "-1/kT", y = "log(r)")
 
-# Plot for fitted K values
+# Plot for fitted K values for all temperature treatments
 K_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
 		geom_point() +
 		geom_smooth(method = lm, col = "red") +
