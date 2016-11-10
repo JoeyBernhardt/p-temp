@@ -6,6 +6,7 @@
 
 library(tidyverse)
 library(minpack.lm)
+library(broom)
 
 # load data ---------------------------------------------------------------
 
@@ -14,7 +15,7 @@ ptemp <- read_csv("data-processed/p_temp_processed.csv")
 
 # get data in order -------------------------------------------------------
 
-current_dataset_full <- ptemp %>% 
+current_dataset <- ptemp %>% 
 	filter(date == "04-May", phosphorus_treatment == "FULL") %>% 
 	select(daphnia_total, temperature) %>% 
 	mutate(K = temperature + 273.15) %>% 
@@ -147,7 +148,7 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point() +
 
 
 ### bootstrapping
-bootstrapped_estimates <- current_dataset_full %>% 
+bootstrapped_estimates_100 <- current_dataset_full %>% 
 	bootstrap(100) %>%
 do(tidy(nlsLM(
 	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
@@ -156,6 +157,7 @@ do(tidy(nlsLM(
 	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
 	data=., control=list(minFactor=1 / 2^16, maxiter=1024)))) 
 
+write_csv(bootstrapped_estimates_100, "data-processed/schoolfield_boot_estimates.csv")
 
 ## plot these babies!
 
@@ -173,7 +175,7 @@ tmp_temps <- seq(min(
 		tmp_temps))
 	}
 
-	tmp_model_boot <- bootstrapped_estimates %>% 
+	tmp_model_boot <- bootstrapped_estimates_100 %>% 
 		split(.$replicate) %>% 
 		map_df(.f = plot_sf) %>% 
 		gather(key = replicate, value = TraitValue, 1:100) %>% 
@@ -186,9 +188,9 @@ ggplot() + geom_point(data = DataToPlot, aes(x = Temperature,
 	geom_line(data = tmp_model_boot, 
 						aes(x = Temperature, y = TraitValue, group = replicate), colour = "#1b9e77",
 						lwd = 1.3, alpha=.2) + 
-geom_line(data = ModelToPlotS, 
-					aes(x = Temperature, y = TraitValue), colour = "black", 
-					lwd = 1.3) +
+# geom_line(data = ModelToPlotS, 
+# 					aes(x = Temperature, y = TraitValue), colour = "black", 
+# 					lwd = 1.3) +
 	ggtitle("Phosphorus replete") +
 	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
 	ylab("daphnia population abundance @ day 30") +
