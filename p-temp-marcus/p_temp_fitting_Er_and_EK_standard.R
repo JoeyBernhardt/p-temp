@@ -232,13 +232,14 @@ grid.arrange(r_plot, K_plot, nrow = 2)
 
 ### Output activation energies ###
 
-# Here the activation energies are the slopes of each OLS model.
+# We regress log(fitted parameter) onto -1/kT; here the activation energies are the slopes of each OLS model.
 
 r_model <- lm(log(r) ~ transformedtemp, data = rKdata)
-summary(r_model)
-
 K_model <- lm(log(K) ~ transformedtemp, data = rKdata)
-summary(K_model)
+
+# Output the slopes (which are the fitted activation energies)
+coef(r_model)
+coef(K_model)
 
 ## Strange replicates ##
 
