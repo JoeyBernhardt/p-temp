@@ -47,7 +47,7 @@ controldata <- filter(controldata, grepl("C", replicate))
 # Reorder rows in data frame by resource treatment, temperature, and ID
 controldata <- arrange(controldata, Phosphorus, temp, ID)
 
-## Remove "weird" replicates; see explanation for each removal below ##
+## Now we remove "weird" replicates; see explanation for each removal below ##
 
 # EXCLUDED
 # 49: either bizarre measurement error or severe demographic noise
@@ -57,6 +57,8 @@ controldata <- arrange(controldata, Phosphorus, temp, ID)
 
 # INCLUDED FOR NOW - they could still be useful for estimating r
 # 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
+
+# Removing the data indicated above, under the "EXCLUDED" section
 controldata <- filter(controldata, ID != 49 & ID != 51 & ID != 54 & ID != 57)
 
 # Split entire control dataset into multiple indexed data frames based on their ID
@@ -73,7 +75,7 @@ controldata <- split(controldata, f = controldata$ID)
 
 # Declare the parameters to be used in the dynamical models
 
-# These parameters do not need to contain infor on the activation energies.
+# These parameters do not need to contain information on the activation energies.
 Parameters <- c(r = 1, K = 5)
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
@@ -199,7 +201,7 @@ plotsinglefit <- function(data){
 	return(output)
 }
 
-### Output data ###
+### Output Data ###
 
 # Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
 rKdata <- map_df(controldata, rKfit)
