@@ -30,7 +30,7 @@ controldata <- filter(controldata, grepl("C", replicate))
 # Reorder rows in data frame by resource treatment, temperature, and ID
 controldata <- arrange(controldata, Phosphorus, temp, ID)
 
-# Remove "weird" replicates
+# Remove "weird" replicates; see explanation at bottom of script
 
 controldata <- filter(controldata, ID != 49 & ID != 51 & ID != 54 & ID != 57)
 
@@ -108,12 +108,12 @@ fittedparms <- c("r", "K") # for assigning fitted parameter values to fittedCRmo
 
 ## Model Fitting Function ##
 
-# The following function is intended to be used with map_df() on the nested
-# dataframe called "controldata". It takes a single dataframe of various
+# The following function is intended to be used with map_df() on nested
+# dataframes like "rKdefdata". It takes a single dataframe of various
 # observations for a control replicate, and outputs a dataframe consisting of
 # the replicate ID, the Phosphorus treatment, the temperature, and the
 # parameter estimates for r and K. It can also be used to output parameter
-# values for a single replicate. To do this call controlfit(controldata[['X']],
+# values for a single replicate. To do this call rKfit(controldata[['X']],
 # where "X" is the replicate's ID number.
 
 rKfit <- function(data){
@@ -227,20 +227,27 @@ summary(K_model)
 
 ## Strange replicates
 
+# EXCLUDED
 # 49: either bizarre measurement error or severe demographic noise
 # 51: appears to be measurement error at t=20 days. Impossible to fit logistic growth to resulting pattern.
 # 54: dynamics appear to undergo strange bifurcation. Chaos?
 # 57: dynamics appear periodic with high amplitude; possibly chaotic
+
+# INCLUDED FOR NOW - they could still be useful for estimating r
 # 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
 
 ###!! HOW TO USE THIS SCRIPT: !!###
 
-# 1. Simply run all of the code, and it will produce four dataframes of interest. 
+# 1. Simply run all of the code, and it will produce three dataframes of interest. 
 
 # Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
 
 # rKdefdata
 # rKfulldata
+
+# Dataframe consisting of the above two, but combined.
+
+# rKdata
 
 # 2. To visually investigate the fit of a single replicate with ID = "X", please use:
 # plotsinglefit(controldata[['X']])

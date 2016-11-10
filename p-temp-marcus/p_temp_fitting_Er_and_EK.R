@@ -28,6 +28,9 @@ controldata <- filter(controldata, grepl("C", replicate))
 # Reorder rows in data frame by resource treatment, temperature, and ID
 controldata <- arrange(controldata, Phosphorus, temp, ID)
 
+# Remove strange replicates
+controldata <- filter(controldata, ID != 49 & ID != 51 & ID != 54 & ID != 57)
+
 # Isolate only the data involving the 12C controls, dividing into different resource treatments.
 TwelveDefPdata <- filter(controldata, temp == 12, Phosphorus == "DEF")
 TwelveFullPdata <- filter(controldata, temp == 12, Phosphorus == "FULL")
@@ -162,10 +165,6 @@ rKfit <- function(data){
 # Fit r and K for 12C replicates
 rKdefdata <- map_df(TwelveDefPdata, rKfit)
 rKfulldata <- map_df(TwelveFullPdata, rKfit)
-
-# Throw out weird replicates
-rKdefdata <- filter(rKdefdata, ID != 51)
-rKfulldata <- filter(rKfulldata, ID != 54)
 
 # Extract fitted values for r and K, and take their arithmetic means
 defr <- mean(rKdefdata$r)
