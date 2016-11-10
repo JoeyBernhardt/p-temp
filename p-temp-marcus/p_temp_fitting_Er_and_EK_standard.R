@@ -37,8 +37,16 @@ controldata <- filter(controldata, grepl("C", replicate))
 # Reorder rows in data frame by resource treatment, temperature, and ID
 controldata <- arrange(controldata, Phosphorus, temp, ID)
 
-# Remove "weird" replicates; see explanation at bottom of script
+## Remove "weird" replicates; see explanation for each removal below ##
 
+# EXCLUDED
+# 49: either bizarre measurement error or severe demographic noise
+# 51: appears to be measurement error at t=20 days. Impossible to fit logistic growth to resulting pattern.
+# 54: dynamics appear to undergo strange bifurcation. Chaos?
+# 57: dynamics appear periodic with high amplitude; possibly chaotic
+
+# INCLUDED FOR NOW - they could still be useful for estimating r
+# 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
 controldata <- filter(controldata, ID != 49 & ID != 51 & ID != 54 & ID != 57)
 
 # Divide the data by their different resource treatments.
@@ -52,26 +60,7 @@ FullPdata <- split(FullPdata, f = FullPdata$ID)
 # Split entire control dataset into multiple indexed data frames based on their ID
 controldata <- split(controldata, f = controldata$ID)
 
-### Model Construction ###
-
-## Arrhenius Function ##
-
-# Create an Arrhenius function to transform metabolic rates based on
-# temperature. Here, "T" is the temperature. "E" is the activation energy
-# constant. Its structure is identical to the one used in O'Connor et al.
-# 2011
-
-# Declare constants for Arrhenius function
-Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
-BasalTemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate; 12 was the lowest temp used during the experiment.
-
-# Declare Arrhenius function
-arrhenius <- function(T,E){
-	output <- exp(E * ((T + 273.15) - BasalTemperature) / (Boltz * (T + 273.15) * BasalTemperature))
-return(output)
-}
-
-## Consumer Resource Model ##
+### Constructing the Consumer Resource Model ###
 
 # Create a new odeModel object. This represents the "base" Lotka-Volterra
 # consumer resource dynamics model that we would like to eventually fit. Metabolic effects 
@@ -211,6 +200,19 @@ rKfulldata <- map_df(FullPdata, rKfit)
 # rKdata
 rKdata <- rbind(rKdefdata, rKfulldata)
 
+### Output activation energies ###
+
+# We regress log(fitted parameter) onto -1/kT; here the activation energies are the slopes of each OLS model.
+
+r_model <- lm(log(r) ~ transformedtemp, data = rKdata)
+K_model <- lm(log(K) ~ transformedtemp, data = rKdata)
+
+# Create data frame containing the fitted activation energies
+r <- last(coef(r_model))
+K <- last(coef(K_model))
+
+Eadata <- data.frame(r, K)
+
 ### Plot results of entire dataset ###
 
 # Plot for fitted r values
@@ -227,27 +229,5 @@ K_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(K), color = Pho
 		ggtitle("Fitted log(K) Values") +
 		labs(x = "-1/kT", y = "log(K)")
 
-Display both plots together
+# Display both plots together
 grid.arrange(r_plot, K_plot, nrow = 2)
-
-### Output activation energies ###
-
-# We regress log(fitted parameter) onto -1/kT; here the activation energies are the slopes of each OLS model.
-
-r_model <- lm(log(r) ~ transformedtemp, data = rKdata)
-K_model <- lm(log(K) ~ transformedtemp, data = rKdata)
-
-# Output the slopes (which are the fitted activation energies)
-coef(r_model)
-coef(K_model)
-
-## Strange replicates ##
-
-# EXCLUDED
-# 49: either bizarre measurement error or severe demographic noise
-# 51: appears to be measurement error at t=20 days. Impossible to fit logistic growth to resulting pattern.
-# 54: dynamics appear to undergo strange bifurcation. Chaos?
-# 57: dynamics appear periodic with high amplitude; possibly chaotic
-
-# INCLUDED FOR NOW - they could still be useful for estimating r
-# 63,64,65,66,67,68,70,71,73, and 74: None of these appear to reach equilibrium density.
