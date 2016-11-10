@@ -211,19 +211,28 @@ rKfulldata <- map_df(FullPdata, rKfit)
 # rKdata
 rKdata <- rbind(rKdefdata, rKfulldata)
 
+### Plot results of entire dataset ###
+
+# Plot for fitted r values
 r_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
 		geom_smooth(method = lm, col = "red") +
 		ggtitle("Fitted log(r) Values") +
 		labs(x = "-1/kT", y = "log(r)")
 
+# Plot for fitted K values
 K_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
 		geom_point() +
 		geom_smooth(method = lm, col = "red") +
 		ggtitle("Fitted log(K) Values") +
 		labs(x = "-1/kT", y = "log(K)")
 
+Display both plots together
 grid.arrange(r_plot, K_plot, nrow = 2)
+
+### Output activation energies ###
+
+# Here the activation energies are the slopes of each OLS model.
 
 r_model <- lm(log(r) ~ transformedtemp, data = rKdata)
 summary(r_model)
