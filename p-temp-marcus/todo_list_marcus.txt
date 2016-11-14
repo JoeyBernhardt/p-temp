@@ -16,4 +16,4 @@ complete, but the base code can still be written ahead of time.
 # Nagging questions #
 
 1. O'Connor et al. use "lsoda" for solving the differential equations. Is
-there a better alternative?
+there a better alternative? *SOLVED: The answer is no.*

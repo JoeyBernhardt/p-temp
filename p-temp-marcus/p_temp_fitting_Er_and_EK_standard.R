@@ -99,9 +99,9 @@ CRmodel <- new("odeModel",
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
 
-# These vectors simply contain strings, which are used to facilitate parameter
-# assignment in the below code. While seemingly clumsy, it appears to be a
-# necessary step.
+# This vector simply contains strings, which are used to facilitate parameter
+# assignment in the below code. While seemingly clumsy, it is a necessary step.
+
 fittedparms <- c("r", "K") # for assigning fitted parameter values to fittedCRmodel
 
 ### FUNCTIONS ###
