@@ -69,6 +69,23 @@ UpperBound <- c(r = 2, K = 10 ^ 11, a = 1000, b = 10 ^ 7, eps = 10, m = 10)
 # by the simecol documentation.
 ParamScaling <- 1 / UpperBound
 
+# Create a new odeModel object. This represents the "base" Lotka-Volterra
+# consumer resource dynamics model that we would like to eventually fit, with
+# added metabolic effects due to temperature.
+
+# dp and dh are the differential equations for producers and heterotrophs,
+# respectively. Likewise, P and H refer to the population densities. For
+# producers, both the intrinsic growth rate r and the carrying capacity K are
+# subject to metabolic scaling. For heterotrophs, metabolic scaling applies to
+# the attack rate a, and the intrinsic mortality rate m. "temp" refers to the
+# temperature of the modelled system, used for determining the arrhenius
+# scaling factor.
+
+# If you would like to view the model output, you can use the following
+# commands afer hp has been evaluated:
+# hp <- sim(hp)
+# plot(hp)
+
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 			with(as.list(c(init, parms)), {
@@ -105,13 +122,13 @@ return(output)
 # values for a single replicate. To do this call rKfit(controldata[['X']],
 # where "X" is the replicate's ID number.
 
-rKfit <- function(data){
-		
-		init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
+pfit <- function(data){
+
+		temp <- data$temperature[1]
+		model <- create_model(temp)
+		init(model) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
 		yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
-		parms(CRmodel) <- Parameters
-		temp <- data$temp[1]
 
 		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
 		# squared differences between the experimental data and our modelled data. This
@@ -121,7 +138,7 @@ rKfit <- function(data){
 		# "lower" is a vector containing the lower bound constraints
 		# for the parameter values. This may need tweaking.
 
-		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
+		fittedCRmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = T)
