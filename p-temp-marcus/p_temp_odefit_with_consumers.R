@@ -128,7 +128,7 @@ pfit <- function(data){
 		model <- create_model(temp)
 		init(model) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
-		yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
+		yobs <- select(data, P, H) # The Y values of the observed data points we are fitting our model to
 
 		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
 		# squared differences between the experimental data and our modelled data. This
@@ -149,12 +149,16 @@ pfit <- function(data){
 		# fitted parameters. "transformedtemp" is simply -1/kT, where
 		# k is the Boltzmann constant and T is temperature. This measure
 		# will be used for plotting purposes.
-		Phosphorus <- data$Phosphorus[1]
-		r <- coef(fittedCRmodel)[1]
-		K <- coef(fittedCRmodel)[2]
-		ID <- data$ID[1]
-		transformedtemp <- -1/(Boltz * (temp + 273.15))
-		output <- data.frame(ID, Phosphorus, temp, transformedtemp, r, K)
+
+		ID <- data$unique_ID[1]
+		Phosphorus <- data$phosphorus_treatment[1]
+		r <- coef(fittedCRmodel)["r"]
+		K <- coef(fittedCRmodel)["K"]
+		a <- coef(fittedCRmodel)["a"]
+		b <- coef(fittedCRmodel)["eps"]
+		m <- coef(fittedCRmodel)["m"]
+		
+		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, m)
 		return(output)
 }
 
