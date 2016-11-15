@@ -73,7 +73,7 @@ controldata <- split(controldata, f = controldata$ID)
 # dp is the differential equation for the phytoplankton population dynamics. P
 # refers to the population density.
 
-# Declare the parameters to be used in the dynamical models
+## Declare the parameters to be used in the dynamical models ##
 
 # These parameters do not need to contain information on the activation energies.
 Parameters <- c(r = 1, K = 5)
