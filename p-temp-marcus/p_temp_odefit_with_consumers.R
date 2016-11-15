@@ -96,7 +96,7 @@ CRmodel <- new("odeModel",
 	},
 	parms = Parameters,
 	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
-	init = c(P = 100000),
+	init = c(P = 100000, H = 10),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
 
@@ -126,7 +126,7 @@ pfit <- function(data){
 
 		temp <- data$temperature[1]
 		model <- create_model(temp)
-		init(model) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
+		init(model) <- c(P = data$P[1], H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
 		yobs <- select(data, P, H) # The Y values of the observed data points we are fitting our model to
 
@@ -138,7 +138,7 @@ pfit <- function(data){
 		# "lower" is a vector containing the lower bound constraints
 		# for the parameter values. This may need tweaking.
 
-		fittedCRmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
+		fittedmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = T)
@@ -152,94 +152,17 @@ pfit <- function(data){
 
 		ID <- data$unique_ID[1]
 		Phosphorus <- data$phosphorus_treatment[1]
-		r <- coef(fittedCRmodel)["r"]
-		K <- coef(fittedCRmodel)["K"]
-		a <- coef(fittedCRmodel)["a"]
-		b <- coef(fittedCRmodel)["eps"]
-		m <- coef(fittedCRmodel)["m"]
+		r <- coef(fittedmodel)["r"]
+		K <- coef(fittedmodel)["K"]
+		a <- coef(fittedmodel)["a"]
+		b <- coef(fittedmodel)["eps"]
+		m <- coef(fittedmodel)["m"]
 		
 		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, m)
 		return(output)
 }
 
-## 2. Plotting Function ##
-
-plotsinglefit <- function(data){
-
-		init(CRmodel) <- c(P = data$P[1]) # Set initial model conditions to the biovolume taken from the first measurement day
-		obstime <- data$days # The X values of the observed data points we are fitting our model to
-		yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
-		
-		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
-		# squared differences between the experimental data and our modelled data. This
-		# is fairly standard, although alternatives do exist.
-		
-		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
-		# "lower" is a vector containing the lower bound constraints
-		# for the parameter values. This may need tweaking.
-		fittedCRmodel <- fitOdeModel(CRmodel, whichpar = fittedparms, obstime, yobs,
- 		debuglevel = 0, fn = ssqOdeModel,
-   		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
-  		control = list(trace = T)
-		)
-
-	# To display the fitted results we need to create a new OdeModel object. Here
-	# we duplicate CRmodel and then alter it to use our new fitted parameters.
-	plotfittedCRmodel <- CRmodel
-	parms(plotfittedCRmodel)[fittedparms] <- coef(fittedCRmodel)
-
-	# set model parameters to fitted values and simulate again
-	times(plotfittedCRmodel) <- c(from=0, to=40, by=1)
-	ysim <- out(sim(plotfittedCRmodel, rtol = 1e-9, atol = 1e-9))
-
-	# Form observed data into a dataframe; the simulated data are already in a dataframe
-	observeddata <- data.frame(obstime, yobs)
-	simulateddata <- ysim
-
-	# Plot the results of our model fitting.
-	biol_plot <- ggplot() +
-		geom_point(data = observeddata, aes(x = obstime, y = yobs, color = "observed")) + # Observed data are points
-		geom_line(data = simulateddata, aes(x = time, y = P, color = "simulated")) + # Simulated data are in a continuous line
-		labs(x = "Time (days)", y = "Algal Biovolume")
-	
-	# Output the results as a ggplot2 object
-	output <- biol_plot
-	return(output)
-}
-
 ### Output Data ###
 
 # Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
-rKdata <- map_df(controldata, rKfit)
-
-### Output activation energies ###
-
-# We regress log(fitted parameter) onto -1/kT; here the activation energies are the slopes of each OLS model.
-
-r_model <- lm(log(r) ~ transformedtemp, data = rKdata)
-K_model <- lm(log(K) ~ transformedtemp, data = rKdata)
-
-# Create data frame containing the fitted activation energies
-r <- last(coef(r_model))
-K <- last(coef(K_model))
-
-Eadata <- data.frame(r, K)
-
-### Plot results of entire dataset ###
-
-# Plot for fitted r values for all temperature treatments
-r_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
-		geom_point() +
-		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted log(r) Values") +
-		labs(x = "-1/kT", y = "log(r)")
-
-# Plot for fitted K values for all temperature treatments
-K_plot <- ggplot(data = rKdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
-		geom_point() +
-		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted log(K) Values") +
-		labs(x = "-1/kT", y = "log(K)")
-
-# Display both plots together
-grid.arrange(r_plot, K_plot, nrow = 2)
+fittedpdata <- map_df(pdata, pfit)
