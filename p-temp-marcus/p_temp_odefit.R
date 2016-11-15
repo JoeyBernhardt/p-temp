@@ -39,7 +39,7 @@ expdata <- arrange(expdata, days)
 day_three_cell_volume <- expdata$volume_cell[1]
 day_one_cell_concentration <- 10 ^ 5
 initial_algal_biovolume <- day_three_cell_volume * day_one_cell_concentration
-add_row(expdata, unique_ID = uniqueid, daphnia_total = 10, algal_biovolume = initial_algal_biovolume, days = 1, .before = 1)
+expdata <- add_row(expdata, unique_ID = uniqueid, daphnia_total = 10, algal_biovolume = initial_algal_biovolume, days = 1, .before = 1)
 
 # Rename columns in data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary to invoke the fitOdeModel function.
