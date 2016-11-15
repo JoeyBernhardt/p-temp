@@ -55,7 +55,7 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models #
-Parameters <- c(r = 1, K = 10 ^ 8, a = 3, b = 10 ^ 5, eps = 0.1, m = 0.2, Er = 0.32, EK, = -0.32, Ea = 0.65, Em = 0.65)
+Parameters <- c(r = 1, K = 10 ^ 8, a = 3, b = 10 ^ 5, eps = 0.1, m = 0.2, Er = 0.32, EK = -0.32, Ea = 0.65, Em = 0.65, temp = 12)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
@@ -69,7 +69,7 @@ UpperBound <- c(r = 2, K = 10 ^ 11, a = 1000, b = 10 ^ 7, eps = 10, m = 10)
 # by the simecol documentation.
 ParamScaling <- 1 / UpperBound
 
-hpmodel <- new("odeModel",
+CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 			with(as.list(c(init, parms)), {
 		dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * K))) - arrhenius(temp, Ea) * a * H * (P / (P + b))
@@ -82,6 +82,13 @@ hpmodel <- new("odeModel",
 	init = c(P = 100000),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
+
+create_model <- function(temp){
+		model <- CRmodel
+		parms(model)["temp"] <- temp
+		output <- model 
+return(output)
+}
 
 ### FUNCTIONS ###
 
