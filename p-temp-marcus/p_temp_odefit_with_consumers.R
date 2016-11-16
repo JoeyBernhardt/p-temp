@@ -115,12 +115,12 @@ return(output)
 ## 1. Model Fitting Function ##
 
 # The following function is intended to be used with map_df() on nested
-# dataframes like "rKdefdata". It takes a single dataframe of various
-# observations for a control replicate, and outputs a dataframe consisting of
-# the replicate ID, the Phosphorus treatment, the temperature, and the
-# parameter estimates for r and K. It can also be used to output parameter
-# values for a single replicate. To do this call rKfit(controldata[['X']],
-# where "X" is the replicate's ID number.
+# dataframes like "pdata". It takes a single dataframe of various observations
+# for a replicate, and outputs a dataframe consisting of the replicate ID, the
+# Phosphorus treatment, the temperature, and the parameter estimates for our
+# differential equation. It can also be used to output parameter values for a
+# single replicate. To do this call rKfit(controldata[['X']], where "X" is the
+# replicate's ID number.
 
 pfit <- function(data){
 
@@ -146,9 +146,7 @@ pfit <- function(data){
 		
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
-		# fitted parameters. "transformedtemp" is simply -1/kT, where
-		# k is the Boltzmann constant and T is temperature. This measure
-		# will be used for plotting purposes.
+		# fitted parameters. 
 
 		ID <- data$unique_ID[1]
 		Phosphorus <- data$phosphorus_treatment[1]
@@ -164,5 +162,5 @@ pfit <- function(data){
 
 ### Output Data ###
 
-# Dataframes of the fitted r's and K's, grouped by phosphorus treatment:
+# Dataframes of the fitted parameters, grouped by replicate ID:
 fittedpdata <- map_df(pdata, pfit)
