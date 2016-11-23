@@ -32,6 +32,7 @@ current_dataset_def <- ptemp %>%
 
 current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue == 0] <- 1
 
+
 #### assign Tref as GlobalEnv
 # T_ref is the standardization temperature (in K). 
 # This needs to be any value below the peak of the curve.
@@ -139,6 +140,8 @@ def_est <- tidy(schoolfield_nls_def) %>%
 	mutate(phosphorus = "deficient")
 
 all_estimates <- bind_rows(full_est, def_est)
+
+write_csv(all_estimates, "data-processed/schoolfield_Ea_estimates.csv")
 
 ## plot the activation energy estimates for the P replete and deficient treatments
 all_estimates %>% 	
