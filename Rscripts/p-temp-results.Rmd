@@ -1,0 +1,86 @@
+---
+title: "P-TEMP results"
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Load libraries and data
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(minpack.lm)
+library(broom)
+library(gridExtra)
+library(lubridate)
+library(plotrix)
+library(stringr)
+
+# load data ---------------------------------------------------------------
+
+ptemp <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_processed.csv")
+ptemp_algae <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_algae.csv") 
+algae_summaries <- read_csv("/Users/Joey/Documents/p-temp/data-processed/algae_summaries.csv")
+```
+
+
+Phytoplankton populations over time
+```{r, include=FALSE}
+ptemp_algae$month_day <- NA
+ptemp_algae$month_day[ptemp_algae$date == "MARCH29"] <- "2016-03-29"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL1"] <- "2016-04-01"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL5"] <- "2016-04-05"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL8"] <- "2016-04-08"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL12"] <- "2016-04-12"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL15"] <- "2016-04-15"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL19"] <- "2016-04-19"
+ptemp_algae$month_day[ptemp_algae$date == "APRIL26"] <- "2016-04-26"
+ptemp_algae$month_day[ptemp_algae$date == "MAY4"] <- "2016-05-04"
+
+ptemp_algae <- ptemp_algae %>% 
+	mutate(month_day = ymd(month_day))
+```
+
+
+Phytoplankton populations over time (daphnia present)
+```{r}
+ptemp_algae %>% 
+	filter(!grepl("C", replicate)) %>% 
+	ggplot(data = ., aes(x = month_day, y = biovol, group = ID, color = factor(temp))) + geom_line(aes(linetype = P), size = 2) +
+	facet_wrap( ~ temp) +
+	scale_y_log10() +
+	ylab("phytoplankton biovolume") +
+	xlab("date") +
+	ggtitle("Phytoplankton dynamics, with daphnia")
+```
+
+Phytoplankton populations over time (daphnia absent)
+```{r}
+ptemp_algae %>% 
+	filter(grepl("C", replicate)) %>% 
+	ggplot(data = ., aes(x = month_day, y = biovol, group = ID, color = factor(temp))) + geom_line(aes(linetype = P), size = 2) +
+	facet_wrap( ~ temp) +
+	scale_y_log10() +
+	ylab("phytoplankton biovolume") +
+	xlab("date") +
+	ggtitle("Phytoplankton dynamics, without daphnia")
+```
+
+Phytoplankton maximum biovolume, over the entire experiment
+```{r}
+algae_summaries %>% 
+	mutate(consumer = str_replace(consumer, "present", "daphnia present")) %>% 
+		mutate(consumer = str_replace(consumer, "absent", "daphnia absent")) %>% 
+	ggplot(data = ., aes(x = factor(temp), y = max, fill = factor(P))) + geom_boxplot() +
+	# scale_y_log10() +
+	facet_wrap( ~ consumer) +
+	ylab("phytoplankton max biovolume")
+```
+
+

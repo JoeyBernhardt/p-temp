@@ -89,6 +89,8 @@ ptemp_algae_control_summary$consumer <- "absent"
 ptemp_algae_summary$consumer <- "present"
 
 algae_summaries <- bind_rows(ptemp_algae_control_summary, ptemp_algae_summary)
+write_csv(algae_summaries, "data-processed/algae_summaries.csv")
+
 
 
 mod <- lm(log(max) ~ temp*P, data =ptemp_algae_control_summary)
