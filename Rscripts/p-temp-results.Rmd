@@ -495,7 +495,7 @@ current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue ==
 ```
 
 Fit schoolfield model
-```{r}
+```{r, echo=FALSE}
 # get starting values -----------------------------------------------------
 
 T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
@@ -527,6 +527,7 @@ def_est <- tidy(schoolfield_nls_def) %>%
 	mutate(phosphorus = "deficient")
 
 all_estimates_daphnia <- bind_rows(full_est, def_est)
+knitr::kable(all_estimates_daphnia, align = 'c', format = 'markdown', digits = 2)
 
 ```
 

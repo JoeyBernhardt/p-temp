@@ -478,41 +478,89 @@ current_dataset_def &lt;- ptemp %&gt;%
 
 current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue == 0] &lt;- 1</code></pre>
 <p>Fit schoolfield model</p>
-<pre class="r"><code># get starting values -----------------------------------------------------
-
-T.h.st  &lt;- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
-E.st    &lt;- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
-B.st &lt;- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
-
-
-# get schoolfield fit ---------------------------------------------------------
-
-
-schoolfield_nls_full &lt;- nlsLM(
-    log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
-    start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
-    lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
-    upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
-    data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
-
-schoolfield_nls_def &lt;- nlsLM(
-    log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
-    start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
-    lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
-    upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
-    data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))</code></pre>
 <pre><code>## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
 ## NaNs produced
 
 ## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
 ## NaNs produced</code></pre>
-<pre class="r"><code>full_est &lt;- tidy(schoolfield_nls_full) %&gt;% 
-    mutate(phosphorus = &quot;replete&quot;)
-
-def_est &lt;- tidy(schoolfield_nls_def) %&gt;% 
-    mutate(phosphorus = &quot;deficient&quot;)
-
-all_estimates_daphnia &lt;- bind_rows(full_est, def_est)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="center">term</th>
+<th align="center">estimate</th>
+<th align="center">std.error</th>
+<th align="center">statistic</th>
+<th align="center">p.value</th>
+<th align="center">phosphorus</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">B0</td>
+<td align="center">1.55</td>
+<td align="center">0.20</td>
+<td align="center">7.85</td>
+<td align="center">0.00</td>
+<td align="center">replete</td>
+</tr>
+<tr class="even">
+<td align="center">E</td>
+<td align="center">3.42</td>
+<td align="center">0.57</td>
+<td align="center">6.03</td>
+<td align="center">0.00</td>
+<td align="center">replete</td>
+</tr>
+<tr class="odd">
+<td align="center">E_D</td>
+<td align="center">6.02</td>
+<td align="center">1.74</td>
+<td align="center">3.46</td>
+<td align="center">0.00</td>
+<td align="center">replete</td>
+</tr>
+<tr class="even">
+<td align="center">T_h</td>
+<td align="center">294.21</td>
+<td align="center">0.68</td>
+<td align="center">435.49</td>
+<td align="center">0.00</td>
+<td align="center">replete</td>
+</tr>
+<tr class="odd">
+<td align="center">B0</td>
+<td align="center">0.24</td>
+<td align="center">0.42</td>
+<td align="center">0.57</td>
+<td align="center">0.57</td>
+<td align="center">deficient</td>
+</tr>
+<tr class="even">
+<td align="center">E</td>
+<td align="center">4.80</td>
+<td align="center">1.51</td>
+<td align="center">3.17</td>
+<td align="center">0.00</td>
+<td align="center">deficient</td>
+</tr>
+<tr class="odd">
+<td align="center">E_D</td>
+<td align="center">5.33</td>
+<td align="center">1.35</td>
+<td align="center">3.96</td>
+<td align="center">0.00</td>
+<td align="center">deficient</td>
+</tr>
+<tr class="even">
+<td align="center">T_h</td>
+<td align="center">294.23</td>
+<td align="center">2.88</td>
+<td align="center">102.32</td>
+<td align="center">0.00</td>
+<td align="center">deficient</td>
+</tr>
+</tbody>
+</table>
 <p>Plot the daphnia population Eas</p>
 <pre class="r"><code>all_estimates_daphnia %&gt;%   
 filter(term == &quot;E&quot;) %&gt;%

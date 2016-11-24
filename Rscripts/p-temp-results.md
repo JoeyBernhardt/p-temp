@@ -317,32 +317,6 @@ current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue ==
 
 Fit schoolfield model
 
-```r
-# get starting values -----------------------------------------------------
-
-T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
-E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
-B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
-
-
-# get schoolfield fit ---------------------------------------------------------
-
-
-schoolfield_nls_full <- nlsLM(
-	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
-	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
-	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
-	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
-	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
-
-schoolfield_nls_def <- nlsLM(
-	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
-	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
-	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
-	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
-	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
-```
-
 ```
 ## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
 ## NaNs produced
@@ -351,15 +325,18 @@ schoolfield_nls_def <- nlsLM(
 ## NaNs produced
 ```
 
-```r
-full_est <- tidy(schoolfield_nls_full) %>% 
-	mutate(phosphorus = "replete")
 
-def_est <- tidy(schoolfield_nls_def) %>% 
-	mutate(phosphorus = "deficient")
 
-all_estimates_daphnia <- bind_rows(full_est, def_est)
-```
+| term | estimate | std.error | statistic | p.value | phosphorus |
+|:----:|:--------:|:---------:|:---------:|:-------:|:----------:|
+|  B0  |   1.55   |   0.20    |   7.85    |  0.00   |  replete   |
+|  E   |   3.42   |   0.57    |   6.03    |  0.00   |  replete   |
+| E_D  |   6.02   |   1.74    |   3.46    |  0.00   |  replete   |
+| T_h  |  294.21  |   0.68    |  435.49   |  0.00   |  replete   |
+|  B0  |   0.24   |   0.42    |   0.57    |  0.57   | deficient  |
+|  E   |   4.80   |   1.51    |   3.17    |  0.00   | deficient  |
+| E_D  |   5.33   |   1.35    |   3.96    |  0.00   | deficient  |
+| T_h  |  294.23  |   2.88    |  102.32   |  0.00   | deficient  |
 
 Plot the daphnia population Eas
 
