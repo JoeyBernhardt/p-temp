@@ -6,6 +6,7 @@ output:
     keep_md: yes
     toc: yes
     theme: "lumen"
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -99,7 +100,7 @@ predictions %>%
 
 
 
-### We found 
+### Phytoplankton abundances
 
 
 
@@ -166,6 +167,7 @@ ptemp_algae %>%
 	ggtitle("Phytoplankton dynamics, without daphnia")
 ```
 
+
 Phytoplankton maximum biovolume, over the entire experiment
 ```{r}
 algae_summaries %>% 
@@ -176,6 +178,8 @@ algae_summaries %>%
 	facet_wrap( ~ consumer) +
 	ylab("phytoplankton max biovolume")
 ```
+
+### Phytoplankton activation energies
 
 Activation energies of phytoplankton densities, a la Schoolfield
 
@@ -565,6 +569,7 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 
+### Daphnia abundances
 
 Now onto the Daphnia population abundances (at time final)
 
@@ -717,6 +722,8 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 
+
+### Daphnia growth rates
 
 Daphnia population growth rates
 

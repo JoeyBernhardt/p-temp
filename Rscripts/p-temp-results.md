@@ -93,7 +93,7 @@ predictions %>%
 
 
 
-### We found 
+### Phytoplankton abundances
 
 
 
@@ -153,6 +153,7 @@ ptemp_algae %>%
 
 ![](p-temp-results_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
+
 Phytoplankton maximum biovolume, over the entire experiment
 
 ```r
@@ -166,6 +167,8 @@ algae_summaries %>%
 ```
 
 ![](p-temp-results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+### Phytoplankton activation energies
 
 Activation energies of phytoplankton densities, a la Schoolfield
 
@@ -389,6 +392,7 @@ Generate predictions from the model fit -- Daphnia present!
 plot them!
 ![](p-temp-results_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
+### Daphnia abundances
 
 Now onto the Daphnia population abundances (at time final)
 
@@ -454,6 +458,8 @@ Generate predictions from the model fit -- Daphnia population abundances!
 Plot the schoolfield fits to Daphnia data
 ![](p-temp-results_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
+
+### Daphnia growth rates
 
 Daphnia population growth rates
 
