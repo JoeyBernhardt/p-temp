@@ -5,6 +5,7 @@ output:
     fig_caption: yes
     keep_md: yes
     toc: yes
+    theme: "lumen"
 ---
 
 ```{r setup, include=FALSE}
@@ -27,11 +28,11 @@ library(stringr)
 
 Temperature effects on consumer-resource dynamics are predictable when resource supply is constant (O’Connor et al. 2011). However changes in nutrient supply to primary producers may occur simultaneously with warming. How variable nutrient supply modifies the temperature dependences of consumer and resource population abundances remains an open question. 
 
-### We asked: 
+### We asked
 
 _How does nutrient limitation affect the temperature dependences of consumer and resource growth rates and abundances?_
 
-### We predicted:
+### We predicted
 
 * increased maximum population growth rates and decreased carrying capacity as temperatures warm
 
@@ -63,7 +64,7 @@ predictions %>%
 
 ```
 
-### At day 30: 
+#### At day 30: 
 
 
 ```{r}
@@ -98,7 +99,7 @@ predictions %>%
 
 
 
-### We found: 
+### We found 
 
 
 
@@ -108,6 +109,18 @@ Load data
 ptemp <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_processed.csv")
 ptemp_algae <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_algae.csv") 
 algae_summaries <- read_csv("/Users/Joey/Documents/p-temp/data-processed/algae_summaries.csv")
+
+### a bit of data prep
+ptemp <- ptemp %>% 
+	mutate(sample_date = mdy(sample_date))
+
+ptemp$start.time <- ymd_hms("2016-03-30 14:15:43")
+ptemp$time_since_innoc <- interval(ptemp$start.time, ptemp$sample_date)
+
+
+ptemp <- ptemp %>% 
+	mutate(time_since_innoc_days = time_since_innoc/ddays(1)) %>% 
+	mutate(time_since_innoc_hours = time_since_innoc/dhours(1))
 ```
 
 
@@ -703,3 +716,191 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 
 grid.arrange(full_plot, def_plot, ncol = 2)
 ```
+
+
+Daphnia population growth rates
+
+```{r}
+ptemp %>% 
+	ggplot(data = ., aes(x = sample_date, y = daphnia_total, group = unique_ID, color = factor(temperature))) + geom_line(aes(linetype = phosphorus_treatment), size = 2) +
+	facet_wrap( ~ temperature) +
+	ylab("daphnia population abundance") +
+	xlab("date") +
+	ggtitle("daphnia dynamics")
+```
+
+Daphnia growth rates
+
+```{r}
+daphnia_growth_rates <- ptemp %>%
+	# filter(phosphorus_treatment == "DEF") %>%
+	group_by(temperature, phosphorus_treatment, replicate) %>%
+	do(tidy(nls(daphnia_total ~ 5 * (1+a)^(time_since_innoc_days),
+							data= .,  start=list(a=0.01),
+							control = nls.control(maxiter=100, minFactor=1/204800000)))) 
+
+daphnia_growth_rates %>% 
+	group_by(temperature, phosphorus_treatment) %>% 
+	summarise_each(funs(mean, std.error), estimate) %>% 
+	ggplot(data = ., aes(x = temperature, y = mean, group = phosphorus_treatment, color = phosphorus_treatment)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1) + ylab("daphnia population growth rate")
+```
+
+Now onto the Daphnia population abundances (at time final)
+
+```{r}
+current_dataset <- daphnia_growth_rates %>% 
+	filter(phosphorus_treatment == "FULL") %>% 
+	select(estimate, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = estimate) %>% 
+	select(-temperature)
+
+current_dataset$OriginalTraitValue[current_dataset$OriginalTraitValue <= 0] <- NA
+
+current_dataset_def <- daphnia_growth_rates %>% 
+	filter(phosphorus_treatment == "DEF") %>% 
+	select(estimate, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = estimate) %>% 
+	select(-temperature)
+
+
+current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue <= 0] <- NA
+
+```
+
+Fit schoolfield model
+```{r, echo=FALSE}
+# get starting values -----------------------------------------------------
+
+T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
+B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+
+
+T.h.st_def  <- GetTpk(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+E.st_def    <- GetE(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue, T.p=T.h.st_def)
+B.st_def <- GetB0(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+
+
+# get schoolfield fit ---------------------------------------------------------
+
+
+schoolfield_nls_full <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+schoolfield_nls_def <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+full_est <- tidy(schoolfield_nls_full) %>% 
+	mutate(phosphorus = "replete")
+
+def_est <- tidy(schoolfield_nls_def) %>% 
+	mutate(phosphorus = "deficient")
+
+all_estimates_daphnia <- bind_rows(full_est, def_est)
+knitr::kable(all_estimates_daphnia, align = 'c', format = 'markdown', digits = 2)
+
+```
+
+Plot the daphnia population Eas
+```{r}
+all_estimates_daphnia %>% 	
+filter(term == "E") %>%
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
+	ggtitle("daphnia growth rate Eas")
+```
+
+Generate predictions from the model fit -- Daphnia population abundances!
+```{r echo = FALSE, include=FALSE}
+ tmp_temps <- seq(min(
+	floor(current_dataset$K)), 
+	ceiling(max(current_dataset$K)
+	), length = 200)
+
+tmp_model <- exp(Schoolfield(
+	coef(schoolfield_nls_full)["B0"],
+	coef(schoolfield_nls_full)["E"],
+	coef(schoolfield_nls_full)["E_D"],
+	coef(schoolfield_nls_full)["T_h"],
+	tmp_temps
+))
+
+
+ModelToPlotS <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model
+)
+
+DataToPlot <- data.frame(
+	Temperature = current_dataset$K - 273.15, 
+	TraitValue = current_dataset$OriginalTraitValue
+)
+DataToPlot <- na.omit(DataToPlot)
+
+
+
+##### DEF 
+
+tmp_model_def <- exp(Schoolfield(
+	coef(schoolfield_nls_def)["B0"],
+	coef(schoolfield_nls_def)["E"],
+	coef(schoolfield_nls_def)["E_D"],
+	coef(schoolfield_nls_def)["T_h"],
+	tmp_temps
+))
+
+
+ModelToPlotS_def <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model_def
+)
+
+DataToPlot_def <- data.frame(
+	Temperature = current_dataset_def$K - 273.15, 
+	TraitValue = current_dataset_def$OriginalTraitValue
+)
+DataToPlot_def <- na.omit(DataToPlot_def)
+```
+
+
+Plot the schoolfield fits to Daphnia data
+```{r, echo=FALSE}
+full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus replete") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("daphnia growth rates") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16))
+
+#### DEF
+def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS_def, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus deficient") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("daphnia growth rates") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16)) + scale_y_log10()
+
+grid.arrange(full_plot, def_plot, ncol = 2)
+```
+

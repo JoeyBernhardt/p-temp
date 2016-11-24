@@ -10,11 +10,11 @@
 
 Temperature effects on consumer-resource dynamics are predictable when resource supply is constant (O’Connor et al. 2011). However changes in nutrient supply to primary producers may occur simultaneously with warming. How variable nutrient supply modifies the temperature dependences of consumer and resource population abundances remains an open question. 
 
-### We asked: 
+### We asked
 
 _How does nutrient limitation affect the temperature dependences of consumer and resource growth rates and abundances?_
 
-### We predicted:
+### We predicted
 
 * increased maximum population growth rates and decreased carrying capacity as temperatures warm
 
@@ -52,7 +52,7 @@ predictions %>%
 
 ![](p-temp-results_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
 
-### At day 30: 
+#### At day 30: 
 
 
 
@@ -93,7 +93,7 @@ predictions %>%
 
 
 
-### We found: 
+### We found 
 
 
 
@@ -104,6 +104,18 @@ Load data
 ptemp <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_processed.csv")
 ptemp_algae <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_algae.csv") 
 algae_summaries <- read_csv("/Users/Joey/Documents/p-temp/data-processed/algae_summaries.csv")
+
+### a bit of data prep
+ptemp <- ptemp %>% 
+	mutate(sample_date = mdy(sample_date))
+
+ptemp$start.time <- ymd_hms("2016-03-30 14:15:43")
+ptemp$time_since_innoc <- interval(ptemp$start.time, ptemp$sample_date)
+
+
+ptemp <- ptemp %>% 
+	mutate(time_since_innoc_days = time_since_innoc/ddays(1)) %>% 
+	mutate(time_since_innoc_hours = time_since_innoc/dhours(1))
 ```
 
 
@@ -441,3 +453,121 @@ Generate predictions from the model fit -- Daphnia population abundances!
 
 Plot the schoolfield fits to Daphnia data
 ![](p-temp-results_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+
+
+Daphnia population growth rates
+
+
+```r
+ptemp %>% 
+	ggplot(data = ., aes(x = sample_date, y = daphnia_total, group = unique_ID, color = factor(temperature))) + geom_line(aes(linetype = phosphorus_treatment), size = 2) +
+	facet_wrap( ~ temperature) +
+	ylab("daphnia population abundance") +
+	xlab("date") +
+	ggtitle("daphnia dynamics")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+
+Daphnia growth rates
+
+
+```r
+daphnia_growth_rates <- ptemp %>%
+	# filter(phosphorus_treatment == "DEF") %>%
+	group_by(temperature, phosphorus_treatment, replicate) %>%
+	do(tidy(nls(daphnia_total ~ 5 * (1+a)^(time_since_innoc_days),
+							data= .,  start=list(a=0.01),
+							control = nls.control(maxiter=100, minFactor=1/204800000)))) 
+
+daphnia_growth_rates %>% 
+	group_by(temperature, phosphorus_treatment) %>% 
+	summarise_each(funs(mean, std.error), estimate) %>% 
+	ggplot(data = ., aes(x = temperature, y = mean, group = phosphorus_treatment, color = phosphorus_treatment)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1) + ylab("daphnia population growth rate")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+
+Now onto the Daphnia population abundances (at time final)
+
+
+```r
+current_dataset <- daphnia_growth_rates %>% 
+	filter(phosphorus_treatment == "FULL") %>% 
+	select(estimate, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = estimate) %>% 
+	select(-temperature)
+```
+
+```
+## Adding missing grouping variables: `phosphorus_treatment`, `replicate`
+```
+
+```
+## Adding missing grouping variables: `temperature`
+```
+
+```r
+current_dataset$OriginalTraitValue[current_dataset$OriginalTraitValue <= 0] <- NA
+
+current_dataset_def <- daphnia_growth_rates %>% 
+	filter(phosphorus_treatment == "DEF") %>% 
+	select(estimate, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = estimate) %>% 
+	select(-temperature)
+```
+
+```
+## Adding missing grouping variables: `phosphorus_treatment`, `replicate`
+## Adding missing grouping variables: `temperature`
+```
+
+```r
+current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue <= 0] <- NA
+```
+
+Fit schoolfield model
+
+```
+## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
+## NaNs produced
+
+## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
+## NaNs produced
+```
+
+
+
+| term | estimate | std.error | statistic | p.value | phosphorus |
+|:----:|:--------:|:---------:|:---------:|:-------:|:----------:|
+|  B0  |  -4.90   |   0.27    |  -18.38   |  0.00   |  replete   |
+|  E   |   3.54   |   0.92    |   3.86    |  0.00   |  replete   |
+| E_D  |   4.53   |   0.76    |   5.99    |  0.00   |  replete   |
+| T_h  |  293.77  |   0.96    |  305.83   |  0.00   |  replete   |
+|  B0  |  -4.01   |   0.50    |   -8.03   |  0.00   | deficient  |
+|  E   |   3.31   |   3.00    |   1.10    |  0.29   | deficient  |
+| E_D  |   3.41   |   2.11    |   1.61    |  0.13   | deficient  |
+| T_h  |  296.00  |   17.32   |   17.09   |  0.00   | deficient  |
+
+Plot the daphnia population Eas
+
+```r
+all_estimates_daphnia %>% 	
+filter(term == "E") %>%
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
+	ggtitle("daphnia growth rate Eas")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+
+Generate predictions from the model fit -- Daphnia population abundances!
+
+
+
+Plot the schoolfield fits to Daphnia data
+![](p-temp-results_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
+

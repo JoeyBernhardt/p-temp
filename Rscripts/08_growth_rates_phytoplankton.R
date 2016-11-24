@@ -34,6 +34,7 @@ ptemp2 <- ptemp %>%
 	mutate(time_since_innoc_days = time_since_innoc/ddays(1)) %>% 
 	mutate(time_since_innoc_hours = time_since_innoc/dhours(1))
 
+
 ### now with ptemp_algae
 
 ptemp_algae$month_day <- NA
