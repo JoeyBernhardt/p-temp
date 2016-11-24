@@ -3,19 +3,104 @@
 
 
 
-Load libraries and data
+
+
+
+### Background
+
+Temperature effects on consumer-resource dynamics are predictable when resource supply is constant (O’Connor et al. 2011). However changes in nutrient supply to primary producers may occur simultaneously with warming. How variable nutrient supply modifies the temperature dependences of consumer and resource population abundances remains an open question. 
+
+### We asked: 
+
+_How does nutrient limitation affect the temperature dependences of consumer and resource growth rates and abundances?_
+
+### We predicted:
+
+* increased maximum population growth rates and decreased carrying capacity as temperatures warm
+
+* a linear change in nutrient supply should have larger effects on growth rates at high vs. low temperatures
+
 
 ```r
-library(tidyverse)
-library(minpack.lm)
-library(broom)
-library(gridExtra)
-library(lubridate)
-library(plotrix)
-library(stringr)
+predictions <- read_csv("/Users/Joey/Documents/p-temp/data-processed/CR_abundances_30days.csv")
+```
 
+
+```r
+predictions %>% 
+	filter(temperature %in% c("12", "16", "20", "24")) %>% 
+	ggplot(data = ., aes(x = time, y = P, color = factor(temperature))) +geom_point() +
+	facet_wrap( ~ resource_level) +
+	ylab("phytoplankton abundance") +
+	xlab("time, days") + 
+	ggtitle("resource density") +
+	theme_minimal()
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+```r
+predictions %>% 
+	filter(temperature %in% c("12", "16", "20", "24")) %>% 
+	ggplot(data = ., aes(x = time, y = H, color = factor(temperature))) +geom_point() +
+	facet_wrap( ~ resource_level) +
+	ylab("consumer abundance") +
+	xlab("time, days") + 
+	ggtitle("consumer abundance") +
+	theme_minimal()
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
+
+### At day 30: 
+
+
+
+```r
+predictions %>% 
+	filter(time == 30) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(aes(x = inverse_temp, y = H, group = resource_level, color = resource_level)) + geom_line(size = 3) +
+	scale_x_reverse() + 
+	scale_y_log10() +
+	theme_minimal() + xlab("temperature (1/kT)") + ylab("log(consumer abundance)") + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	theme(legend.title=element_blank(),
+				legend.text = element_text(size = 18)) +
+	theme(legend.position="top")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+
+```r
+predictions %>% 
+	filter(time == 30) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(aes(x = inverse_temp, y = P, group = resource_level, color = resource_level)) + geom_line(size = 3) +
+	scale_x_reverse() + 
+	scale_y_log10() +
+	theme_minimal() + xlab("temperature (1/kT)") + ylab("log(consumer abundance)") + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	theme(legend.title=element_blank(),
+				legend.text = element_text(size = 18)) +
+	theme(legend.position="top")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+
+
+### We found: 
+
+
+
+Load data
+
+```r
 # load data ---------------------------------------------------------------
-
 ptemp <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_processed.csv")
 ptemp_algae <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_algae.csv") 
 algae_summaries <- read_csv("/Users/Joey/Documents/p-temp/data-processed/algae_summaries.csv")
@@ -39,7 +124,7 @@ ptemp_algae %>%
 	ggtitle("Phytoplankton dynamics, with daphnia")
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 Phytoplankton populations over time (daphnia absent)
 
@@ -54,7 +139,7 @@ ptemp_algae %>%
 	ggtitle("Phytoplankton dynamics, without daphnia")
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 Phytoplankton maximum biovolume, over the entire experiment
 
@@ -68,7 +153,7 @@ algae_summaries %>%
 	ylab("phytoplankton max biovolume")
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 Activation energies of phytoplankton densities, a la Schoolfield
 
@@ -157,7 +242,7 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size 
 	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1)
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 Generate predictions from the model fit (non bootstrapped)
 
@@ -194,7 +279,7 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 Now with Daphnia present
 
@@ -283,14 +368,14 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size 
 	ggtitle("Phytoplankton abundance Eas, daphnia present")
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 Generate predictions from the model fit -- Daphnia present!
 
 
 
 plot them!
-![](p-temp-results_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 
 Now onto the Daphnia population abundances (at time final)
@@ -348,11 +433,11 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size 
 	ggtitle("daphnia population abundance Eas")
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 Generate predictions from the model fit -- Daphnia population abundances!
 
 
 
 Plot the schoolfield fits to Daphnia data
-![](p-temp-results_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-28-1.png)<!-- -->

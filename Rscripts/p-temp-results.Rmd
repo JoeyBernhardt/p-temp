@@ -11,9 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-Load libraries and data
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 library(tidyverse)
 library(minpack.lm)
 library(broom)
@@ -21,9 +19,92 @@ library(gridExtra)
 library(lubridate)
 library(plotrix)
 library(stringr)
+```
 
+
+
+### Background
+
+Temperature effects on consumer-resource dynamics are predictable when resource supply is constant (O’Connor et al. 2011). However changes in nutrient supply to primary producers may occur simultaneously with warming. How variable nutrient supply modifies the temperature dependences of consumer and resource population abundances remains an open question. 
+
+### We asked: 
+
+_How does nutrient limitation affect the temperature dependences of consumer and resource growth rates and abundances?_
+
+### We predicted:
+
+* increased maximum population growth rates and decreased carrying capacity as temperatures warm
+
+* a linear change in nutrient supply should have larger effects on growth rates at high vs. low temperatures
+
+```{r message=FALSE, warning=FALSE}
+predictions <- read_csv("/Users/Joey/Documents/p-temp/data-processed/CR_abundances_30days.csv")
+```
+
+```{r}
+predictions %>% 
+	filter(temperature %in% c("12", "16", "20", "24")) %>% 
+	ggplot(data = ., aes(x = time, y = P, color = factor(temperature))) +geom_point() +
+	facet_wrap( ~ resource_level) +
+	ylab("phytoplankton abundance") +
+	xlab("time, days") + 
+	ggtitle("resource density") +
+	theme_minimal()
+
+predictions %>% 
+	filter(temperature %in% c("12", "16", "20", "24")) %>% 
+	ggplot(data = ., aes(x = time, y = H, color = factor(temperature))) +geom_point() +
+	facet_wrap( ~ resource_level) +
+	ylab("consumer abundance") +
+	xlab("time, days") + 
+	ggtitle("consumer abundance") +
+	theme_minimal()
+
+
+```
+
+### At day 30: 
+
+
+```{r}
+predictions %>% 
+	filter(time == 30) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(aes(x = inverse_temp, y = H, group = resource_level, color = resource_level)) + geom_line(size = 3) +
+	scale_x_reverse() + 
+	scale_y_log10() +
+	theme_minimal() + xlab("temperature (1/kT)") + ylab("log(consumer abundance)") + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	theme(legend.title=element_blank(),
+				legend.text = element_text(size = 18)) +
+	theme(legend.position="top")
+```
+
+```{r}
+predictions %>% 
+	filter(time == 30) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(aes(x = inverse_temp, y = P, group = resource_level, color = resource_level)) + geom_line(size = 3) +
+	scale_x_reverse() + 
+	scale_y_log10() +
+	theme_minimal() + xlab("temperature (1/kT)") + ylab("log(consumer abundance)") + 
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) +
+	theme(legend.title=element_blank(),
+				legend.text = element_text(size = 18)) +
+	theme(legend.position="top")
+```
+
+
+
+### We found: 
+
+
+
+Load data
+```{r message=FALSE, warning=FALSE}
 # load data ---------------------------------------------------------------
-
 ptemp <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_processed.csv")
 ptemp_algae <- read_csv("/Users/Joey/Documents/p-temp/data-processed/p_temp_algae.csv") 
 algae_summaries <- read_csv("/Users/Joey/Documents/p-temp/data-processed/algae_summaries.csv")
