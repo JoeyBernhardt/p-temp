@@ -912,7 +912,7 @@ grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 
 ```{r}
-full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
 																						 y = TraitValue), size = 3, col = "black", bg = "124", 
 											alpha = 0.7, pch = 21) + 
 	geom_point(data = DataToPlot_def, aes(x = Temperature, 

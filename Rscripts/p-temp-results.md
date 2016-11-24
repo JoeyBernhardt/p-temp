@@ -579,7 +579,7 @@ Plot the schoolfield fits to Daphnia data
 
 
 ```r
-full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
 																						 y = TraitValue), size = 3, col = "black", bg = "124", 
 											alpha = 0.7, pch = 21) + 
 	geom_point(data = DataToPlot_def, aes(x = Temperature, 
@@ -594,4 +594,6 @@ full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature,
 						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
 						lwd = 1.3) 
 ```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
 
