@@ -471,3 +471,153 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 
+
+Now onto the Daphnia population abundances (at time final)
+
+```{r}
+current_dataset <- ptemp %>% 
+	filter(date == "04-May", phosphorus_treatment == "FULL") %>% 
+	select(daphnia_total, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = daphnia_total) %>% 
+	select(-temperature)
+
+current_dataset_def <- ptemp %>% 
+	filter(date == "04-May", phosphorus_treatment == "DEF") %>% 
+	select(daphnia_total, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = daphnia_total) %>% 
+	select(-temperature)
+
+
+current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue == 0] <- 1
+
+```
+
+Fit schoolfield model
+```{r}
+# get starting values -----------------------------------------------------
+
+T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
+B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+
+
+# get schoolfield fit ---------------------------------------------------------
+
+
+schoolfield_nls_full <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+schoolfield_nls_def <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+full_est <- tidy(schoolfield_nls_full) %>% 
+	mutate(phosphorus = "replete")
+
+def_est <- tidy(schoolfield_nls_def) %>% 
+	mutate(phosphorus = "deficient")
+
+all_estimates_daphnia <- bind_rows(full_est, def_est)
+
+```
+
+Plot the daphnia population Eas
+```{r}
+all_estimates_daphnia %>% 	
+filter(term == "E") %>%
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
+	ggtitle("daphnia population abundance Eas")
+```
+
+Generate predictions from the model fit -- Daphnia population abundances!
+```{r echo = FALSE, include=FALSE}
+ tmp_temps <- seq(min(
+	floor(current_dataset$K)), 
+	ceiling(max(current_dataset$K)
+	), length = 200)
+
+tmp_model <- exp(Schoolfield(
+	coef(schoolfield_nls_full)["B0"],
+	coef(schoolfield_nls_full)["E"],
+	coef(schoolfield_nls_full)["E_D"],
+	coef(schoolfield_nls_full)["T_h"],
+	tmp_temps
+))
+
+
+ModelToPlotS <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model
+)
+
+DataToPlot <- data.frame(
+	Temperature = current_dataset$K - 273.15, 
+	TraitValue = current_dataset$OriginalTraitValue
+)
+DataToPlot <- na.omit(DataToPlot)
+
+
+
+##### DEF 
+
+tmp_model_def <- exp(Schoolfield(
+	coef(schoolfield_nls_def)["B0"],
+	coef(schoolfield_nls_def)["E"],
+	coef(schoolfield_nls_def)["E_D"],
+	coef(schoolfield_nls_def)["T_h"],
+	tmp_temps
+))
+
+
+ModelToPlotS_def <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model_def
+)
+
+DataToPlot_def <- data.frame(
+	Temperature = current_dataset_def$K - 273.15, 
+	TraitValue = current_dataset_def$OriginalTraitValue
+)
+DataToPlot_def <- na.omit(DataToPlot_def)
+```
+
+
+Plot the schoolfield fits to Daphnia data
+```{r, echo=FALSE}
+full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus replete") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("final daphnia abudances") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16))
+
+#### DEF
+def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS_def, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus deficient") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("final daphnia abudances") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16)) + scale_y_log10()
+
+grid.arrange(full_plot, def_plot, ncol = 2)
+```

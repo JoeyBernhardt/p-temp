@@ -285,10 +285,97 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size 
 
 ![](p-temp-results_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
-Generate predictions from the model fit (non bootstrapped)
+Generate predictions from the model fit -- Daphnia present!
 
 
 
 plot them!
 ![](p-temp-results_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
+
+Now onto the Daphnia population abundances (at time final)
+
+
+```r
+current_dataset <- ptemp %>% 
+	filter(date == "04-May", phosphorus_treatment == "FULL") %>% 
+	select(daphnia_total, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = daphnia_total) %>% 
+	select(-temperature)
+
+current_dataset_def <- ptemp %>% 
+	filter(date == "04-May", phosphorus_treatment == "DEF") %>% 
+	select(daphnia_total, temperature) %>% 
+	mutate(K = temperature + 273.15) %>% 
+	rename(OriginalTraitValue = daphnia_total) %>% 
+	select(-temperature)
+
+
+current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue == 0] <- 1
+```
+
+Fit schoolfield model
+
+```r
+# get starting values -----------------------------------------------------
+
+T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
+B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+
+
+# get schoolfield fit ---------------------------------------------------------
+
+
+schoolfield_nls_full <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+schoolfield_nls_def <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+```
+
+```
+## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
+## NaNs produced
+
+## Warning in log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * :
+## NaNs produced
+```
+
+```r
+full_est <- tidy(schoolfield_nls_full) %>% 
+	mutate(phosphorus = "replete")
+
+def_est <- tidy(schoolfield_nls_def) %>% 
+	mutate(phosphorus = "deficient")
+
+all_estimates_daphnia <- bind_rows(full_est, def_est)
+```
+
+Plot the daphnia population Eas
+
+```r
+all_estimates_daphnia %>% 	
+filter(term == "E") %>%
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
+	ggtitle("daphnia population abundance Eas")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+Generate predictions from the model fit -- Daphnia population abundances!
+
+
+
+Plot the schoolfield fits to Daphnia data
+![](p-temp-results_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
