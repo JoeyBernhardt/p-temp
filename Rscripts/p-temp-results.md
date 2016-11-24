@@ -597,3 +597,36 @@ ggplot() + geom_point(data = DataToPlot, aes(x = Temperature,
 
 ![](p-temp-results_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
 
+### Chlamy pktemp growth rates
+
+
+```r
+all_rates <- read_csv("/Users/Joey/Documents/chlamy-ktemp/k-temp/data/chlamy-ktemp-growth-rates.csv")
+
+all_rates %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(data = ., aes(x = inverse_temp, y = log(estimate), group = nutrient_level, color = nutrient_level)) + geom_point() +
+	geom_smooth(method = "lm") +
+	scale_x_reverse() +
+	xlab("inverse temperature (1/kT)") + 
+	ylab("log growth rate")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+
+```r
+all_rates %>% 
+	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
+	group_by(nutrient_level) %>% 
+	do(tidy(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
+	filter(term == "inverse_temp") %>%
+	knitr::kable(., align = 'c', format = 'markdown', digits = 2)
+```
+
+
+
+| nutrient_level |     term     | estimate | std.error | statistic | p.value | conf.low | conf.high |
+|:--------------:|:------------:|:--------:|:---------:|:---------:|:-------:|:--------:|:---------:|
+|   deficient    | inverse_temp |   0.86   |   0.08    |   11.42   |    0    |   0.70   |   1.02    |
+|    replete     | inverse_temp |   0.40   |   0.03    |   14.81   |    0    |   0.34   |   0.46    |
+
