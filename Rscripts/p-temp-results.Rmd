@@ -83,7 +83,7 @@ algae_summaries %>%
 	ylab("phytoplankton max biovolume")
 ```
 
-Activation energies of phytoplankton densitiies, a la Schoolfield
+Activation energies of phytoplankton densities, a la Schoolfield
 
 ```{r}
 current_dataset <- algae_summaries %>% 
@@ -92,6 +92,8 @@ current_dataset <- algae_summaries %>%
 	mutate(K = temp + 273.15) %>% 
 	rename(OriginalTraitValue = max) %>% 
 	select(-temp)
+
+# ggplot(data = current_dataset_def, aes(x = K, y = OriginalTraitValue)) + geom_point()
 
 current_dataset_def <- algae_summaries %>% 
 	filter(P == "DEF", consumer == "absent") %>%
@@ -177,9 +179,10 @@ Schoolfield <- function(B0, E, E_D, T_h, temp) {
 	return(B0 + log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * exp(E_D/k * (1/T_h - 1/temp))))) ## T_pk as an explicit parameter. FITS BETTER
 	
 }
+```
+get starting values
 
-# get starting values -----------------------------------------------------
-
+```{r}
 T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
 E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
 B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
@@ -189,14 +192,14 @@ T.h.st_def  <- GetTpk(tmp=current_dataset_def$K, rate=current_dataset_def$Origin
 E.st_def    <- GetE(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue, T.p=T.h.st_def)
 B.st_def <- GetB0(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
 
+```
 
+get schoolfield fit
 
-# get schoolfield fit ---------------------------------------------------------
-
-
+```{r}
 schoolfield_nls_full <- nlsLM(
 	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
-	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
+	start=c(B0 = B.st, E = E.st_def, E_D = 4*E.st, T_h=T.h.st),
 	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
 	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
 	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
@@ -215,7 +218,7 @@ def_est <- tidy(schoolfield_nls_def) %>%
 	mutate(phosphorus = "deficient")
 
 all_estimates <- bind_rows(full_est, def_est) 
-knitr::kable(all_estimates)
+knitr::kable(all_estimates, align = 'c', format = 'markdown', digits = 2)
 
 ```
 
@@ -224,13 +227,13 @@ Plot the activation energies, daphnia absent
 ```{r}
 all_estimates %>% 	
 filter(term == "E") %>%
-ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point() +
-	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error))
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1)
 
 ```
 
-Generate predictions from the model fit (non bootstrapped) ---------------------------------
-```{r}
+Generate predictions from the model fit (non bootstrapped)
+```{r echo = FALSE}
  tmp_temps <- seq(min(
 	floor(current_dataset$K)), 
 	ceiling(max(current_dataset$K)
@@ -310,7 +313,161 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 										 axis.title = element_text(size = 16)) + scale_y_log10()
 
 grid.arrange(full_plot, def_plot, ncol = 2)
+```
+
+Now with Daphnia present
+
+```{r}
+current_dataset <- algae_summaries %>% 
+	filter(P == "FULL", consumer == "present") %>%
+	select(max, temp) %>% 
+	mutate(K = temp + 273.15) %>% 
+	rename(OriginalTraitValue = max) %>% 
+	select(-temp)
+
+# ggplot(data = current_dataset_def, aes(x = K, y = OriginalTraitValue)) + geom_point()
+
+current_dataset_def <- algae_summaries %>% 
+	filter(P == "DEF", consumer == "present") %>%
+	select(max, temp) %>% 
+	mutate(K = temp + 273.15) %>% 
+	rename(OriginalTraitValue = max) %>% 
+	select(-temp)
+```
+
+get starting values
+
+```{r}
+T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
+B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
 
 
+T.h.st_def  <- GetTpk(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+E.st_def    <- GetE(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue, T.p=T.h.st_def)
+B.st_def <- GetB0(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+
+```
+
+get schoolfield fit
+
+```{r}
+schoolfield_nls_full <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st_def, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+schoolfield_nls_def <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st_def, E = E.st_def, E_D = 4*E.st_def, T_h=T.h.st_def),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+full_est <- tidy(schoolfield_nls_full) %>% 
+	mutate(phosphorus = "replete")
+
+def_est <- tidy(schoolfield_nls_def) %>% 
+	mutate(phosphorus = "deficient")
+
+all_estimates <- bind_rows(full_est, def_est) 
+knitr::kable(all_estimates, align = 'c', format = 'markdown', digits = 2)
+
+```
+
+Plot the activation energies, daphnia present
+
+```{r}
+all_estimates %>% 	
+filter(term == "E") %>%
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
+	ggtitle("Phytoplankton abundance Eas, daphnia present")
+
+```
+
+Generate predictions from the model fit -- Daphnia present!
+```{r echo = FALSE, include=FALSE}
+ tmp_temps <- seq(min(
+	floor(current_dataset$K)), 
+	ceiling(max(current_dataset$K)
+	), length = 200)
+
+tmp_model <- exp(Schoolfield(
+	coef(schoolfield_nls_full)["B0"],
+	coef(schoolfield_nls_full)["E"],
+	coef(schoolfield_nls_full)["E_D"],
+	coef(schoolfield_nls_full)["T_h"],
+	tmp_temps
+))
+
+
+ModelToPlotS <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model
+)
+
+DataToPlot <- data.frame(
+	Temperature = current_dataset$K - 273.15, 
+	TraitValue = current_dataset$OriginalTraitValue
+)
+DataToPlot <- na.omit(DataToPlot)
+
+
+
+##### DEF 
+
+tmp_model_def <- exp(Schoolfield(
+	coef(schoolfield_nls_def)["B0"],
+	coef(schoolfield_nls_def)["E"],
+	coef(schoolfield_nls_def)["E_D"],
+	coef(schoolfield_nls_def)["T_h"],
+	tmp_temps
+))
+
+
+ModelToPlotS_def <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model_def
+)
+
+DataToPlot_def <- data.frame(
+	Temperature = current_dataset_def$K - 273.15, 
+	TraitValue = current_dataset_def$OriginalTraitValue
+)
+DataToPlot_def <- na.omit(DataToPlot_def)
+```
+
+
+plot them!
+```{r, echo=FALSE}
+full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus replete") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("max phytoplankton abundance") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16))
+
+#### DEF
+def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS_def, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus deficient") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("max phytoplankton abundance") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16)) + scale_y_log10()
+
+grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 

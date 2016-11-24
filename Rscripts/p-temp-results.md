@@ -70,7 +70,7 @@ algae_summaries %>%
 
 ![](p-temp-results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
-Activation energies of phytoplankton densitiies, a la Schoolfield
+Activation energies of phytoplankton densities, a la Schoolfield
 
 
 ```r
@@ -81,6 +81,8 @@ current_dataset <- algae_summaries %>%
 	rename(OriginalTraitValue = max) %>% 
 	select(-temp)
 
+# ggplot(data = current_dataset_def, aes(x = K, y = OriginalTraitValue)) + geom_point()
+
 current_dataset_def <- algae_summaries %>% 
 	filter(P == "DEF", consumer == "absent") %>%
 	select(max, temp) %>% 
@@ -90,16 +92,60 @@ current_dataset_def <- algae_summaries %>%
 ```
 
 
-term      estimate      std.error    statistic     p.value  phosphorus 
------  -----------  -------------  -----------  ----------  -----------
-B0       18.700827   2.250786e-01   83.0857648   0.0000000  replete    
-E         2.329546   6.108948e-01    3.8133334   0.0041319  replete    
-E_D      31.523532   1.012739e+07    0.0000031   0.9999976  replete    
-T_h     296.354656   1.715220e+05    0.0017278   0.9986591  replete    
-B0       18.858266   4.731711e-01   39.8550650   0.0000000  deficient  
-E         1.233073   1.284253e+00    0.9601481   0.3620638  deficient  
-E_D      30.348379   2.945930e+07    0.0000010   0.9999992  deficient  
-T_h     296.420100   4.542636e+05    0.0006525   0.9994936  deficient  
+get starting values
+
+
+```r
+T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
+B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+
+
+T.h.st_def  <- GetTpk(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+E.st_def    <- GetE(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue, T.p=T.h.st_def)
+B.st_def <- GetB0(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+```
+
+get schoolfield fit
+
+
+```r
+schoolfield_nls_full <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st_def, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+schoolfield_nls_def <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st_def, E = E.st_def, E_D = 4*E.st_def, T_h=T.h.st_def),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+full_est <- tidy(schoolfield_nls_full) %>% 
+	mutate(phosphorus = "replete")
+
+def_est <- tidy(schoolfield_nls_def) %>% 
+	mutate(phosphorus = "deficient")
+
+all_estimates <- bind_rows(full_est, def_est) 
+knitr::kable(all_estimates, align = 'c', format = 'markdown', digits = 2)
+```
+
+
+
+| term | estimate |  std.error  | statistic | p.value | phosphorus |
+|:----:|:--------:|:-----------:|:---------:|:-------:|:----------:|
+|  B0  |  18.70   |    0.23     |   83.09   |  0.00   |  replete   |
+|  E   |   2.33   |    0.61     |   3.81    |  0.00   |  replete   |
+| E_D  |  30.66   | 6811268.76  |   0.00    |  1.00   |  replete   |
+| T_h  |  296.34  |  120175.67  |   0.00    |  1.00   |  replete   |
+|  B0  |  18.86   |    0.47     |   39.86   |  0.00   | deficient  |
+|  E   |   1.23   |    1.28     |   0.96    |  0.36   | deficient  |
+| E_D  |  30.35   | 29459300.53 |   0.00    |  1.00   | deficient  |
+| T_h  |  296.42  |  454263.62  |   0.00    |  1.00   | deficient  |
 
 Plot the activation energies, daphnia absent
 
@@ -107,64 +153,14 @@ Plot the activation energies, daphnia absent
 ```r
 all_estimates %>% 	
 filter(term == "E") %>%
-ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point() +
-	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error))
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1)
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
-Generate predictions from the model fit (non bootstrapped) ---------------------------------
+Generate predictions from the model fit (non bootstrapped)
 
-```r
- tmp_temps <- seq(min(
-	floor(current_dataset$K)), 
-	ceiling(max(current_dataset$K)
-	), length = 200)
-
-tmp_model <- exp(Schoolfield(
-	coef(schoolfield_nls_full)["B0"],
-	coef(schoolfield_nls_full)["E"],
-	coef(schoolfield_nls_full)["E_D"],
-	coef(schoolfield_nls_full)["T_h"],
-	tmp_temps
-))
-
-
-ModelToPlotS <- data.frame(
-	Temperature = tmp_temps - 273.15, 
-	TraitValue = tmp_model
-)
-
-DataToPlot <- data.frame(
-	Temperature = current_dataset$K - 273.15, 
-	TraitValue = current_dataset$OriginalTraitValue
-)
-DataToPlot <- na.omit(DataToPlot)
-
-
-
-##### DEF 
-
-tmp_model_def <- exp(Schoolfield(
-	coef(schoolfield_nls_def)["B0"],
-	coef(schoolfield_nls_def)["E"],
-	coef(schoolfield_nls_def)["E_D"],
-	coef(schoolfield_nls_def)["T_h"],
-	tmp_temps
-))
-
-
-ModelToPlotS_def <- data.frame(
-	Temperature = tmp_temps - 273.15, 
-	TraitValue = tmp_model_def
-)
-
-DataToPlot_def <- data.frame(
-	Temperature = current_dataset_def$K - 273.15, 
-	TraitValue = current_dataset_def$OriginalTraitValue
-)
-DataToPlot_def <- na.omit(DataToPlot_def)
-```
 
 
 plot them!
@@ -198,5 +194,101 @@ def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature,
 grid.arrange(full_plot, def_plot, ncol = 2)
 ```
 
-![](p-temp-results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](p-temp-results_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+Now with Daphnia present
+
+
+```r
+current_dataset <- algae_summaries %>% 
+	filter(P == "FULL", consumer == "present") %>%
+	select(max, temp) %>% 
+	mutate(K = temp + 273.15) %>% 
+	rename(OriginalTraitValue = max) %>% 
+	select(-temp)
+
+# ggplot(data = current_dataset_def, aes(x = K, y = OriginalTraitValue)) + geom_point()
+
+current_dataset_def <- algae_summaries %>% 
+	filter(P == "DEF", consumer == "present") %>%
+	select(max, temp) %>% 
+	mutate(K = temp + 273.15) %>% 
+	rename(OriginalTraitValue = max) %>% 
+	select(-temp)
+```
+
+get starting values
+
+
+```r
+T.h.st  <- GetTpk(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+E.st    <- GetE(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue, T.p=T.h.st)
+B.st <- GetB0(tmp=current_dataset$K, rate=current_dataset$OriginalTraitValue)
+
+
+T.h.st_def  <- GetTpk(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+E.st_def    <- GetE(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue, T.p=T.h.st_def)
+B.st_def <- GetB0(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
+```
+
+get schoolfield fit
+
+
+```r
+schoolfield_nls_full <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st, E = E.st_def, E_D = 4*E.st, T_h=T.h.st),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+schoolfield_nls_def <- nlsLM(
+	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
+	start=c(B0 = B.st_def, E = E.st_def, E_D = 4*E.st_def, T_h=T.h.st_def),
+	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
+	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
+	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+full_est <- tidy(schoolfield_nls_full) %>% 
+	mutate(phosphorus = "replete")
+
+def_est <- tidy(schoolfield_nls_def) %>% 
+	mutate(phosphorus = "deficient")
+
+all_estimates <- bind_rows(full_est, def_est) 
+knitr::kable(all_estimates, align = 'c', format = 'markdown', digits = 2)
+```
+
+
+
+| term | estimate | std.error  | statistic | p.value | phosphorus |
+|:----:|:--------:|:----------:|:---------:|:-------:|:----------:|
+|  B0  |  18.23   |    0.27    |   67.46   |  0.00   |  replete   |
+|  E   |   1.43   |    0.68    |   2.10    |  0.05   |  replete   |
+| E_D  |  31.36   | 1333951.40 |   0.00    |  1.00   |  replete   |
+| T_h  |  295.74  |  49056.53  |   0.01    |  1.00   |  replete   |
+|  B0  |  18.76   |    0.23    |   80.73   |  0.00   | deficient  |
+|  E   |   0.98   |    0.58    |   1.67    |  0.11   | deficient  |
+| E_D  |  31.36   | 982606.96  |   0.00    |  1.00   | deficient  |
+| T_h  |  295.60  |  40392.43  |   0.01    |  0.99   | deficient  |
+
+Plot the activation energies, daphnia present
+
+
+```r
+all_estimates %>% 	
+filter(term == "E") %>%
+ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
+	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
+	ggtitle("Phytoplankton abundance Eas, daphnia present")
+```
+
+![](p-temp-results_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+Generate predictions from the model fit (non bootstrapped)
+
+
+
+plot them!
+![](p-temp-results_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
