@@ -577,3 +577,21 @@ Generate predictions from the model fit -- Daphnia population abundances!
 Plot the schoolfield fits to Daphnia data
 ![](p-temp-results_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
+
+```r
+full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "124", 
+											alpha = 0.7, pch = 21) + 
+	geom_point(data = DataToPlot_def, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "#1b9e77", 
+											alpha = 0.7, pch = 21) +
+	geom_line(data = ModelToPlotS, 
+						aes(x = Temperature, y = TraitValue), colour = "124", 
+						lwd = 1.3) +                           
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("daphnia growth rates") +
+	geom_line(data = ModelToPlotS_def, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) 
+```
+
