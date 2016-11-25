@@ -21,6 +21,7 @@ library(gridExtra)
 library(lubridate)
 library(plotrix)
 library(stringr)
+library(nlstools)
 ```
 
 
@@ -140,6 +141,28 @@ ptemp_algae$month_day[ptemp_algae$date == "MAY4"] <- "2016-05-04"
 
 ptemp_algae <- ptemp_algae %>% 
 	mutate(month_day = ymd(month_day))
+
+ptemp_algae %>% 
+	filter(!grepl("C", replicate)) %>% 
+	group_by(ID) %>% 
+	arrange(month_day) %>% 
+	mutate(pop_diff = lag(biovol)) %>% 
+	arrange(ID) %>% 
+	mutate(percapita_growth = (biovol - pop_diff)/biovol) %>% 
+	group_by(ID) %>% 
+	mutate(previous_date = lag(month_day)) %>% 
+	filter(!is.na(previous_date)) %>% 
+	group_by(ID) %>% 
+	mutate(time_between = interval(previous_date, month_day)/ddays(1)) %>% 
+	mutate(percapita_growth_time = percapita_growth/time_between) %>% 
+	filter(days > 14) %>% 
+	# filter(percapita_growth_time > 0) %>% 
+	# group_by(ID) %>%
+	# top_n(percapita_growth_time, n = 3) %>%
+	group_by(temp, P) %>% 
+	summarise_each(funs(mean, std.error, max), percapita_growth_time) %>% 
+	ggplot(data = ., aes(x = temp, y = mean, color = P)) + geom_point() +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error))
 ```
 
 
@@ -308,6 +331,10 @@ schoolfield_nls_def <- nlsLM(
 	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
 	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
 	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+
+str(schoolfield_nls_full)
+confint2(schoolfield_nls_full)
+confint2(schoolfield_nls_def)
 
 full_est <- tidy(schoolfield_nls_full) %>% 
 	mutate(phosphorus = "replete")
@@ -763,6 +790,15 @@ current_dataset <- daphnia_growth_rates %>%
 	rename(OriginalTraitValue = estimate) %>% 
 	select(-temperature)
 
+daphnia_growth_rates %>% 
+	filter(temperature != 24) %>% 
+	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
+	group_by(phosphorus_treatment) %>% 
+	do(glance(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
+	View
+
+
+
 current_dataset$OriginalTraitValue[current_dataset$OriginalTraitValue <= 0] <- NA
 
 current_dataset_def <- daphnia_growth_rates %>% 
@@ -774,6 +810,10 @@ current_dataset_def <- daphnia_growth_rates %>%
 
 
 current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue <= 0] <- NA
+
+current_dataset_def %>% 
+	ggplot(aes(x = K, y = OriginalTraitValue)) + geom_point()
+
 
 ```
 
@@ -791,6 +831,7 @@ E.st_def    <- GetE(tmp=current_dataset_def$K, rate=current_dataset_def$Original
 B.st_def <- GetB0(tmp=current_dataset_def$K, rate=current_dataset_def$OriginalTraitValue)
 
 
+
 # get schoolfield fit ---------------------------------------------------------
 
 
@@ -800,6 +841,7 @@ schoolfield_nls_full <- nlsLM(
 	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
 	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
 	data=current_dataset, control=list(minFactor=1 / 2^16, maxiter=1024))
+confint2(schoolfield_nls_full)
 
 schoolfield_nls_def <- nlsLM(
 	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
@@ -807,8 +849,9 @@ schoolfield_nls_def <- nlsLM(
 	lower=c(B0=-Inf,   E=0,    E.D=0, Th=0),
 	upper=c(B0=Inf,    E=Inf,  E.D=Inf, Th=273.15+150),
 	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
+confint2(schoolfield_nls_def)
 
-full_est <- tidy(schoolfield_nls_full) %>% 
+full_est <- tidy(schoolfield_nls_full, conf.int = TRUE) %>% 
 	mutate(phosphorus = "replete")
 
 def_est <- tidy(schoolfield_nls_def) %>% 
