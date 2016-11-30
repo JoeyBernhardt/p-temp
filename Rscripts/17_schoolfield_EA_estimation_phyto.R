@@ -7,30 +7,76 @@
 library(tidyverse)
 library(minpack.lm)
 library(broom)
+library(gridExtra)
+library(lubridate)
 
 # load data ---------------------------------------------------------------
 
 ptemp <- read_csv("data-processed/p_temp_processed.csv")
- 
+ptemp_algae <- read_csv("data-processed/p_temp_algae.csv") 
+
+
+
+# initial plots -----------------------------------------------------------
+
+str(ptemp)
+
+ptemp <- ptemp %>% 
+	mutate(sample_date = mdy(sample_date))
+
+ptemp %>% 
+	# group_by(unique_ID) %>% 
+ggplot(data = ., aes(x = sample_date, y = algal_biovolume, group = unique_ID, color = factor(temperature))) + geom_line(aes(linetype = phosphorus_treatment), size = 2) +
+ facet_wrap( ~ temperature)
+
+
 
 # get data in order -------------------------------------------------------
 
 current_dataset <- ptemp %>% 
-	filter(date == "04-May", phosphorus_treatment == "FULL") %>% 
-	select(daphnia_total, temperature) %>% 
+	filter(date == "04-May", phosphorus_treatment == "FULL") %>%
+	select(algal_biovolume, temperature) %>% 
 	mutate(K = temperature + 273.15) %>% 
-	rename(OriginalTraitValue = daphnia_total) %>% 
+	rename(OriginalTraitValue = algal_biovolume) %>% 
 	select(-temperature)
 
+
 current_dataset_def <- ptemp %>% 
-	filter(date == "04-May", phosphorus_treatment == "DEF") %>% 
-	select(daphnia_total, temperature) %>% 
+	filter(date == "04-May", phosphorus_treatment == "DEF") %>%
+	select(algal_biovolume, temperature) %>% 
 	mutate(K = temperature + 273.15) %>% 
-	rename(OriginalTraitValue = daphnia_total) %>% 
+	rename(OriginalTraitValue = algal_biovolume) %>% 
 	select(-temperature)
+
+
+
+current_dataset <- ptemp_algae %>% 
+	filter(date == "MAY4", P == "FULL") %>%
+	filter(grepl("C", replicate)) %>% 
+	select(biovol, temp) %>% 
+	mutate(K = temp + 273.15) %>% 
+	rename(OriginalTraitValue = biovol) %>% 
+	select(-temp)
+	
+current_dataset_def <- ptemp_algae %>% 
+	filter(date == "MAY4", P == "DEF") %>%
+	filter(grepl("C", replicate)) %>% 
+	select(biovol, temp) %>% 
+	mutate(K = temp + 273.15) %>% 
+	rename(OriginalTraitValue = biovol) %>% 
+	select(-temp)
 
 
 current_dataset_def$OriginalTraitValue[current_dataset_def$OriginalTraitValue == 0] <- 1
+
+
+
+# inital plots ------------------------------------------------------------
+
+full <- ggplot(data = current_dataset, aes(x = K, y = OriginalTraitValue)) + geom_point() + scale_y_log10()
+def <- ggplot(data = current_dataset_def, aes(x = K, y = OriginalTraitValue)) + geom_point() + ylim(0, 3 * 10^9)
+
+grid.arrange(full, def, ncol = 2)
 
 
 #### assign Tref as GlobalEnv
@@ -103,7 +149,7 @@ Schoolfield <- function(B0, E, E_D, T_h, temp) {
 	# T_h is the temperature at which the rate-limiting enzyme 
 	# is 50% active and 50% denatured due to high temperature.
 	
-	#     return(B0 - E/k * (1/temp - 1/Tref) - log(1 + exp((E_D/k) * (1/T_h - 1/temp)))) #Schoolfied model in original form (not with T_pk as an explicit parameter)
+	# return(B0 - E/k * (1/temp - 1/Tref) - log(1 + exp((E_D/k) * (1/T_h - 1/temp)))) #Schoolfied model in original form (not with T_pk as an explicit parameter)
 	
 	return(B0 + log(exp((-E/k) * ((1/temp) - (1/Tref)))/(1 + (E/(E_D - E)) * exp(E_D/k * (1/T_h - 1/temp))))) ## T_pk as an explicit parameter. FITS BETTER
 	
@@ -141,7 +187,7 @@ def_est <- tidy(schoolfield_nls_def) %>%
 
 all_estimates <- bind_rows(full_est, def_est)
 
-write_csv(all_estimates, "data-processed/schoolfield_Ea_estimates.csv")
+write_csv(all_estimates, "data-processed/schoolfield_Ea_estimates_phyto.csv")
 
 ## plot the activation energy estimates for the P replete and deficient treatments
 all_estimates %>% 	
@@ -151,8 +197,8 @@ ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point() +
 
 
 ### bootstrapping
-bootstrapped_estimates_100 <- current_dataset_full %>% 
-	bootstrap(100) %>%
+bootstrapped_estimates_100 <- current_dataset%>% 
+	bootstrap(10) %>%
 do(tidy(nlsLM(
 	log(OriginalTraitValue) ~ Schoolfield(B0, E, E_D, T_h, temp = K), 
 	start=c(B0 = B.st, E = E.st, E_D = 4*E.st, T_h=T.h.st),
@@ -218,13 +264,13 @@ tmp_temps <- seq(min(
 	), length = 200)
 
 tmp_model <- exp(Schoolfield(
-	coef(schoolfield_nls)["B0"],
-	coef(schoolfield_nls)["E"],
-	coef(schoolfield_nls)["E_D"],
-	coef(schoolfield_nls)["T_h"],
+	coef(schoolfield_nls_full)["B0"],
+	coef(schoolfield_nls_full)["E"],
+	coef(schoolfield_nls_full)["E_D"],
+	coef(schoolfield_nls_full)["T_h"],
 	tmp_temps
 ))
-
+tmp_model
 
 ModelToPlotS <- data.frame(
 	Temperature = tmp_temps - 273.15, 
@@ -238,9 +284,34 @@ DataToPlot <- data.frame(
 DataToPlot <- na.omit(DataToPlot)
 
 
+
+##### DEF 
+
+tmp_model_def <- exp(Schoolfield(
+	coef(schoolfield_nls_def)["B0"],
+	coef(schoolfield_nls_def)["E"],
+	coef(schoolfield_nls_def)["E_D"],
+	coef(schoolfield_nls_def)["T_h"],
+	tmp_temps
+))
+tmp_model
+
+ModelToPlotS_def <- data.frame(
+	Temperature = tmp_temps - 273.15, 
+	TraitValue = tmp_model_def
+)
+
+DataToPlot_def <- data.frame(
+	Temperature = current_dataset_def$K - 273.15, 
+	TraitValue = current_dataset_def$OriginalTraitValue
+)
+DataToPlot_def <- na.omit(DataToPlot_def)
+
+
+
 # plot it! ----------------------------------------------------------------
 
-ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
+full_plot <- ggplot() + geom_point(data = DataToPlot, aes(x = Temperature, 
 																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
 											alpha = 0.7, pch = 21) + 
 	geom_line(data = ModelToPlotS, 
@@ -251,3 +322,19 @@ ggplot() + geom_point(data = DataToPlot, aes(x = Temperature,
 	ylab("daphnia population abundance @ day 30") +
 	theme_bw() + theme(plot.title = element_text(size = 16), 
 										 axis.title = element_text(size = 16))
+
+#### DEF
+def_plot <- ggplot() + geom_point(data = DataToPlot_def, aes(x = Temperature, 
+																						 y = TraitValue), size = 3, col = "black", bg = "lightcyan2", 
+											alpha = 0.7, pch = 21) + 
+	geom_line(data = ModelToPlotS_def, 
+						aes(x = Temperature, y = TraitValue), colour = "#1b9e77", 
+						lwd = 1.3) +                           
+	ggtitle("Phosphorus deficient") +
+	xlab(expression(paste("Temperature (", degree, C, ")"))) + 
+	ylab("daphnia population abundance @ day 30") +
+	theme_bw() + theme(plot.title = element_text(size = 16), 
+										 axis.title = element_text(size = 16)) + scale_y_log10()
+
+grid.arrange(full_plot, def_plot, ncol = 2)
+

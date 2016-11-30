@@ -17,7 +17,7 @@ library(broom)
 ```{r}
 # read in data ------------------------------------------------------------
 
-all_times <- read_csv("data-processed/CR_abundances_30days.csv")
+all_times <- read_csv("/Users/Joey/Documents/p-temp/data-processed/CR_abundances_30days.csv")
 
 ```
 
