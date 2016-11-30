@@ -41,14 +41,14 @@ fittingdata <- rename(fittingdata, time = obstime)
 
 times <- seq(0, 40, 0.1)
 initial_state <- c(P = yobs$P[1], H = 10)
-model_parameters <- c(r = 1, K = 10 ^ 9, a = 3, b = 5000000, eps = 0.1, m = 0.2)
-lower_parameters <- c(0, 10 ^ 5, 0, 0, 0, 0)
-upper_parameters <- c( 5, 10 ^ 20, 5, 10 ^ 10, 5, 5)
+model_parameters <- c(r = 1, K = 10 ^ 9, a = 3, m = 0.5)
+lower_parameters <- c(0, 10 ^ 5, 0, 0)
+upper_parameters <- c( 5, 10 ^ 20, 5, 5)
 
 CRmodel <- function (times, initial_state, model_parameters) {
 		with(as.list(c(initial_state, model_parameters)), {
-	dP <-  r * P * (1 - (P /  K)) - a * H * (P / (P + b))
-	dH <-  a * eps * H * (P / (P + b)) -  m * H
+	dP <-  r * P * (1 - (P /  K)) - a * H * P 
+	dH <-  a * H * P -  m * H
 	list(c(dP, dH))
 	})
 	}
@@ -59,7 +59,7 @@ dfsoda <- data.frame(Lsoda)
 
 ModelCost2 <- function(parms) {
 odemodel <- ode(initial_state, times, CRmodel, parms)
-cost <- modCost(odemodel, fittingdata, scaleVar = TRUE)
+cost <- modCost(odemodel, fittingdata, scaleVar = TRUE) # Note that scaleVar is true here...
 return(cost) # object of class modCost
 }
 
