@@ -9,10 +9,10 @@ phytoplankton system.
 
 A simplified consumer resource model was selected, with the form:
 
-$$\begin{align*}
-\frac{\mathrm{d} P}{\mathrm{d} t} = rP(1 - \frac{P}{K} - aHP\\
+$$
+\frac{\mathrm{d} P}{\mathrm{d} t} = rP(1 - \frac{P}{K} - aHP \\
 \frac{\mathrm{d} H}{\mathrm{d} t} = aHP - mH
-\end{align*}$$
+$$
 
 The FME package was utilized to obtain parameter estimates for the
 
