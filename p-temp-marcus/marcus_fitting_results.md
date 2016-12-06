@@ -7,7 +7,8 @@ phytoplankton system.
 
 ### Methods
 
-A simplified consumer resource model was selected, with the form:
+Due to problems with fitting the full model, a simplified consumer resource
+model was selected, with the form:
 
 $$
 \frac{\mathrm{d} P}{\mathrm{d} t} = rP(1 - \frac{P}{K} - aHP \\
@@ -18,12 +19,11 @@ The FME package was utilized to obtain parameter estimates for the
 
 ### Results
 ```r
-fittedpdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
+#file.path() is used for cross-platform compatibility
+fittedpdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"),
 	strip.white = TRUE,
 	na.strings = c("NA","") )
-```
 
-```r
 knitr::kable(fittedpdata, align = 'c', format = 'markdown', digits = 2)
 ```
 
