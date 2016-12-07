@@ -163,6 +163,31 @@ ptemp_algae %>%
 	summarise_each(funs(mean, std.error, max), percapita_growth_time) %>% 
 	ggplot(data = ., aes(x = temp, y = mean, color = P)) + geom_point() +
 	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error))
+
+
+### OR an alternative approach to calculating growth rate
+
+ptemp_algae %>% 
+	filter(grepl("C", replicate)) %>% 
+	group_by(ID) %>% 
+	arrange(month_day) %>% 
+	mutate(pop_diff = lag(biovol)) %>% 
+	group_by(ID) %>% 
+	mutate(previous_date = lag(month_day)) %>% 
+	filter(!is.na(previous_date)) %>% 
+	group_by(ID) %>% 
+	mutate(time_between = interval(previous_date, month_day)/ddays(1)) %>%
+	arrange(ID) %>% 
+	mutate(specific_growth = (log(biovol/pop_diff))/time_between) %>% 
+	filter(specific_growth > 0) %>% 
+	group_by(temp, P) %>% 
+	summarise_each(funs(mean, std.error, max), specific_growth) %>% 
+	ggplot(data = ., aes(x = temp, y = mean, color = P)) + geom_point() +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error))
+	
+
+
+
 ```
 
 
@@ -773,6 +798,8 @@ daphnia_growth_rates <- ptemp %>%
 							data= .,  start=list(a=0.01),
 							control = nls.control(maxiter=100, minFactor=1/204800000)))) 
 
+ggplot(data = daphnia_growth_rates, aes(x = temperature, y = estimate, group = phosphorus_treatment, color = phosphorus_treatment)) + geom_point()
+
 daphnia_growth_rates %>% 
 	group_by(temperature, phosphorus_treatment) %>% 
 	summarise_each(funs(mean, std.error), estimate) %>% 
@@ -794,7 +821,7 @@ daphnia_growth_rates %>%
 	filter(temperature != 24) %>% 
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
 	group_by(phosphorus_treatment) %>% 
-	do(glance(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
+	do(tidy(lm(log(estimate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
 	View
 
 
@@ -851,7 +878,7 @@ schoolfield_nls_def <- nlsLM(
 	data=current_dataset_def, control=list(minFactor=1 / 2^16, maxiter=1024))
 confint2(schoolfield_nls_def)
 
-full_est <- tidy(schoolfield_nls_full, conf.int = TRUE) %>% 
+full_est <- tidy(schoolfield_nls_full) %>% 
 	mutate(phosphorus = "replete")
 
 def_est <- tidy(schoolfield_nls_def) %>% 
@@ -865,10 +892,10 @@ knitr::kable(all_estimates_daphnia, align = 'c', format = 'markdown', digits = 2
 Plot the daphnia population Eas
 ```{r}
 all_estimates_daphnia %>% 	
-filter(term == "E") %>%
+# filter(term == "B0") %>%
 ggplot(aes(x = phosphorus, y = estimate, group = phosphorus)) + geom_point(size = 4) +
 	geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.1) +
-	ggtitle("daphnia growth rate Eas")
+	ggtitle("daphnia growth rate Eas") + facet_wrap( ~ term, scales = "free")
 ```
 
 Generate predictions from the model fit -- Daphnia population abundances!
