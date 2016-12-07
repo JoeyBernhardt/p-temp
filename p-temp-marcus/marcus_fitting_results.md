@@ -4,7 +4,8 @@
 
 Here we read in the data used for all of the below plots:
 ```r
-plotdata <- read.csv(file = file.path("p-temp-marcus", "plotdata.csv"), #file.path() is used for cross-platform compatibility
+#file.path() is used for cross-platform compatibility
+plotdata <- read.csv(file = file.path("p-temp-marcus", "plotdata.csv"),
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 ```
