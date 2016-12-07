@@ -4,6 +4,8 @@
 
 ![](p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png)<!-- -->
 
+![](https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png)<!-- -->
+
 ### Results
 ```r
 #file.path() is used for cross-platform compatibility
