@@ -75,6 +75,8 @@ summary(r_model) #slope of 0.2375, 95% CI: (-0.17, 0.65), p-value = 0.253
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot.png" width="600">
 
+
+Here we can see that **K** appears to be underestimated, at least for the replicates in the highest temperature treatment.
 ```r
 fittedK_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
 		geom_point() +
@@ -88,6 +90,7 @@ K_model <- lm(log(K) ~ transformedtemp, data = plotdata)
 summary(K_model) # slope of -0.1918, 95% CI: (-0.76, 0.38), p-value = 0.50
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot.png" width="600">
+
 
 ```r
 fitteda_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
