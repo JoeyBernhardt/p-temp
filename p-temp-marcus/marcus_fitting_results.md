@@ -65,7 +65,7 @@ fittedr_plot
 ggsave("fittedr_plot.png", plot = last_plot())
 
 r_model <- lm(log(r) ~ transformedtemp, data = plotdata)
-summary(r_model) #slope of 0.2375, p-value = 0.253
+summary(r_model) #slope of 0.2375, 95% CI: (-0.17, 0.65), p-value = 0.253
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot.png" width="600">
 
@@ -79,7 +79,7 @@ fittedK_plot
 ggsave("fittedK_plot.png", plot = last_plot())
 
 K_model <- lm(log(K) ~ transformedtemp, data = plotdata)
-summary(K_model) # slope of -0.1918, p-value = 0.50
+summary(K_model) # slope of -0.1918, 95% CI: (-0.76, 0.38), p-value = 0.50
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot.png" width="600">
 
@@ -93,6 +93,6 @@ fitteda_plot
 ggsave("fitteda_plot.png", plot = last_plot())
 
 a_model <- lm(log(a) ~ transformedtemp, data = plotdata)
-summary(a_model) # slope of 0.2092, p-value = 0.71
+summary(a_model) # slope of 0.2092, 95% CI: (-0.93, 1.35), p-value = 0.71
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot.png" width="600">
