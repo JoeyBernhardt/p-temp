@@ -1,69 +1,32 @@
 # Fitting results
 
-### Plots
+### Plotting Day 36 Densities for Predicted vs. Observed Data
 
-![](p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png)<!-- -->
+Here we show plots of the simulation results vs. the experimental data taken on day 36 (the final observation).
+The major point here is to assess the quality of our model fits. I have outputted some (possibly) relevant summary statistics for the linear regressions below each plot. Overall the fits look surprisingly good, especially for the Daphnia!
 
-![](https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png)<!-- -->
+For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate.
 
-### Results
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png" width="600">
+
 ```r
-#file.path() is used for cross-platform compatibility
-fittedpdata <- read.csv(file = file.path("p-temp-marcus", "fittedpdata.csv"),
-	strip.white = TRUE,
-	na.strings = c("NA","") )
-
-knitr::kable(fittedpdata, align = 'c', format = 'markdown', digits = 2)
+P_model <- lm(logobservedfinalP ~ logpredictedfinalP, data = plotdata)
+summary(P_model)
+# adjusted R^2 of 0.4257, p-value of 3.04 * 10^-7
 ```
+For the Daphnia, we can see some obvious outliers where the predicted values are much higher than the observed values; these are concentrated in the bottom left corner of the below plot.
 
-| ID | Phosphorus | temp |  r   |     K      |   a   |  m   |
-|:--:|:----------:|:----:|:----:|:----------:|:-----:|:----:|
-| 1  |    FULL    |  20  | 2.00 | 137159375  | 0.00  | 0.73 |
-| 2  |    FULL    |  20  | 0.15 | 1588617056 | 0.00  | 0.00 |
-| 3  |    FULL    |  20  | 1.39 |  76558121  | 0.00  | 0.00 |
-| 4  |    FULL    |  20  | 0.81 | 151290602  | 0.00  | 1.00 |
-| 5  |    FULL    |  20  | 1.08 | 128721107  | 0.00  | 1.00 |
-| 6  |    FULL    |  20  | 0.91 |  63877109  | 0.00  | 0.00 |
-| 7  |    DEF     |  20  | 0.15 | 1643824594 | 0.00  | 0.01 |
-| 8  |    DEF     |  20  | 0.15 |  10000000  | 45.95 | 1.00 |
-| 9  |    DEF     |  20  | 1.59 | 100511654  | 0.00  | 0.99 |
-| 10 |    DEF     |  20  | 1.81 |  56724734  | 0.00  | 1.00 |
-| 11 |    DEF     |  20  | 0.15 |  10000000  | 53.28 | 1.00 |
-| 12 |    DEF     |  20  | 2.00 | 105874540  | 0.00  | 0.00 |
-| 13 |    FULL    |  16  | 0.56 |  10000000  | 13.90 | 1.00 |
-| 14 |    FULL    |  16  | 0.49 | 127201959  | 0.00  | 0.00 |
-| 15 |    FULL    |  16  | 0.67 |  10000078  | 46.05 | 1.00 |
-| 16 |    FULL    |  16  | 0.15 |  28620961  | 0.00  | 1.00 |
-| 17 |    FULL    |  16  | 0.15 |  22573412  | 0.00  | 0.00 |
-| 18 |    FULL    |  16  | 1.24 |  44700875  | 0.00  | 0.01 |
-| 19 |    DEF     |  16  | 1.90 |  48436929  | 0.00  | 0.00 |
-| 20 |    DEF     |  16  | 2.00 | 110327736  | 0.00  | 1.00 |
-| 21 |    DEF     |  16  | 0.15 |  27729037  | 0.00  | 0.00 |
-| 22 |    DEF     |  16  | 2.00 |  38124222  | 0.00  | 0.01 |
-| 23 |    DEF     |  16  | 1.87 |  53810889  | 0.00  | 0.05 |
-| 24 |    DEF     |  16  | 1.39 |  10000190  | 34.26 | 1.00 |
-| 25 |    FULL    |  24  | 0.15 |  10000000  | 0.00  | 0.00 |
-| 26 |    FULL    |  24  | 0.59 |  10000000  | 12.54 | 1.00 |
-| 27 |    FULL    |  24  | 0.15 |  10000000  | 46.37 | 1.00 |
-| 28 |    FULL    |  24  | 0.15 |  10000000  | 12.81 | 1.00 |
-| 29 |    FULL    |  24  | 0.15 |  10000000  | 0.00  | 1.00 |
-| 30 |    FULL    |  24  | 0.15 |  10140857  | 0.00  | 1.00 |
-| 31 |    DEF     |  24  | 0.15 |  10000015  | 0.00  | 0.00 |
-| 32 |    DEF     |  24  | 0.15 |  12232799  | 0.00  | 0.00 |
-| 33 |    DEF     |  24  | 0.15 |  10000000  | 32.64 | 1.00 |
-| 34 |    DEF     |  24  | 0.20 |  10000000  | 0.00  | 0.00 |
-| 35 |    DEF     |  24  | 0.17 |  10000000  | 0.00  | 1.00 |
-| 36 |    DEF     |  24  | 0.15 |  10000000  | 0.00  | 1.00 |
-| 37 |    FULL    |  12  | 0.15 |  33254839  | 0.00  | 0.02 |
-| 38 |    FULL    |  12  | 0.15 |  24737774  | 0.00  | 0.04 |
-| 39 |    FULL    |  12  | 0.15 |  28459608  | 0.00  | 0.01 |
-| 40 |    FULL    |  12  | 0.15 |  27191784  | 0.00  | 0.02 |
-| 41 |    FULL    |  12  | 0.15 |  24659355  | 0.00  | 1.00 |
-| 42 |    FULL    |  12  | 0.15 |  23952150  | 0.00  | 0.06 |
-| 43 |    DEF     |  12  | 0.15 |  10922203  | 0.00  | 1.00 |
-| 44 |    DEF     |  12  | 2.00 |  51256251  | 0.00  | 1.00 |
-| 45 |    DEF     |  12  | 0.36 |  21401558  | 0.00  | 0.02 |
-| 46 |    DEF     |  12  | 0.15 |  32146355  | 0.00  | 0.01 |
-| 47 |    DEF     |  12  | 0.15 |  10000000  | 47.88 | 1.00 |
-| 48 |    DEF     |  12  | 0.15 |  25494375  | 0.00  | 1.00 |
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Daphnia_predicted_vs_observedplot.png" width="600">
 
+```r
+H_model <- lm(logobservedfinalH ~ logpredictedfinalH, data = plotdata)
+summary(H_model)
+# adjusted R^2 of 0.7706, p-value of 2 * 10^-16
+```
+### Estimating Activation Energies for Fitted Parameter Values
+
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot.png" width="600">
+
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot.png" width="600">
+
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot.png" width="600">
