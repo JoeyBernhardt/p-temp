@@ -17,6 +17,16 @@ The major point here is to assess the quality of our model fits. I have outputte
 
 For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate.
 
+```r
+# Plot the results of our model fitting.
+	producer_plot <- ggplot(data = plotdata, aes(x = logpredictedfinalP, y = logobservedfinalP, color = Phosphorus)) +
+		geom_point() + # predicted data
+		geom_smooth(method = lm, col = "red") +
+		labs(x = "log(Predicted phytoplankton density)", y = "log(observed Phytoplankton density)") +
+		ggtitle("Phytoplankton Densities: Observed vs. Predicted")
+	producer_plot
+```
+
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png" width="600">
 
 ```r
@@ -25,6 +35,16 @@ summary(P_model)
 # adjusted R^2 of 0.4257, p-value of 3.04 * 10^-7
 ```
 For the Daphnia, we can see some obvious outliers where the predicted values are much higher than the observed values; these are concentrated in the bottom left corner of the below plot.
+
+```r
+# Plot the results of our model fitting for daphnia
+	hetero_plot <- ggplot(data = plotdata, aes(x = logpredictedfinalH, y = logobservedfinalH, color = Phosphorus)) +
+		geom_point() + # predicted data
+		geom_smooth(method = lm, col = "red") +
+		labs(x = "log(Predicted Daphnia density)", y = "log(observed Daphnia density)") +
+		ggtitle("Daphnia Densities: Observed vs. Predicted")
+	hetero_plot
+```
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Daphnia_predicted_vs_observedplot.png" width="600">
 
