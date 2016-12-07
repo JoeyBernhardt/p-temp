@@ -38,7 +38,7 @@ data %>%
 
 ![](CR-fitted-plots_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
-#### Fitted and observed consumer abundances at day 36
+### Fitted and observed consumer abundances at day 36
 
 ```r
 	data %>% 
@@ -53,7 +53,7 @@ data %>%
 
 ![](CR-fitted-plots_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
-#### Fitted and observed resource abundances at day 36
+### Fitted and observed resource abundances at day 36
 
 ```r
 	data %>% 
