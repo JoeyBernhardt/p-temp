@@ -106,4 +106,6 @@ summary(a_model) # slope of 0.2092, 95% CI: (-0.93, 1.35), p-value = 0.71
 ```
 
 Some of the fitted **a's** are almost certainly off; this is due to the influence of the transfer efficiency **e**. For some replicates a very, very high **a** was fit (one order of magnitude larger than in the other replicates), but the fitted **e** for the same replicate was an order of magnitude smaller than what was produced by the other fittings. This is just a matter of tightening up the parameter constraints for the fitting. Improvements have already been made to the code to address this issue for the next step.
+
+
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot.png" width="600">
