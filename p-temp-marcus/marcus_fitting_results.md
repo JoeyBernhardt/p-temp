@@ -15,7 +15,7 @@ plotdata <- read.csv(file = file.path("p-temp-marcus", "plotdata.csv"),
 Here we show plots of the simulation results vs. the experimental data taken on day 36 (the final observation).
 The major point here is to assess the quality of our model fits. I have outputted some (possibly) relevant summary statistics for the linear regressions below each plot. Overall the fits look surprisingly good, especially for the Daphnia!
 
-For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate.
+For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate. In general, some of the fits are off due to the fitting algorithm underestimating K. This should improve in the next fitting attempt, so we should expect the new simulation results to do a better job of predicting the experimental data (and we'll see a higher R^2).
 
 ```r
 # Plot the results of our model fitting.
