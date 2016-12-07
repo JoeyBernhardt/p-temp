@@ -4,27 +4,6 @@
 
 
 
-```r
-ggplot(data = data, aes(x = temp, y = log(r), group = Phosphorus, color = Phosphorus)) + geom_point()
-```
-
-![](CR-fitted-plots_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
-
-
-```r
-data %>% 
-	filter(temp < 24) %>% 
-	mutate(inverse_temp = (1/(.00008617*(temp+273.15)))) %>% 
-	group_by(Phosphorus) %>% 
-	do(tidy(lm(log(K) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
-	filter(term != "(Intercept)") %>%
-	ggplot(aes(x = Phosphorus, y = estimate)) + geom_point(size = 4) + 
-	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1)
-```
-
-![](CR-fitted-plots_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
-
-
 
 
 ```r
@@ -36,7 +15,7 @@ data %>%
 		ggplot(aes(x = transformedtemp, y = abundance, color = type)) + geom_point(aes(shape = Phosphorus, fill = type), size = 4, alpha = 0.5) + ylab("log consumer abundance at day 36")
 ```
 
-![](CR-fitted-plots_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](CR-fitted-plots_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ### Fitted and observed consumer abundances at day 36
 
@@ -51,7 +30,7 @@ data %>%
 		ylab("log consumer abundance at day 36")
 ```
 
-![](CR-fitted-plots_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](CR-fitted-plots_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 ### Fitted and observed resource abundances at day 36
 
@@ -66,4 +45,4 @@ data %>%
 		ylab("log resource abundance at day 36")
 ```
 
-![](CR-fitted-plots_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](CR-fitted-plots_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
