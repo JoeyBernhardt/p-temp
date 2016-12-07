@@ -25,30 +25,6 @@ data %>%
 ![](CR-fitted-plots_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 
-```r
-data <- read_csv("/Users/Joey/Documents/p-temp/p-temp-marcus/plotdata.csv")
-```
-
-```
-## Warning: Missing column names filled in: 'X1' [1]
-```
-
-```
-## Parsed with column specification:
-## cols(
-##   X1 = col_integer(),
-##   ID = col_integer(),
-##   Phosphorus = col_character(),
-##   transformedtemp = col_double(),
-##   r = col_double(),
-##   K = col_double(),
-##   a = col_double(),
-##   logobservedfinalP = col_double(),
-##   logpredictedfinalP = col_double(),
-##   logobservedfinalH = col_double(),
-##   logpredictedfinalH = col_double()
-## )
-```
 
 
 ```r
@@ -57,12 +33,12 @@ data <- read_csv("/Users/Joey/Documents/p-temp/p-temp-marcus/plotdata.csv")
 		mutate(type = ifelse(grepl("predicted", predicted_observed), "predicted", "observed")) %>% 
 		mutate(trophic_level = ifelse(grepl("H$", predicted_observed), "consumer", "resource")) %>% 
 		filter(trophic_level == "consumer") %>% 
-		ggplot(aes(x = transformedtemp, y = abundance, color = type)) + geom_point(aes(shape = Phosphorus, fill = type), size = 4) + 
-		scale_shape(solid = FALSE) + ylab("log consumer abundance at day 36")
+		ggplot(aes(x = transformedtemp, y = abundance, color = type)) + geom_point(aes(shape = Phosphorus, fill = type), size = 4, alpha = 0.5) + ylab("log consumer abundance at day 36")
 ```
 
 ![](CR-fitted-plots_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
+#### Fitted and observed consumer abundances at day 36
 
 ```r
 	data %>% 
@@ -77,7 +53,7 @@ data <- read_csv("/Users/Joey/Documents/p-temp/p-temp-marcus/plotdata.csv")
 
 ![](CR-fitted-plots_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
-
+#### Fitted and observed resource abundances at day 36
 
 ```r
 	data %>% 

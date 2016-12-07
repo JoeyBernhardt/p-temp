@@ -33,7 +33,7 @@ data %>%
 
 ```
 
-```{r}
+```{r, warning=FALSE, include=FALSE}
 data <- read_csv("/Users/Joey/Documents/p-temp/p-temp-marcus/plotdata.csv")
 ```
 
@@ -43,11 +43,11 @@ data <- read_csv("/Users/Joey/Documents/p-temp/p-temp-marcus/plotdata.csv")
 		mutate(type = ifelse(grepl("predicted", predicted_observed), "predicted", "observed")) %>% 
 		mutate(trophic_level = ifelse(grepl("H$", predicted_observed), "consumer", "resource")) %>% 
 		filter(trophic_level == "consumer") %>% 
-		ggplot(aes(x = transformedtemp, y = abundance, color = type)) + geom_point(aes(shape = Phosphorus, fill = type), size = 4) + 
-		scale_shape(solid = FALSE) + ylab("log consumer abundance at day 36")
+		ggplot(aes(x = transformedtemp, y = abundance, color = type)) + geom_point(aes(shape = Phosphorus, fill = type), size = 4, alpha = 0.5) + ylab("log consumer abundance at day 36")
 
 ```
 
+#### Fitted and observed consumer abundances at day 36
 ```{r}
 	data %>% 
 		gather(key = predicted_observed, value = abundance, 8:11) %>%
@@ -59,7 +59,7 @@ data <- read_csv("/Users/Joey/Documents/p-temp/p-temp-marcus/plotdata.csv")
 		ylab("log consumer abundance at day 36")
 ```	
 
-
+#### Fitted and observed resource abundances at day 36
 ```{r}
 	data %>% 
 		gather(key = predicted_observed, value = abundance, 8:11) %>%
