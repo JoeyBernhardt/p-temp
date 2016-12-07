@@ -1,28 +1,13 @@
 # Fitting results
-### Objective
 
-To fit Lotka Volterra dynamical models to experimental time series data for a
-_Daphnia_ and phytoplankton predator-prey system.
+### Plots
 
-### Methods
-
-#### Theoretical Model
-Due to problems with fitting the full model, a simplified consumer resource
-model was selected, with the form:
-
-$$
-\frac{\mathrm{d} P}{\mathrm{d} t} = rP(1 - \frac{P}{K} - aHP \\
-\frac{\mathrm{d} H}{\mathrm{d} t} = aHP - mH
-$$
-
-
-The simecol package was first used to obtain parameter estimates, but the
-achievable fits were judged to be too poor. FME package was utilized to obtain parameter estimates for the
+![](p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png)<!-- -->
 
 ### Results
 ```r
 #file.path() is used for cross-platform compatibility
-fittedpdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"),
+fittedpdata <- read.csv(file = file.path("p-temp-marcus", "fittedpdata.csv"),
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
