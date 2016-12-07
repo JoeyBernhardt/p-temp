@@ -1,5 +1,14 @@
 # Fitting results
 
+### Data
+
+Here we read in the data used for all of the below plots:
+```r
+plotdata <- read.csv(file = file.path("p-temp-marcus", "plotdata.csv"), #file.path() is used for cross-platform compatibility
+	strip.white = TRUE,
+	na.strings = c("NA","") )
+```
+
 ### Plotting Day 36 Densities for Predicted vs. Observed Data
 
 Here we show plots of the simulation results vs. the experimental data taken on day 36 (the final observation).
