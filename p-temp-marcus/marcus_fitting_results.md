@@ -55,6 +55,9 @@ summary(H_model)
 ```
 ### Estimating Activation Energies for Fitted Parameter Values
 
+Here we estimate the activation energies for 3 different fitted parameters: **r**, **K**, and **a**. In general, the current fitting implementation likely underestimated **r** by a small amount, and also underestimated **K**, possibly by as much as an order of magnitude in some cases. This is due to the influence of the half-saturation constant (**b**) on the fitting process. You can think of **b** as being a kind of "pseudo-carrying capacity", because a higher **b** depresses the _effective_ attack rate, which then increases the _effective_ carrying capacity.
+
+From the fitting algorithm's perspective, fitting a higher **b** is very similar to fitting a higher **K**, which is why I think it screwed up here. I have attempted to address this problem by coding in specific constraints as to how high **b** is allowed to be fit compared to **K**. The allowed gap between them was simply too narrow on the previous try.
 ```r
 fittedr_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
