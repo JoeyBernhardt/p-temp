@@ -15,7 +15,7 @@ plotdata <- read.csv(file = file.path("p-temp-marcus", "plotdata.csv"),
 Here we show plots of the simulation results vs. the experimental data taken on day 36 (the final observation).
 The major point here is to assess the quality of our model fits. I have outputted some (possibly) relevant summary statistics for the linear regressions below each plot. Overall the fits look surprisingly good, especially for the Daphnia!
 
-For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate. In general, some of the fits are off due to the fitting algorithm underestimating K. This should improve in the next fitting attempt, so we should expect the new simulation results to do a better job of predicting the experimental data (and we'll see a higher R^2).
+For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate. In general, some of the fits are off due to the fitting algorithm underestimating **K**. This should improve in the next fitting attempt (more details in the fitting section), so we should expect the new simulation results to do a better job of predicting the experimental data (and we'll see a higher R^2).
 
 ```r
 # Plot the results of our model fitting.
@@ -58,6 +58,9 @@ summary(H_model)
 Here we estimate the activation energies for 3 different fitted parameters: **r**, **K**, and **a**. In general, the current fitting implementation likely underestimated **r** by a small amount, and also underestimated **K**, possibly by as much as an order of magnitude in some cases. This is due to the influence of the half-saturation constant (**b**) on the fitting process. You can think of **b** as being a kind of "pseudo-carrying capacity", because a higher **b** depresses the _effective_ attack rate, which then increases the _effective_ carrying capacity.
 
 From the fitting algorithm's perspective, fitting a higher **b** is very similar to fitting a higher **K**, which is why I think it screwed up here. I have attempted to address this problem by coding in specific constraints as to how high **b** is allowed to be fit compared to **K**. The allowed gap between them was simply too narrow on the previous try.
+
+Immediately below we can see the plots for the fitted **r** values. Note the large amount of alternatively high and low values for the two middle temperatures. This is because, for some of these replicates, the observed phytoplankton population dynamics appear to be periodic. Periodic dynamics in the producer are typically associated with higher **r** values, but the fitting algorithm was not able to successfully "figure out" that the dynamics were periodic in some of these cases, and subsequently fit very low values for **r**. We expect the fit to improve on our next few tries, by reducing the influence of **b**, as stated above.
+
 ```r
 fittedr_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
 		geom_point() +
