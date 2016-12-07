@@ -55,8 +55,44 @@ summary(H_model)
 ```
 ### Estimating Activation Energies for Fitted Parameter Values
 
+```r
+fittedr_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
+		geom_point() +
+		geom_smooth(method = lm, col = "red") +
+		ggtitle("Fitted log(r) Values") +
+		labs(x = "-1/kT", y = "log(r)")
+fittedr_plot
+ggsave("fittedr_plot.png", plot = last_plot())
+
+r_model <- lm(log(r) ~ transformedtemp, data = plotdata)
+summary(r_model) #slope of 0.2375, p-value = 0.253
+```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot.png" width="600">
 
+```r
+fittedK_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
+		geom_point() +
+		geom_smooth(method = lm, col = "red") +
+		ggtitle("Fitted log(K) Values") +
+		labs(x = "-1/kT", y = "log(K)")
+fittedK_plot
+ggsave("fittedK_plot.png", plot = last_plot())
+
+K_model <- lm(log(K) ~ transformedtemp, data = plotdata)
+summary(K_model) # slope of -0.1918, p-value = 0.50
+```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot.png" width="600">
 
+```r
+fitteda_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
+		geom_point() +
+		geom_smooth(method = lm, col = "red") +
+		ggtitle("Fitted log(a) Values") +
+		labs(x = "-1/kT", y = "log(a)")
+fitteda_plot
+ggsave("fitteda_plot.png", plot = last_plot())
+
+a_model <- lm(log(a) ~ transformedtemp, data = plotdata)
+summary(a_model) # slope of 0.2092, p-value = 0.71
+```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot.png" width="600">
