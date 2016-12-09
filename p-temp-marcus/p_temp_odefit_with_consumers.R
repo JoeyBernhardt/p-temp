@@ -62,8 +62,8 @@ Parameters <- c(r = 1, K = 10 ^ 8, a = 3, b = 10 ^ 5, eps = 0.1, m = 0.2, Er = 0
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.15, K = 10 ^ 6, a = 0, b = 0, eps = 0, m = 0)
-UpperBound <- c(r = 2, K = 10 ^ 11, a = 1000, b = 10 ^ 7, eps = 10, m = 10) 
+LowerBound <- c(r = 0.1, K = 10 ^ 7, a = 0, b = 10 ^ 3, eps = 0, m = 0)
+UpperBound <- c(r = 5, K = 10 ^ 13, a = 1000, b = 10 ^ 5, eps = 10, m = 10) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -89,23 +89,16 @@ ParamScaling <- 1 / UpperBound
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 			with(as.list(c(init, parms)), {
-		dp <- arrhenius(temp, Er) * r * P * (1 - (P / (arrhenius(temp, EK) * K))) - arrhenius(temp, Ea) * a * H * (P / (P + b))
-		dh <- arrhenius(temp, Ea) * a * eps * H * (P / (P + b)) - arrhenius(temp, Em) * m * H
+		dp <-  r * P * (1 - (P / K)) - a * H * (P / (P + b))
+		dh <-  a * eps * H * (P / (P + b)) - m * H
 		list(c(dp, dh))
 		})
 	},
 	parms = Parameters,
-	times = c(from = 0, to = 35, by = 0.1), # the time interval over which the model will be simulated.
+	times = c(from = 0, to = 35, by = 0.01), # the time interval over which the model will be simulated.
 	init = c(P = 100000, H = 10),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
-
-create_model <- function(temp){
-		model <- CRmodel
-		parms(model)["temp"] <- temp
-		output <- model 
-return(output)
-}
 
 ### FUNCTIONS ###
 
