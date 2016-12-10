@@ -119,7 +119,12 @@ CRmodel <- new("odeModel",
 
 pfit <- function(data){
 
-		temp <- data$temperature[1]
+		day_three_cell_volume <- data$volume_cell[1]
+		day_zero_cell_concentration <- 10 ^ 5
+		initial_algal_biovolume <- day_three_cell_volume * day_zero_cell_concentration
+		data <- add_row(data, daphnia_total = 10, algal_biovolume = initial_algal_biovolume, days = 0, .before = 1)		
+	
+		temp <- data$temperature[2]
 		model <- create_model(temp)
 		init(model) <- c(P = data$P[1], H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
@@ -136,14 +141,17 @@ pfit <- function(data){
 		fittedmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
-  		control = list(trace = T)
+  		control = list(trace = T,
+			      rtol = 10 ^ -9,
+			      atol = 10 ^ -9
+			      )
 		)
 		
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
 		# fitted parameters. 
 
-		ID <- data$unique_ID[1]
+		ID <- data$unique_ID[2]
 		Phosphorus <- data$phosphorus_treatment[1]
 		r <- coef(fittedmodel)["r"]
 		K <- coef(fittedmodel)["K"]
