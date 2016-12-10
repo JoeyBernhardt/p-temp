@@ -6,6 +6,8 @@ library(simecol)
 library(tidyverse)
 # Load the gridExtra package for conveniently arranging ggplot objects
 library(gridExtra)
+# Load the knitr package for producing tables and graphics for markdown
+library(knitr)
 
 ### Data Frame ###
 
@@ -55,7 +57,7 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models #
-Parameters <- c(r = 1, K = 10 ^ 8, a = 3, b = 10 ^ 5, eps = 0.1, m = 0.2, Er = 0.32, EK = -0.32, Ea = 0.65, Em = 0.65, temp = 12)
+Parameters <- c(r = 1, K = 10 ^ 8, a = 3, b = 10 ^ 5, eps = 0.1, m = 0.2)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
@@ -63,7 +65,7 @@ FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.1, K = 10 ^ 7, a = 0, b = 10 ^ 3, eps = 0, m = 0)
-UpperBound <- c(r = 5, K = 10 ^ 13, a = 1000, b = 10 ^ 5, eps = 10, m = 10) 
+UpperBound <- c(r = 5, K = 10 ^ 13, a = 1000, b = 10 ^ 5, eps = 3, m = 10) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -146,7 +148,8 @@ pfit <- function(data){
 		r <- coef(fittedmodel)["r"]
 		K <- coef(fittedmodel)["K"]
 		a <- coef(fittedmodel)["a"]
-		b <- coef(fittedmodel)["eps"]
+		b <- coef(fittedmodel)["b"]
+		eps <- coef(fittedmodel)["eps"]
 		m <- coef(fittedmodel)["m"]
 		
 		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, m)
