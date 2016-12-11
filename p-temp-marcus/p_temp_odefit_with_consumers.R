@@ -167,4 +167,4 @@ pfit <- function(data){
 ### Output Data ###
 
 # Dataframes of the fitted parameters, grouped by replicate ID:
--fittedpdata <- map_df(pdata, pfit)
+fittedpdata <- map_df(pdata, pfit)
