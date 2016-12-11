@@ -12,7 +12,7 @@ library(knitr)
 ### Data Frame ###
 
 # Read the data from the consumer free controls, and store as object
-pdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
+pdata <- read.csv(file = file.path("p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
@@ -57,7 +57,7 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models #
-Parameters <- c(r = 1, K = 10 ^ 8, a = 3, b = 10 ^ 5, eps = 0.1, m = 0.2)
+Parameters <- c(r = 1, K = 10 ^ 8, a = 10, b = 10 ^ 5, eps = 0.1, m = 0.2)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
@@ -167,4 +167,4 @@ pfit <- function(data){
 ### Output Data ###
 
 # Dataframes of the fitted parameters, grouped by replicate ID:
-fittedpdata <- map_df(pdata, pfit)
+-fittedpdata <- map_df(pdata, pfit)
