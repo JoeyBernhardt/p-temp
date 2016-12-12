@@ -65,7 +65,7 @@ FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.1, K = 10 ^ 7, a = 0, b = 10 ^ 3, eps = 0, m = 0)
-UpperBound <- c(r = 5, K = 10 ^ 13, a = 1000, b = 10 ^ 5, eps = 3, m = 10) 
+UpperBound <- c(r = 5, K = 10 ^ 13, a = 1000, b = 10 ^ 5, eps = 1, m = 2) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -141,7 +141,9 @@ pfit <- function(data){
 		fittedmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
-  		control = list(trace = T)
+  		control = list(trace = T),
+			    rtol = 10 ^ -9,
+			    atol = 10 ^ -9
 		)
 		
 		# Here we create vectors to be used to output a dataframe of
@@ -157,8 +159,8 @@ pfit <- function(data){
 		eps <- coef(fittedmodel)["eps"]
 		m <- coef(fittedmodel)["m"]
 		
-		# output <- data.frame(ID, Phosphorus, temp, r, K, a, b, m)
-		output <- data
+		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, m)
+		
 		return(output)
 }
 
