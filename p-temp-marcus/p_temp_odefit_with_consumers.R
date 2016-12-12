@@ -9,6 +9,7 @@ library(gridExtra)
 # Load the knitr package for producing tables and graphics for markdown
 library(knitr)
 
+# quick edit
 ### Data Frame ###
 
 # Read the data from the consumer free controls, and store as object
