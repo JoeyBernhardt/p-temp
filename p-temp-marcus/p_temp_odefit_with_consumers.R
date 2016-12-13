@@ -96,7 +96,7 @@ CRmodel <- new("odeModel",
 		})
 	},
 	parms = Parameters,
-	times = c(from = 0, to = 36, by = 0.01), # the time interval over which the model will be simulated.
+	times = c(from = 0, to = 36, by = 0.1), # the time interval over which the model will be simulated.
 	init = c(P = 1e6, H = 10),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
@@ -158,7 +158,21 @@ pfit <- function(data){
 		eps <- coef(fittedmodel)["eps"]
 		m <- coef(fittedmodel)["m"]
 		
-		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, eps, m)
+		simmodel <- CRmodel
+		# set model parameters to fitted values and simulate again
+		parms(simmodel)[FittedParameters] <- coef(fittedmodel)
+		simdata <- out(sim(simmodel, rtol = 1e-9, atol = 1e-9))
+		
+		finalsimulatedP <- last(simdata$P)
+		finalsimulatedH <- last(simdata$H)
+		finalobservedP <- last(yobs$P)
+		finalobservedH <- last(yobs$H)
+
+		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, eps, m,
+					finalsimulatedP,
+					finalsimulatedH,
+					finalobservedP,
+					finalobservedH)
 		
 		return(output)
 }
@@ -166,5 +180,6 @@ pfit <- function(data){
 ### Output Data ###
 
 # Dataframes of the fitted parameters, grouped by replicate ID:
-fittedpdata <- pfit(pdata[[1]])
-#fittedpdata <- map_df(pdata, pfit)
+
+# fittedpdata <- pfit(pdata[[2]])
+fittedpdata <- map_df(pdata, pfit)
