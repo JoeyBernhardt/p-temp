@@ -57,15 +57,15 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models #
-Parameters <- c(r = 0.5, K = 10 ^ 8, a = 10 ^ 2, b = 10 ^ 4, eps = 0.1, m = 0.2)
+Parameters <- c(r = 0.25, K = 1e8, a = 1e1, b = 1e4, eps = 0.001, m = 0.2)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.1, K = 10 ^ 7, a = 0, b = 1e3, eps = 0, m = 0)
-UpperBound <- c(r = 5, K = 10 ^ 13, a = 1e3, b = 1e5, eps = 1, m = 2) 
+LowerBound <- c(r = 0.1, K = 1e7, a = 0, b = 1e3, eps = 0, m = 1e-6)
+UpperBound <- c(r = 5, K = 1e13, a = 1e3, b = 1e5, eps = 1, m = 2) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -84,9 +84,8 @@ ParamScaling <- 1 / UpperBound
 # scaling factor.
 
 # If you would like to view the model output, you can use the following
-# commands afer hp has been evaluated:
-# hp <- sim(hp)
-# plot(hp)
+# command afer CRmodel has been evaluated:
+# plot(sim(CRmodel))
 
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
@@ -97,8 +96,8 @@ CRmodel <- new("odeModel",
 		})
 	},
 	parms = Parameters,
-	times = c(from = 0, to = 35, by = 0.01), # the time interval over which the model will be simulated.
-	init = c(P = 1000000, H = 10),
+	times = c(from = 0, to = 36, by = 0.01), # the time interval over which the model will be simulated.
+	init = c(P = 1e6, H = 10),
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
 
@@ -167,5 +166,5 @@ pfit <- function(data){
 ### Output Data ###
 
 # Dataframes of the fitted parameters, grouped by replicate ID:
-pfit(pdata[[1]])
+fittedpdata <- pfit(pdata[[1]])
 #fittedpdata <- map_df(pdata, pfit)
