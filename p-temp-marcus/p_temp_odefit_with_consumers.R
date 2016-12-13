@@ -64,8 +64,8 @@ Parameters <- c(r = 0.25, K = 1e8, a = 1e1, b = 1e4, eps = 0.001, m = 0.2)
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.1, K = 1e7, a = 0, b = 1e3, eps = 0, m = 1e-6)
-UpperBound <- c(r = 5, K = 1e13, a = 1e3, b = 1e5, eps = 1, m = 2) 
+LowerBound <- c(r = 0.1, K = 1e6, a = 1e1, b = 1e3, eps = 0, m = 1e-6)
+UpperBound <- c(r = 2, K = 1e13, a = 1e3, b = 1e5, eps = 1, m = 2) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
