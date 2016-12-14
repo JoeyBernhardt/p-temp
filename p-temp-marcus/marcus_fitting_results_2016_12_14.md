@@ -115,13 +115,33 @@ ggsave("fitteda_plot2.png", plot = last_plot())
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot3.png" width="600">
 
 #### Activation energy for a: Phosphorus Rich
-**Ea**: -0.2606; 95% confidence intervals:
+```r
+a_fullP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(a_fullP_model)
+confint(a_fullP_model)
+```
+
+**Ea**: 0.2862; 95% confidence intervals:
 
 ```r
-confint(a_model)
-                    2.5 %     97.5 %
-(Intercept)     8.8368465 23.8860429
-transformedtemp 0.1669927  0.5445506
+confint(a_fullP_model)
+                      2.5 %     97.5 %
+(Intercept)      1.78058145 25.4574317
+transformedtemp -0.01080157  0.5832091
 ```
 #### Activation energy for a: Phosphorus Poor
-**Ea**: -0.2606; 95% confidence intervals:
+```r
+# Finding Ea for phosphorus poor treatment
+a_defP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(a_defP_model)
+confint(a_defP_model)
+```
+
+**Ea**: 0.4253; 95% confidence intervals:
+
+```r
+confint(a_defP_model)
+                    2.5 %     97.5 %
+(Intercept)     8.7756074 29.4321582
+transformedtemp 0.1662212  0.6844579
+```
