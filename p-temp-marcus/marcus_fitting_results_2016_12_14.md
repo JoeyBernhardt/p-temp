@@ -27,13 +27,13 @@ summary(r_model)
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot3.png" width="600">
 
-Fitted activation energy for **r**: 0.1474; 95% confidence intervals:
+Fitted activation energy for **r**: 0.3442; 95% confidence intervals:
 
 ```r
 confint(r_model)
-                      2.5 %     97.5 %
-(Intercept)     -20.8155358 30.5050648
-transformedtemp  -0.4963514  0.7911925
+                     2.5 %     97.5 %
+(Intercept)     -8.5840836 34.5376991
+transformedtemp -0.1967269  0.8851231
 ```
 
 #### Estimating K
@@ -51,13 +51,13 @@ summary(K_model)
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot3.png" width="600">
 
-Fitted activation energy for **K**: -0.6901; 95% confidence intervals:
+Fitted activation energy for **K**: -0.2606; 95% confidence intervals:
 
 ```r
-> confint(K_model)
-                     2.5 %     97.5 %
-(Intercept)     -50.748190 30.3133003
-transformedtemp  -1.706941  0.3267495
+confint(K_model)
+                      2.5 %     97.5 %
+(Intercept)     -17.0359925 30.9451036
+transformedtemp  -0.8624901  0.3412715
 ```
 
 #### Estimating a
@@ -76,11 +76,11 @@ summary(a_model)
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot3.png" width="600">
 
-Fitted activation energy for **a**: 0.22041; 95% confidence intervals:
+Fitted activation energy for **a**: 0.35577; 95% confidence intervals:
 
 ```r
 confint(a_model)
-                     2.5 %     97.5 %
-(Intercept)     3.72815013 19.4147643
-transformedtemp 0.02363509  0.4171847
+                    2.5 %     97.5 %
+(Intercept)     8.8368465 23.8860429
+transformedtemp 0.1669927  0.5445506
 ```
