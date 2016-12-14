@@ -25,7 +25,7 @@ fittedr_plot
 r_model <- lm(log(r) ~ transformedtemp, data = fittedpdata)
 summary(r_model) 
 ```
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot2.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot3.png" width="600">
 
 Fitted activation energy for **r**: 0.1474; 95% confidence intervals:
 
@@ -49,7 +49,7 @@ ggsave("fittedK_plot2.png", plot = last_plot())
 K_model <- lm(log(K) ~ transformedtemp, data = fittedpdata)
 summary(K_model)
 ```
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot2.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot3.png" width="600">
 
 Fitted activation energy for **K**: -0.6901; 95% confidence intervals:
 
@@ -74,7 +74,7 @@ a_model <- lm(log(a) ~ transformedtemp, data = fittedpdata)
 summary(a_model)
 ```
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot2.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot3.png" width="600">
 
 Fitted activation energy for **a**: 0.22041; 95% confidence intervals:
 
