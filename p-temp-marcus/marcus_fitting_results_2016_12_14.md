@@ -31,7 +31,7 @@ r_fullP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phospho
 summary(r_fullP_model)
 confint(r_fullP_model)
 ```
-Fitted activation energy for **r**, **Phosphorus rich**: 0.5350; 95% confidence intervals:
+**Ea**: 0.5350; 95% confidence intervals:
 
 ```r
 confint(r_fullP_model)
@@ -47,7 +47,7 @@ r_defP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphor
 summary(r_defP_model)
 confint(r_defP_model)
 ```
-Fitted activation energy for **r**, **Phosphorus poor**: 0.1434; 95% confidence intervals:
+**Ea**: 0.1434; 95% confidence intervals:
 
 ```r
 confint(r_defP_model)
@@ -69,7 +69,7 @@ ggsave("fittedK_plot2.png", plot = last_plot())
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot3.png" width="600">
 
 #### Activation energy for K: Phosphorus Rich
-Fitted activation energy for **K**: -0.2606; 95% confidence intervals:
+**Ea**: -0.2606; 95% confidence intervals:
 
 ```r
 confint(K_model)
@@ -78,7 +78,7 @@ confint(K_model)
 transformedtemp  -0.8624901  0.3412715
 ```
 #### Activation energy for K: Phosphorus Rich
-
+**Ea**: -0.2606; 95% confidence intervals:
 ### Estimating a
 ```r
 fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
@@ -93,7 +93,7 @@ ggsave("fitteda_plot2.png", plot = last_plot())
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot3.png" width="600">
 
 #### Activation energy for a: Phosphorus Rich
-Fitted activation energy for **a**: 0.35577; 95% confidence intervals:
+**Ea**: -0.2606; 95% confidence intervals:
 
 ```r
 confint(a_model)
@@ -102,3 +102,4 @@ confint(a_model)
 transformedtemp 0.1669927  0.5445506
 ```
 #### Activation energy for a: Phosphorus Poor
+**Ea**: -0.2606; 95% confidence intervals:
