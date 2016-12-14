@@ -1,6 +1,6 @@
 # Fitting results
 
-### Data
+## Data
 
 Here we read in the data used for all of the below plots:
 ```r
@@ -9,11 +9,11 @@ fittedpdata <- read.csv(file = file.path("p-temp-marcus", "fittedpdata6.csv"),
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 ```
-### Estimating Activation Energies for Fitted Parameter Values
+## Estimating Activation Energies for Fitted Parameter Values
 
 Here we estimate the activation energies for 3 different fitted parameters: **r**, **K**, and **a**.
 
-#### Estimating r
+### Estimating r
 ```r
 fittedr_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
         geom_point() +
@@ -36,7 +36,7 @@ confint(r_model)
 transformedtemp -0.1967269  0.8851231
 ```
 
-#### Estimating K
+### Estimating K
 ```r
 fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
         geom_point() +
@@ -60,7 +60,7 @@ confint(K_model)
 transformedtemp  -0.8624901  0.3412715
 ```
 
-#### Estimating a
+### Estimating a
 ```r
 fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
         geom_point() +
