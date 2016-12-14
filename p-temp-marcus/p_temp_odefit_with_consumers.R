@@ -56,16 +56,16 @@ return(output)
 
 ## Consumer Resource Model ##
 
-# Declare the parameters to be used in the dynamical models #
-Parameters <- c(r = 0.5, K = 1e8, a = 1e1, b = 5e4, eps = 0.01, m = 0.2)
+# Declare the parameters to be used in the dynamical models
+Parameters <- c(r = 0.5, K = 1e8, a = 1e1, b = 5e4, eps = 0.01, m = 0.05)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.1, K = 1e6, a = 1e1, b = 1e4, eps = 0, m = 0.1)
-UpperBound <- c(r = 3, K = 1e13, a = 1e3, b = 1e6, eps = 1, m = 0.5) 
+LowerBound <- c(r = 0.2, K = 1e6, a = 5, b = 1e4, eps = 0, m = 0.01)
+UpperBound <- c(r = 3, K = 1e13, a = 1e3, b = 1e5, eps = 1, m = 0.2) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -203,9 +203,9 @@ fittedpdata <- mutate(fittedpdata, transformedtemp = -1/(Boltz * (temp + 273.15)
 
 fittedr_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
         geom_point() +
-        geom_smooth(method = lm, col = "red") +
+        geom_smooth(method = lm) +
         ggtitle("Fitted log(r) Values") +
-        labs(x = "-1/kT", y = "log(r)")
+        labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
 fittedr_plot
 ggsave("fittedr_plot2.png", plot = last_plot())
 
@@ -214,9 +214,9 @@ summary(r_model)
 
 fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
         geom_point() +
-        geom_smooth(method = lm, col = "red") +
+        geom_smooth(method = lm) +
         ggtitle("Fitted log(K) Values") +
-        labs(x = "-1/kT", y = "log(K)")
+        labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
 fittedK_plot
 ggsave("fittedK_plot2.png", plot = last_plot())
 
@@ -225,9 +225,9 @@ summary(K_model)
 
 fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
         geom_point() +
-        geom_smooth(method = lm, col = "red") +
+        geom_smooth(method = lm) +
         ggtitle("Fitted log(a) Values") +
-        labs(x = "-1/kT", y = "log(a)")
+        labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
 fitteda_plot
 ggsave("fitteda_plot2.png", plot = last_plot())
 
