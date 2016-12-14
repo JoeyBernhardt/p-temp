@@ -54,8 +54,11 @@ confint(r_defP_model)
                       2.5 %    97.5 %
 (Intercept)     -29.3847414 40.460383
 transformedtemp  -0.7227137  1.029578
-
 ```
+### Interpreting the estimates for r
+
+Currently, the fitting function is still struggling to fit **r** properly. Visually, we can think of **r** as primarily responsible for the _initial_ slope of the growth curve for phytoplankton. A higher **r** will lead to faster population growth, and thus a steeper, more positive slope. From looking at the shape of the plots of experimental data, and then comparing them to the analytical model using various parameter settings, own guess is that the mean _true_ value of **r** falls somewhere between 0.2 and 0.8 for our experimental data. I hope to see fits that fall within this range in a few days, hopefully.
+
 ### Estimating K
 ```r
 fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
