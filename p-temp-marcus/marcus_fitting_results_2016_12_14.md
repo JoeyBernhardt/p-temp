@@ -24,7 +24,7 @@ fittedr_plot
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot3.png" width="600">
 
-#### Phosphorus rich
+#### Activation energy for r: Phosphorus Rich
 ```r
 # Finding Ea for phosphorus rich treatment
 r_fullP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
@@ -40,7 +40,7 @@ confint(r_fullP_model)
 transformedtemp -0.1643051  1.234233
 ```
 
-#### Phosphorus poor
+#### Activation energy for r: Phosphorus Poor
 ```r
 # Finding Ea for phosphorus poor treatment
 r_defP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
@@ -65,12 +65,10 @@ fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), 
         labs(x = "-1/kT", y = "log(K)")
 fittedK_plot
 ggsave("fittedK_plot2.png", plot = last_plot())
-
-K_model <- lm(log(K) ~ transformedtemp, data = fittedpdata)
-summary(K_model)
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot3.png" width="600">
 
+#### Activation energy for K: Phosphorus Rich
 Fitted activation energy for **K**: -0.2606; 95% confidence intervals:
 
 ```r
@@ -79,6 +77,7 @@ confint(K_model)
 (Intercept)     -17.0359925 30.9451036
 transformedtemp  -0.8624901  0.3412715
 ```
+#### Activation energy for K: Phosphorus Rich
 
 ### Estimating a
 ```r
@@ -89,13 +88,11 @@ fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), 
         labs(x = "-1/kT", y = "log(a)")
 fitteda_plot
 ggsave("fitteda_plot2.png", plot = last_plot())
-
-a_model <- lm(log(a) ~ transformedtemp, data = fittedpdata)
-summary(a_model)
 ```
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot3.png" width="600">
 
+#### Activation energy for a: Phosphorus Rich
 Fitted activation energy for **a**: 0.35577; 95% confidence intervals:
 
 ```r
@@ -104,3 +101,4 @@ confint(a_model)
 (Intercept)     8.8368465 23.8860429
 transformedtemp 0.1669927  0.5445506
 ```
+#### Activation energy for a: Phosphorus Poor
