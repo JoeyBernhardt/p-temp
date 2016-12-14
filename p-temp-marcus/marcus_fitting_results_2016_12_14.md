@@ -25,6 +25,7 @@ r_model <- lm(log(r) ~ transformedtemp, data = fittedpdata)
 summary(r_model) 
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot2.png" width="600">
+
 Fitted activation energy for **r**: 0.1474; 95% confidence intervals:
 
 ```r
@@ -48,6 +49,15 @@ summary(K_model)
 ```
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot2.png" width="600">
 
+Fitted activation energy for **K**: -0.6901; 95% confidence intervals:
+
+```r
+> confint(K_model)
+                     2.5 %     97.5 %
+(Intercept)     -50.748190 30.3133003
+transformedtemp  -1.706941  0.3267495
+```
+
 ```r
 fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
         geom_point() +
@@ -62,3 +72,12 @@ summary(a_model)
 ```
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot2.png" width="600">
+
+Fitted activation energy for **a**: 0.22041; 95% confidence intervals:
+
+```r
+confint(a_model)
+                     2.5 %     97.5 %
+(Intercept)     3.72815013 19.4147643
+transformedtemp 0.02363509  0.4171847
+```
