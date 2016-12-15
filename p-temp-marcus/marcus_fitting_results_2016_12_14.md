@@ -1,6 +1,6 @@
 # Fitting results
 
-### Data
+## Data
 
 Here we read in the data used for all of the below plots:
 ```r
@@ -9,11 +9,11 @@ fittedpdata <- read.csv(file = file.path("p-temp-marcus", "fittedpdata6.csv"),
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 ```
-### Estimating Activation Energies for Fitted Parameter Values
+## Estimating Activation Energies for Fitted Parameter Values
 
 Here we estimate the activation energies for 3 different fitted parameters: **r**, **K**, and **a**.
 
-#### Estimating r
+### Estimating r
 ```r
 fittedr_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
         geom_point() +
@@ -21,22 +21,45 @@ fittedr_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(r), 
         ggtitle("Fitted log(r) Values") +
         labs(x = "-1/kT", y = "log(r)")
 fittedr_plot
-
-r_model <- lm(log(r) ~ transformedtemp, data = fittedpdata)
-summary(r_model) 
 ```
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot2.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot3.png" width="600">
 
-Fitted activation energy for **r**: 0.1474; 95% confidence intervals:
+#### Activation energy for r: Phosphorus Rich
+```r
+# Finding Ea for phosphorus rich treatment
+r_fullP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(r_fullP_model)
+confint(r_fullP_model)
+```
+**Ea**: 0.5350; 95% confidence intervals:
 
 ```r
-confint(r_model)
-                      2.5 %     97.5 %
-(Intercept)     -20.8155358 30.5050648
-transformedtemp  -0.4963514  0.7911925
+confint(r_fullP_model)
+                     2.5 %    97.5 %
+(Intercept)     -7.4565840 48.288173
+transformedtemp -0.1643051  1.234233
 ```
 
-#### Estimating K
+#### Activation energy for r: Phosphorus Poor
+```r
+# Finding Ea for phosphorus poor treatment
+r_defP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(r_defP_model)
+confint(r_defP_model)
+```
+**Ea**: 0.1434; 95% confidence intervals:
+
+```r
+confint(r_defP_model)
+                      2.5 %    97.5 %
+(Intercept)     -29.3847414 40.460383
+transformedtemp  -0.7227137  1.029578
+```
+### Interpreting the estimates for r
+
+Currently, the fitting function is still struggling to fit **r** properly. Visually, we can think of **r** as primarily responsible for the _initial_ slope of the growth curve for phytoplankton. A higher **r** will lead to faster population growth, and thus a steeper, more positive slope. From looking at the shape of the plots of experimental data, and then comparing them to the analytical model using various parameter settings, own guess is that the mean _true_ value of **r** falls somewhere between 0.2 and 0.8 for our experimental data. I hope to see fits that fall within this range in a few days, if all goes well.
+
+### Estimating K
 ```r
 fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
         geom_point() +
@@ -45,22 +68,45 @@ fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), 
         labs(x = "-1/kT", y = "log(K)")
 fittedK_plot
 ggsave("fittedK_plot2.png", plot = last_plot())
-
-K_model <- lm(log(K) ~ transformedtemp, data = fittedpdata)
-summary(K_model)
 ```
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot2.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot3.png" width="600">
 
-Fitted activation energy for **K**: -0.6901; 95% confidence intervals:
+#### Activation energy for K: Phosphorus Rich
+```r
+# Finding Ea for phosphorus rich treatment
+K_fullP_model <- lm(log(K) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(K_fullP_model)
+confint(K_fullP_model)
+```
+
+**Ea**: -0.2115; 95% confidence intervals:
 
 ```r
-> confint(K_model)
-                     2.5 %     97.5 %
-(Intercept)     -50.748190 30.3133003
-transformedtemp  -1.706941  0.3267495
+confint(K_fullP_model)
+                    2.5 %     97.5 %
+(Intercept)     -24.27721 42.4069370
+transformedtemp  -1.04801  0.6249789
+```
+#### Activation energy for K: Phosphorus Poor
+```r
+# Finding Ea for phosphorus poor treatment
+K_defP_model <- lm(log(K) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(K_defP_model)
+confint(K_defP_model)
 ```
 
-#### Estimating a
+**Ea**: -0.3097; 95% confidence intervals:
+
+```r
+confint(K_defP_model)
+                    2.5 %     97.5 %
+(Intercept)     -32.60623 42.2947284
+transformedtemp  -1.24927  0.6298635
+```
+### Interpreting the estimates for K
+
+
+### Estimating a
 ```r
 fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
         geom_point() +
@@ -69,18 +115,38 @@ fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), 
         labs(x = "-1/kT", y = "log(a)")
 fitteda_plot
 ggsave("fitteda_plot2.png", plot = last_plot())
-
-a_model <- lm(log(a) ~ transformedtemp, data = fittedpdata)
-summary(a_model)
 ```
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot2.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot3.png" width="600">
 
-Fitted activation energy for **a**: 0.22041; 95% confidence intervals:
+#### Activation energy for a: Phosphorus Rich
+```r
+a_fullP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(a_fullP_model)
+confint(a_fullP_model)
+```
+
+**Ea**: 0.2862; 95% confidence intervals:
 
 ```r
-confint(a_model)
-                     2.5 %     97.5 %
-(Intercept)     3.72815013 19.4147643
-transformedtemp 0.02363509  0.4171847
+confint(a_fullP_model)
+                      2.5 %     97.5 %
+(Intercept)      1.78058145 25.4574317
+transformedtemp -0.01080157  0.5832091
+```
+#### Activation energy for a: Phosphorus Poor
+```r
+# Finding Ea for phosphorus poor treatment
+a_defP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(a_defP_model)
+confint(a_defP_model)
+```
+
+**Ea**: 0.4253; 95% confidence intervals:
+
+```r
+confint(a_defP_model)
+                    2.5 %     97.5 %
+(Intercept)     8.7756074 29.4321582
+transformedtemp 0.1662212  0.6844579
 ```
