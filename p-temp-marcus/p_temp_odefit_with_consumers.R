@@ -207,10 +207,17 @@ fittedr_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(r), 
         ggtitle("Fitted log(r) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
 fittedr_plot
-ggsave("fittedr_plot2.png", plot = last_plot())
+ggsave("fittedr_plot3.png", plot = last_plot())
 
-r_model <- lm(log(r) ~ transformedtemp, data = fittedpdata)
-summary(r_model)
+# Finding Ea for phosphorus rich treatment
+r_fullP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(r_fullP_model)
+confint(r_fullP_model)
+
+# Finding Ea for phosphorus poor treatment
+r_defP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(r_defP_model)
+confint(r_defP_model)
 
 fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
         geom_point() +
@@ -218,10 +225,18 @@ fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), 
         ggtitle("Fitted log(K) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
 fittedK_plot
-ggsave("fittedK_plot2.png", plot = last_plot())
+ggsave("fittedK_plot3.png", plot = last_plot())
 
-K_model <- lm(log(K) ~ transformedtemp, data = fittedpdata)
-summary(K_model)
+
+# Finding Ea for phosphorus rich treatment
+K_fullP_model <- lm(log(K) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(K_fullP_model)
+confint(K_fullP_model)
+
+# Finding Ea for phosphorus poor treatment
+K_defP_model <- lm(log(K) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(K_defP_model)
+confint(K_defP_model)
 
 fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
         geom_point() +
@@ -229,7 +244,15 @@ fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), 
         ggtitle("Fitted log(a) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
 fitteda_plot
-ggsave("fitteda_plot2.png", plot = last_plot())
+ggsave("fitteda_plot3.png", plot = last_plot())
 
-a_model <- lm(log(a) ~ transformedtemp, data = fittedpdata)
-summary(a_model)
+
+# Finding Ea for phosphorus rich treatment
+a_fullP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
+summary(a_fullP_model)
+confint(a_fullP_model)
+
+# Finding Ea for phosphorus poor treatment
+a_defP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
+summary(a_defP_model)
+confint(a_defP_model)
