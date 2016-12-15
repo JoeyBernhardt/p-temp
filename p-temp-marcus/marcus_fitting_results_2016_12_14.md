@@ -105,6 +105,7 @@ transformedtemp  -1.24927  0.6298635
 ```
 ### Interpreting the estimates for K
 
+For both the low and high phosphorus treatments we see what appears to be a non-linear trend, with the fitted carrying capacity **K** steadily increasing with temperature until around 20 degrees C, and then dropping. When fitting a linear regression, this pattern manifests itself as a negative slope (and thus a negative activation energy), but given the apparent non-linear trend, linear regression is not appropriate.
 
 ### Estimating a
 ```r
