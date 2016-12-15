@@ -160,7 +160,7 @@ transformedtemp 0.1662212  0.6844579
 
 In general, we see that the attack rate **a** increases with temperature. Note the very low outlier in one of the phosphorus deficient treatments - I think this is likely the result of the fitting function fitting the transfer efficiency too high for that particular replicate. For that particular replicate, the attack rate would then be fit much lower in order to compensate.
 
-If we look at `fittedpdata6.csv` we can see that the **a** values all have the same order of magnitude, and that only two replicates hit the bounds on the parameter fitting.
+If we look at `fittedpdata6.csv` we can see that the untransformed **a** values all have the same order of magnitude, and that only two replicates hit the bounds on the parameter fitting. Consequently, these are probably our highest quality fits so far, but I'm curious what will happen when we fit the data by treatment group.
 
 We also see that the attack rate is possibly more temperature dependent in the phosphorus deficient case.
 
