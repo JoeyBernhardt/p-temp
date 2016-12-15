@@ -109,7 +109,7 @@ For both the low and high phosphorus treatments we see what appears to be a non-
 
 I also recall seeing a similar pattern in the experimental data itself, when we plot the maximum observed abundances for phytoplankton. Given the perceived shape of the curve, attempting non-linear regression with a function such as the schoolfield model seems to be the best course of action.
 
-The mean K's do appear to be larger for the full-phosphorus treatments, and this can also be seen by calling `t.test(data = fittedpdata, K~Phosphorus)`, however the difference is **not significant** in this case (for now). _As an aside, it is worth noting that we can also call a t-test on the log-transformed data; but this is in some sense a very different (but still valid) kind of test. In this case the t-test would be comparing the **geometric** means, which do have meaning when dealing with dynamical systems that can exhibit periodic cycling, such as ours._
+The mean K's do appear to be larger for the full-phosphorus treatments, and this can also be seen by calling `t.test(data = fittedpdata, K~Phosphorus)`, however the difference is **not significant** in this case (for now). _As an aside, it is worth noting that we can also perform a t-test on the log-transformed data; but this is in some sense a very different (but still valid) kind of test. In this case the t-test would be comparing the **geometric** means, which do have meaning when dealing with dynamical systems that can exhibit periodic cycling, such as ours._
 
 ### Estimating a
 ```r
