@@ -162,6 +162,6 @@ In general, we see that the attack rate **a** increases with temperature. Note t
 
 If we look at `fittedpdata6.csv` we can see that the untransformed **a** values all have the same order of magnitude, and that only two replicates hit the bounds on the parameter fitting. Consequently, these are probably our highest quality fits so far, but I'm curious what will happen when we fit the data by treatment group.
 
-We also see that the attack rate is possibly more temperature dependent in the phosphorus deficient case.
+We also see that the activation energy is possibly higher in the phosphorus deficient case.
 
 It appears that there could also be a non-linear kind of trend in the fitted **a** values in the phosphorus rich treatments. This is difficult to interpret, but I'll give it a shot. **TO DO**
