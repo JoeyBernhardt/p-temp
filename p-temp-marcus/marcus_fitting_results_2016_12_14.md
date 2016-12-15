@@ -107,7 +107,7 @@ transformedtemp  -1.24927  0.6298635
 
 For both the low and high phosphorus treatments we see what appears to be a non-linear trend, with the fitted carrying capacity **K** steadily increasing with temperature until around 20 degrees C, and then dropping. When fitting a linear regression, this pattern manifests itself as a negative slope (and thus a negative activation energy), but given the apparent non-linear trend, linear regression is not appropriate.
 
-The mean K's do appear to be larger for the full-phosphorus treatments, and this can also be seen by calling `t.test(data = fittedpdata, K~Phosphorus)`, however the difference is not significant in this case (for now). _As an aside, it is worth noting that we can also call a t-test on the log-transformed data; but this is in some sense a very different (but still valid) kind of test. In this case the t-test would be comparing the **geometric** means, which do have meaning when dealing with dynamical systems that can exhibit periodic cycling._
+The mean K's do appear to be larger for the full-phosphorus treatments, and this can also be seen by calling `t.test(data = fittedpdata, K~Phosphorus)`, however the difference is **not significant** in this case (for now). _As an aside, it is worth noting that we can also call a t-test on the log-transformed data; but this is in some sense a very different (but still valid) kind of test. In this case the t-test would be comparing the **geometric** means, which do have meaning when dealing with dynamical systems that can exhibit periodic cycling._
 
 ### Estimating a
 ```r
