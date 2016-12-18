@@ -22,12 +22,60 @@ pdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #f
 # dynamical model. This is necessary to invoke the fitOdeModel function.
 pdata <- rename(pdata, P = algal_biovolume)
 pdata <- rename(pdata, H = daphnia_total)
+pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
 
-# Reorder rows in data frame by ID, and then days
+# Reorder rows in data frame by treatment ID, and then by days
 pdata <- arrange(pdata, unique_ID, days)
 
-# Split entire control dataset into multiple indexed data frames based on their ID
+# Split entire dataset into multiple indexed data frames based on their ID
 pdata <- split(pdata, f = pdata$unique_ID)
+
+# Write function for inserting initial densities into dataframes for each treatment
+insertinitstate <- function(data) {
+		
+		temperature <- data$temperature[1]
+		unique_ID <- data$unique_ID[1]
+		Phosphorus <- data$Phosphorus[1]
+		day_three_cell_volume <- data$volume_cell[1]
+		day_zero_cell_concentration <- 10 ^ 5
+		initial_algal_biovolume <- day_three_cell_volume * day_zero_cell_concentration
+		data <- add_row(data, H = 10, P = initial_algal_biovolume, 
+				    Phosphorus = Phosphorus, unique_ID, temperature, days = 0, .before = 1)
+}
+
+pdata <- map_df(pdata, insertinitstate)
+
+# Reorder rows in data frame by days, and then by treatment ID
+pdata <- arrange(pdata, days, unique_ID)
+
+# Create a column for boltzmann-transformed temperatures
+pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
+
+# Split entire dataset into multiple indexed data frames based on their ID
+
+full12data <- filter(pdata, unique_ID == 37 | unique_ID == 38 | unique_ID == 39 |
+			     unique_ID == 40 | unique_ID == 41 | unique_ID == 42)
+
+full16data <- filter(pdata, unique_ID == 13 | unique_ID == 14 | unique_ID == 15 |
+			     unique_ID == 16 | unique_ID == 17 | unique_ID == 18)
+
+full20data <- filter(pdata, unique_ID == 1 | unique_ID == 2 | unique_ID == 3 |
+			     unique_ID == 4 | unique_ID == 5 | unique_ID == 6)
+
+full24data <- filter(pdata, unique_ID == 25 | unique_ID == 26 | unique_ID == 27 |
+			     unique_ID == 28 | unique_ID == 29 | unique_ID == 30)
+
+def12data <- filter(pdata, unique_ID == 43 | unique_ID == 44 | unique_ID == 45 |
+			     unique_ID == 46 | unique_ID == 47 | unique_ID == 48)
+
+def16data <- filter(pdata, unique_ID == 19 | unique_ID == 20 | unique_ID == 21 |
+			     unique_ID == 22 | unique_ID == 23 | unique_ID == 24)
+
+def20data <- filter(pdata, unique_ID == 7 | unique_ID == 8 | unique_ID == 9 |
+			     unique_ID == 10 | unique_ID == 11 | unique_ID == 12)
+
+def24data <- filter(pdata, unique_ID == 31 | unique_ID == 32 | unique_ID == 33 |
+			     unique_ID == 34 | unique_ID == 35 | unique_ID == 36)
 
 ### Model Construction ###
 
@@ -57,14 +105,14 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 0.5, K = 1e8, a = 1e1, b = 5e4, eps = 0.01, m = 0.05)
+Parameters <- c(r = 0.3, K = 1e8, a = 1e1, b = 5e4, eps = 0.02, m = 0.05)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.2, K = 1e6, a = 5, b = 1e4, eps = 0, m = 0.01)
+LowerBound <- c(r = 0.05, K = 1e6, a = 5, b = 1e4, eps = 0.01, m = 0.01)
 UpperBound <- c(r = 3, K = 1e13, a = 1e3, b = 1e5, eps = 1, m = 0.2) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
@@ -116,16 +164,12 @@ CRmodel <- new("odeModel",
 # single replicate. To do this call rKfit(controldata[['X']], where "X" is the
 # replicate's ID number.
 
-pfit <- function(data){
 
-		day_three_cell_volume <- data$volume_cell[1]
-		day_zero_cell_concentration <- 10 ^ 5
-		initial_algal_biovolume <- day_three_cell_volume * day_zero_cell_concentration
-		data <- add_row(data, H = 10, P = initial_algal_biovolume, days = 0, .before = 1)		
+pfit <- function(data) {
 	
-		temp <- data$temperature[2]
+		temp <- data$temperature[1]
 		model <- CRmodel
-		init(model) <- c(P = data$P[1], H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		init(model) <- c(P = mean(data$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
 		yobs <- select(data, P, H) # The Y values of the observed data points we are fitting our model to
 
@@ -148,111 +192,40 @@ pfit <- function(data){
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
 		# fitted parameters. 
+	
+		coef(fittedmodel)
 
-		ID <- data$unique_ID[2]
-		Phosphorus <- data$phosphorus_treatment[2]
-		r <- coef(fittedmodel)["r"]
-		K <- coef(fittedmodel)["K"]
-		a <- coef(fittedmodel)["a"]
-		b <- coef(fittedmodel)["b"]
-		eps <- coef(fittedmodel)["eps"]
-		m <- coef(fittedmodel)["m"]
-		
 		simmodel <- model
 		# set model parameters to fitted values and simulate again
 		parms(simmodel)[FittedParameters] <- coef(fittedmodel)
 		simdata <- out(sim(simmodel, rtol = 1e-9, atol = 1e-9))
-		
-		finalsimulatedP <- last(simdata$P)
-		finalsimulatedH <- last(simdata$H)
-		finalobservedP <- last(yobs$P)
-		finalobservedH <- last(yobs$H)
-
-		output <- data.frame(ID, Phosphorus, temp, r, K, a, b, eps, m,
-					finalsimulatedP,
-					finalsimulatedH,
-					finalobservedP,
-					finalobservedH)
-		
-		return(output)
+		simdata <- mutate(simdata, r = coef(fittedmodel)["r"],
+						   K = coef(fittedmodel)["K"],
+						   a = coef(fittedmodel)["a"],
+						   eps = coef(fittedmodel)["eps"],
+						   m = coef(fittedmodel)["m"]
+					)
+		return(simdata)
 }
 
-### Output Data ###
+fittedfull12data <- pfit(full12data)
+fittedfull16data <- pfit(full16data)
+fittedfull20data <- pfit(full20data)
+fittedfull24data <- pfit(full24data)
 
-# Dataframes of the fitted parameters, grouped by replicate ID:
+ffP12 <- last(fittedfull12data$P)
+ffP16 <- last(fittedfull16data$P)
+ffP20 <- last(fittedfull20data$P)
+ffP24 <- last(fittedfull24data$P)
 
-# fittedpdata <- pfit(pdata[[1]])
-fittedpdata <- map_df(pdata, pfit)
+prod_plot <- ggplot() +
+		geom_point(data = full24data, aes(x = days, y = P)) +
+		geom_line(data = fittedfull24data, aes(x = time, y = P), color = "red")
+prod_plot
 
-fittedpdata <- mutate(fittedpdata, transformedtemp = -1/(Boltz * (temp + 273.15)))
-
-
-# Plot the results of our model fitting.
-    producer_plot <- ggplot(data = fittedpdata, aes(x = log(finalsimulatedP), y = log(finalobservedP), color = Phosphorus)) +
-        geom_point() + # predicted data
-        labs(x = "log(Predicted phytoplankton density)", y = "log(observed Phytoplankton density)") +
-        ggtitle("Phytoplankton Densities: Observed vs. Predicted")
-    producer_plot
-
-# Plot the results of our model fitting.
-    hetero_plot <- ggplot(data = fittedpdata, aes(x = log(finalsimulatedH), y = log(finalobservedH), color = Phosphorus)) +
-        geom_point() + # predicted data
-        labs(x = "log(Predicted daphnia density)", y = "log(Observed daphnia density)") +
-        ggtitle("Daphnia Densities: Observed vs. Predicted")
-   hetero_plot
-
-fittedr_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
-        geom_point() +
-        geom_smooth(method = lm) +
-        ggtitle("Fitted log(r) Values") +
-        labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
-fittedr_plot
-ggsave("fittedr_plot3.png", plot = last_plot())
-
-# Finding Ea for phosphorus rich treatment
-r_fullP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
-summary(r_fullP_model)
-confint(r_fullP_model)
-
-# Finding Ea for phosphorus poor treatment
-r_defP_model <- lm(log(r) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
-summary(r_defP_model)
-confint(r_defP_model)
-
-fittedK_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
-        geom_point() +
-        geom_smooth(method = lm) +
-        ggtitle("Fitted log(K) Values") +
-        labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
-fittedK_plot
-ggsave("fittedK_plot3.png", plot = last_plot())
+het_plot <- ggplot() +
+		geom_point(data = full24data, aes(x = days, y = H)) +
+		geom_line(data = fittedfull24data, aes(x = time, y = H), color = "red")
+het_plot
 
 
-# Finding Ea for phosphorus rich treatment
-K_fullP_model <- lm(log(K) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
-summary(K_fullP_model)
-confint(K_fullP_model)
-
-# Finding Ea for phosphorus poor treatment
-K_defP_model <- lm(log(K) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
-summary(K_defP_model)
-confint(K_defP_model)
-
-fitteda_plot <- ggplot(data = fittedpdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
-        geom_point() +
-        geom_smooth(method = lm) +
-        ggtitle("Fitted log(a) Values") +
-        labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
-fitteda_plot
-ggsave("fitteda_plot3.png", plot = last_plot())
-
-
-# Finding Ea for phosphorus rich treatment
-a_fullP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "FULL"))
-summary(a_fullP_model)
-confint(a_fullP_model)
-
-# Finding Ea for phosphorus poor treatment
-a_defP_model <- lm(log(a) ~ transformedtemp, data = filter(fittedpdata, Phosphorus == "DEF"))
-summary(a_defP_model)
-confint(a_defP_model)
