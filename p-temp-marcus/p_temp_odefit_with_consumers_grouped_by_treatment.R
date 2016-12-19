@@ -105,15 +105,15 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 0.3, K = 1e8, a = 1e1, b = 5e4, eps = 0.02, m = 0.05)
+Parameters <- c(r = 0.5, K = 1e8, a = 1e1, b = 5e4, eps = 0.01, m = 0.05)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.05, K = 1e6, a = 5, b = 1e4, eps = 0.01, m = 0.01)
-UpperBound <- c(r = 3, K = 1e13, a = 1e3, b = 1e5, eps = 1, m = 0.2) 
+LowerBound <- c(r = 0.1, K = 1e6, a = 5, b = 1e4, eps = 0.005, m = 0.01)
+UpperBound <- c(r = 3, K = 1e13, a = 1e3, b = 1e5, eps = 0.02, m = 0.2) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -167,7 +167,6 @@ CRmodel <- new("odeModel",
 
 pfit <- function(data) {
 	
-		temp <- data$temperature[1]
 		model <- CRmodel
 		init(model) <- c(P = mean(data$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
@@ -203,7 +202,9 @@ pfit <- function(data) {
 						   K = coef(fittedmodel)["K"],
 						   a = coef(fittedmodel)["a"],
 						   eps = coef(fittedmodel)["eps"],
-						   m = coef(fittedmodel)["m"]
+						   m = coef(fittedmodel)["m"],
+						   temp = data$temperature[1],
+						   transformedtemp = data$transformedtemp[1]
 					)
 		return(simdata)
 }
@@ -213,19 +214,23 @@ fittedfull16data <- pfit(full16data)
 fittedfull20data <- pfit(full20data)
 fittedfull24data <- pfit(full24data)
 
-ffP12 <- last(fittedfull12data$P)
-ffP16 <- last(fittedfull16data$P)
-ffP20 <- last(fittedfull20data$P)
-ffP24 <- last(fittedfull24data$P)
+fittedfulldata <- rbind(fittedfull12data, fittedfull16data, fittedfull20data, fittedfull24data)
+
+fittedr_plot <- ggplot(data = fittedfulldata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
+        geom_point() +
+        geom_smooth(method = lm) +
+        ggtitle("Fitted log(r) Values") +
+        labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
+fittedr_plot
 
 prod_plot <- ggplot() +
-		geom_point(data = full24data, aes(x = days, y = P)) +
-		geom_line(data = fittedfull24data, aes(x = time, y = P), color = "red")
+		geom_point(data = full16data, aes(x = days, y = P)) +
+		geom_line(data = fittedfull16data, aes(x = time, y = P), color = "red")
 prod_plot
 
 het_plot <- ggplot() +
-		geom_point(data = full24data, aes(x = days, y = H)) +
-		geom_line(data = fittedfull24data, aes(x = time, y = H), color = "red")
+		geom_point(data = full16data, aes(x = days, y = H)) +
+		geom_line(data = fittedfull16data, aes(x = time, y = H), color = "red")
 het_plot
 
 
