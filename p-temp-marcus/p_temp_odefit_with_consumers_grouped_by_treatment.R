@@ -49,6 +49,7 @@ pdata <- map_df(pdata, insertinitstate)
 pdata <- arrange(pdata, days, unique_ID)
 
 # Create a column for boltzmann-transformed temperatures
+Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
 
 # Split entire dataset into multiple indexed data frames based on their ID
@@ -93,7 +94,7 @@ def24data <- filter(pdata, unique_ID == 31 | unique_ID == 32 | unique_ID == 33 |
 
 # First we declare constants used in the Arrhenius function
 
-Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
+# The Boltzmann constant "Boltz" has already been declared earlier in the code
 BasalTemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate; 12 was the lowest temp used during the experiment.
 
 # Declare Arrhenius function
@@ -105,7 +106,7 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 0.5, K = 1e8, a = 1e1, b = 5e4, eps = 0.01, m = 0.05)
+Parameters <- c(r = 0.5, K = 1e8, a = 10, b = 5e4, eps = 0.01, m = 0.05)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
@@ -184,8 +185,8 @@ pfit <- function(data) {
  		debuglevel = 0, fn = ssqOdeModel,
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = TRUE),
-			    rtol = 1e-9,
-			    atol = 1e-9
+			    rtol = 1e-10,
+			    atol = 1e-10
 		)
 		
 		# Here we create vectors to be used to output a dataframe of
@@ -197,11 +198,12 @@ pfit <- function(data) {
 		simmodel <- model
 		# set model parameters to fitted values and simulate again
 		parms(simmodel)[FittedParameters] <- coef(fittedmodel)
-		simdata <- out(sim(simmodel, rtol = 1e-9, atol = 1e-9))
+		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
 		simdata <- mutate(simdata, r = coef(fittedmodel)["r"],
 						   K = coef(fittedmodel)["K"],
 						   a = coef(fittedmodel)["a"],
 						   eps = coef(fittedmodel)["eps"],
+						   b = coef(fittedmodel)["b"],
 						   m = coef(fittedmodel)["m"],
 						   temp = data$temperature[1],
 						   transformedtemp = data$transformedtemp[1]
@@ -216,7 +218,9 @@ fittedfull24data <- pfit(full24data)
 
 fittedfulldata <- rbind(fittedfull12data, fittedfull16data, fittedfull20data, fittedfull24data)
 
-fittedr_plot <- ggplot(data = fittedfulldata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
+fittedr <- distinct(fittedfulldata, r, transformedtemp)
+
+fittedr_plot <- ggplot(data = fittedr, aes(x = transformedtemp, y = log(r))) +
         geom_point() +
         geom_smooth(method = lm) +
         ggtitle("Fitted log(r) Values") +
