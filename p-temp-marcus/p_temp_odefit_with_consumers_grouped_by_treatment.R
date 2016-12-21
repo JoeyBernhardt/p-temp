@@ -216,9 +216,46 @@ fittedfull16data <- pfit(full16data)
 fittedfull20data <- pfit(full20data)
 fittedfull24data <- pfit(full24data)
 
+fitteddef12data <- pfit(def12data)
+fitteddef16data <- pfit(def16data)
+fitteddef20data <- pfit(def20data)
+fitteddef24data <- pfit(def24data)
+
+
+fitteddefdata <- rbind(fitteddef12data, fitteddef16data, fitteddef20data, fitteddef24data)
+
 fittedfulldata <- rbind(fittedfull12data, fittedfull16data, fittedfull20data, fittedfull24data)
 
-fittedr <- distinct(fittedfulldata, r, transformedtemp)
+fittedr <- distinct(fittedfulldata, r, transformedtemp) %>% 
+	mutate(nutrient_level = "high P")
+fitted_def_r <- distinct(fitteddefdata, r, transformedtemp) %>% 
+	mutate(nutrient_level = "low P")
+
+all_r <- bind_rows(fittedr, fitted_def_r)
+
+fittedK <- distinct(fittedfulldata, K, transformedtemp) %>% 
+	mutate(nutrient_level = "high P")
+
+fittedK_def <- distinct(fitteddefdata, K, transformedtemp) %>% 
+	mutate(nutrient_level = "low P")
+
+all_K <- bind_rows(fittedK, fittedK_def)
+
+all_r %>% 
+	ggplot(aes(x = transformedtemp, y = log(r), group = nutrient_level, color = nutrient_level)) + geom_point(size = 4) +
+	geom_smooth(method = "lm")
+
+all_K %>% 
+	ggplot(aes(x = transformedtemp, y = log(K), group = nutrient_level, color = nutrient_level)) + geom_point(size = 4) +
+	geom_smooth(method = "lm")
+
+fittedK_plot <- ggplot(data = fittedK, aes(x = transformedtemp, y = log(K))) +
+	geom_point() +
+	geom_smooth(method = lm) +
+	ggtitle("Fitted log(K) Values") +
+	labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
+fittedK_plot
+
 
 fittedr_plot <- ggplot(data = fittedr, aes(x = transformedtemp, y = log(r))) +
         geom_point() +
@@ -233,8 +270,8 @@ prod_plot <- ggplot() +
 prod_plot
 
 het_plot <- ggplot() +
-		geom_point(data = full16data, aes(x = days, y = H)) +
-		geom_line(data = fittedfull16data, aes(x = time, y = H), color = "red")
+		geom_point(data = full20data, aes(x = days, y = H)) +
+		geom_line(data = fittedfull20data, aes(x = time, y = H), color = "red")
 het_plot
 
 
