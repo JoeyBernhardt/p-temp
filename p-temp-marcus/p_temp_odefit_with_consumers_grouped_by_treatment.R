@@ -226,6 +226,8 @@ fitteddefdata <- rbind(fitteddef12data, fitteddef16data, fitteddef20data, fitted
 
 fittedfulldata <- rbind(fittedfull12data, fittedfull16data, fittedfull20data, fittedfull24data)
 
+
+### JB adding things here to make Ea plots
 fittedr <- distinct(fittedfulldata, r, transformedtemp) %>% 
 	mutate(nutrient_level = "high P")
 fitted_def_r <- distinct(fitteddefdata, r, transformedtemp) %>% 
