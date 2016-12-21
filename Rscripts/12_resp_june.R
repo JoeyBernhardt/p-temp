@@ -7,6 +7,7 @@ library(tidyr)
 library(dplyr)
 library(broom)
 library(plotrix)
+library(stringr)
 
 resp_16 <- read_csv("respirometry-data/daphrespinmg/16C_daph_resp_mg_Oxygen.csv")
 resp_12 <- read_csv("respirometry-data/daphrespinmg/12C_daph_resp_mg_Oxygen.csv")
@@ -37,6 +38,14 @@ resp <- resp %>%
 
 resp_long <- gather(resp, well_number, oxygen, 3:25) %>%
 unite("uniqueID", temperature, well_number, remove = FALSE)
+
+### change the weights df to get rid of the C after temp, which is preventing merging
+
+weights <- weights %>% 
+	mutate(uniqueID = str_replace(uniqueID, "^16C", "16")) %>% 
+	mutate(uniqueID = str_replace(uniqueID, "^12C", "12")) %>% 
+	mutate(uniqueID = str_replace(uniqueID, "^20C", "20")) %>% 
+	mutate(uniqueID = str_replace(uniqueID, "^24C", "24"))
 
 
 resp_weights <- left_join(resp_long, weights, by = "uniqueID")
@@ -295,19 +304,37 @@ all <- bind_rows(slopes.20.weights, slopes.24.weights, slopes.16.weights, slopes
 all.but.12 %>% 
 	filter(temperature.x == "24") %>% View
 
-resp.mass <- all %>% 
+resp.mass <- all %>%
 	mutate(mass = 0.00402*(length_mm^2.66)) %>% 
 	filter(!is.na(mass)) %>% 
 	mutate(cons_per_hour = (microbe.corr.slope/mass) *60 * 0.0002* -1) %>% 
 	select(temperature.x, cons_per_hour, well_number.x, uniqueID) %>% 
 	group_by(temperature.x, well_number.x, uniqueID) %>% 
 	summarise_each(funs(mean,median, sd,std.error)) %>%
-ggplot(data = ., aes(temperature.y, y = mean, x = temperature.x)) +
-	geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
-	geom_point(size = 2) + theme_bw() + ylab("oxygen flux, torr") + xlab("temperature, C") +
+	ungroup() %>% 
+	mutate(temperature = as.numeric(temperature.x)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+ 273.15)))) %>% 
+ggplot(data = ., aes(y = mean, x = inverse_temp)) +
+	# geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
+	geom_point(size = 4, color = "blue", alpha = 0.5) +
+	geom_smooth(method = "lm", color = "blue", size = 2) +
+	scale_x_reverse() + 
+	theme_bw() + ylab("mass-normalized oxygen flux") + xlab("temperature (1/kT)") +
 	theme(axis.text=element_text(size=16),
-				axis.title=element_text(size=16,face="bold")) + geom_smooth(method = "lm")
+				axis.title=element_text(size=16,face="bold")) + 
+	theme(axis.text.y   = element_text(size=20),
+				axis.text.x   = element_text(size=20),
+				axis.title.y  = element_text(size=20),
+				axis.title.x  = element_text(size=20),
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				axis.line = element_line(colour = "black"),
+				axis.ticks = element_line(size = 1)) +
+	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 
+
+ggsave("daphnia_metabolic_rate.png")
 
 ### convert the 12C values which are in air sat to torr
 
@@ -339,8 +366,15 @@ resp.mass$temp.k <- resp.mass$temperature.x + 273.15
 resp.mass <- resp.mass %>% 
 	mutate(temp.inv = (1/(.00008617*(temperature.x+ 273.15))))
 
-tidy(lm(log(mean) ~ temp.inv, data = resp.mass), conf.int = TRUE) %>% 
+
+write_csv(resp.mass, "data-processed/daphnia_metabolic_rates.csv")
+
+tidy(lm(log(mean) ~ inverse_temp, data = resp.mass), conf.int = TRUE) %>% 
 	View
+
+ggplot(aes(x = temp.inv, y = log(mean)), data = resp.mass) + geom_point()
+
+
 
 estimate.m(resp.mass$temperature.x, resp.mass$mean)
 
@@ -349,8 +383,11 @@ resp.mass <- as.data.frame(resp.mass)
 resp.mass$temperature.x <- as.numeric(resp.mass$temperature.x)
 
 str(resp.mass)
-ggplot(data = resp.mass, aes(x = (1/(.00008617*(resp.mass$temperature.x + 273.15))), y = log(resp.mass$mean))) +
-			 	geom_point(size = 4, color = "white") + geom_smooth(method = "lm", color = "white") + theme_bw() +
+
+resp.mass %>% 
+	mutate(inv_temp = (1/(.00008617*(temperature.x + 273.15)))) %>% 
+ggplot(data = ., aes(x = inv_temp, y = log(mean))) +
+			 	geom_point(size = 4) + geom_smooth(method = "lm") + theme_bw() +
 	xlab("temperature, 1/kt") + ylab("log mass-normalized oxygen flux, torr") +
 # 	theme(axis.text=element_text(size=16, color = "white"),
 # 				axis.title=element_text(size=16,face="bold", color = "white")) +
@@ -424,7 +461,7 @@ all$temperature.x <- as.numeric(all$temperature.x)
 	filter(!is.na(mass)) %>% 
 	mutate(cons_per_hour = (microbe.corr.slope/mass) *60 * 0.0002* -1) %>% 
 	select(temperature.x, cons_per_hour, well_number.x) %>% 
-	group_by(temperature.x, well_number.x) %>% View
+	group_by(temperature.x, well_number.x) %>% 
 	ggplot(data = ., aes(y = cons_per_hour, x = temperature.x)) +
 	# geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
 	geom_point(size = 2) + theme_bw() + ylab("oxygen flux, torr") + xlab("temperature, C") +
@@ -569,12 +606,16 @@ m_resp <- left_join(mresp_long, well_IDs, by = "well_number") %>%
 	rename(uniqueID = UniqueID) %>% 
 	mutate(uniqueID = as.character(uniqueID))
 
+sep_June2 <- read_csv("data-processed/ptemp_summaries_June2.csv")
+
 sep_June2 <- sep_June2 %>% 
 	mutate(uniqueID = as.character(uniqueID))
 
 m_resp_biovol <- left_join(m_resp, sep_June2, by = "uniqueID")
 
 m_resp_biovol %>% 
+	mutate(treatment = str_replace(treatment, "DEF", "low phosporus")) %>% 
+	mutate(treatment = str_replace(treatment, "FULL", "high phosporus")) %>% 
 	filter(!grepl('A1|A2|A3|A4|A5', well_number)) %>% 
 	filter(!grepl('24_A6|24_B5|24_D4|20_A6|20_B3|20_B4|20_D2|20_D3|16_A6|16_B1|16_B5|16_C1|16_C3|16_C4', uniquewell)) %>% 
 	group_by(uniqueID, temperature, treatment) %>% 
@@ -582,14 +623,44 @@ m_resp_biovol %>%
 	do(tidy(lm(oxygen ~ Time_in_min, data = .), conf.int = TRUE)) %>% 
 	filter(term != "(Intercept)") %>% 
 	as.data.frame() %>%
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
 	# dplyr::arrange(conf.high) %>% 
 	# group_by(temperature, treatment) %>% View
 	# summarise(mean.slope = mean(estimate)) %>%
-	ggplot(data = ., aes(x = temperature, y = estimate, group = treatment, color = treatment)) +
-	geom_point() +
-	geom_smooth(method = "lm")
-	geom_errorbar(aes(ymin=estimate-std.error, ymax=estimate + std.error), width=.2)
+	ggplot(data = ., aes(x = inverse_temp, y = log(estimate*-1), group = treatment, color = treatment)) +
+	geom_point(size = 4) +
+	geom_smooth(method = "lm") + scale_x_reverse() + ylab("log microbial oxygen flux") + xlab("inverse temperature (1/kT)") +
+	theme(axis.text.y   = element_text(size=20),
+				axis.text.x   = element_text(size=20),
+				axis.title.y  = element_text(size=20),
+				axis.title.x  = element_text(size=20),
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				axis.line = element_line(colour = "black"),
+				axis.ticks = element_line(size = 1)) +
+	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 
+ggsave("microbial_respiration.png")
+
+
+	m_resp_biovol %>% 
+		filter(!grepl('A1|A2|A3|A4|A5', well_number)) %>% 
+		filter(!grepl('24_A6|24_B5|24_D4|20_A6|20_B3|20_B4|20_D2|20_D3|16_A6|16_B1|16_B5|16_C1|16_C3|16_C4', uniquewell)) %>% 
+		group_by(uniqueID, temperature, treatment) %>% 
+		filter(Time_in_min > 20) %>% 
+		do(tidy(lm(oxygen ~ Time_in_min, data = .), conf.int = TRUE)) %>% 
+		filter(term != "(Intercept)") %>% 
+		as.data.frame() %>% 
+		group_by(treatment) %>% 
+		mutate(temperature = as.numeric(temperature)) %>% 
+		mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>% 
+		do(tidy(lm(log(estimate*-1) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	
+	
+	
+	
 	
 	
 m_resp_biov <- m_resp_biovol %>% 
