@@ -227,14 +227,29 @@ fittedr_plot <- ggplot(data = fittedr, aes(x = transformedtemp, y = log(r))) +
         labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
 fittedr_plot
 
+r_model <- lm(data = fittedr, log(r) ~ transformedtemp)
+confint(r_model)
+
+fittedK <- distinct(fittedfulldata, K, transformedtemp)
+
+fittedK_plot <- ggplot(data = fittedK, aes(x = transformedtemp, y = log(K))) +
+        geom_point() +
+        geom_smooth(method = lm) +
+        ggtitle("Fitted log(K) Values") +
+        labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
+fittedK_plot
+
+K_model <- lm(data = fittedK, log(K) ~ transformedtemp)
+confint(K_model)
+
 prod_plot <- ggplot() +
-		geom_point(data = full16data, aes(x = days, y = P)) +
-		geom_line(data = fittedfull16data, aes(x = time, y = P), color = "red")
+		geom_point(data = full24data, aes(x = days, y = P)) +
+		geom_line(data = fittedfull24data, aes(x = time, y = P), color = "red")
 prod_plot
 
 het_plot <- ggplot() +
-		geom_point(data = full16data, aes(x = days, y = H)) +
-		geom_line(data = fittedfull16data, aes(x = time, y = H), color = "red")
+		geom_point(data = full24data, aes(x = days, y = H)) +
+		geom_line(data = fittedfull24data, aes(x = time, y = H), color = "red")
 het_plot
 
 
