@@ -243,8 +243,8 @@ K_model <- lm(data = fittedK, log(K) ~ transformedtemp)
 confint(K_model)
 
 prod_plot <- ggplot() +
-		geom_point(data = full24data, aes(x = days, y = P)) +
-		geom_line(data = fittedfull24data, aes(x = time, y = P), color = "red")
+		geom_point(data = full16data, aes(x = days, y = P)) +
+		geom_line(data = fittedfull16data, aes(x = time, y = P), color = "red")
 prod_plot
 
 het_plot <- ggplot() +
