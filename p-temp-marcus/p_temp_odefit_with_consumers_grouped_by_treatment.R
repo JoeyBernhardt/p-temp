@@ -21,9 +21,23 @@ initdata <- read.csv(file = file.path("data-processed", "march29_cell_data.csv")
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
+# Remove unneeded columns from "initdata" dataframe
+
+initdata <- initdata[-c(1, 5, 7)]
+initdata <- rename(initdata, phosphorus_treatment = nutrient_level, 
+				     volume_cell = cell_volume,
+				     algal_cell_concentration_cells_per_ml = cell_density
+			)
+
+initdata <- mutate(initdata, algal_biovolume = volume_cell * algal_cell_concentration_cells_per_ml,
+				     days = 0,
+				     daphnia_total = 10)
+
+pdata <- bind_rows(pdata, initdata)
+
 ### Data Manipulation ###
 
-# Rename columns in data frame to correspond to the names of the stocks in our
+# Rename columns in the "pdata" data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary to invoke the fitOdeModel function.
 pdata <- rename(pdata, P = algal_biovolume)
 pdata <- rename(pdata, H = daphnia_total)
@@ -31,27 +45,6 @@ pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
 
 # Reorder rows in data frame by treatment ID, and then by days
 pdata <- arrange(pdata, unique_ID, days)
-
-# Split entire dataset into multiple indexed data frames based on their ID
-pdata <- split(pdata, f = pdata$unique_ID)
-
-# Write function for inserting initial densities into dataframes for each treatment
-insertinitstate <- function(data) {
-		
-		temperature <- data$temperature[1]
-		unique_ID <- data$unique_ID[1]
-		Phosphorus <- data$Phosphorus[1]
-		day_three_cell_volume <- data$volume_cell[1]
-		day_zero_cell_concentration <- 10 ^ 5
-		initial_algal_biovolume <- day_three_cell_volume * day_zero_cell_concentration
-		data <- add_row(data, H = 10, P = initial_algal_biovolume, 
-				    Phosphorus = Phosphorus, unique_ID, temperature, days = 0, .before = 1)
-}
-
-pdata <- map_df(pdata, insertinitstate)
-
-# Reorder rows in data frame by days, and then by treatment ID
-pdata <- arrange(pdata, days, unique_ID)
 
 # Create a column for boltzmann-transformed temperatures
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
