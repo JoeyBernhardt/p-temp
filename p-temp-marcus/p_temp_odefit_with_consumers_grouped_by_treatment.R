@@ -44,7 +44,13 @@ pdata <- rename(pdata, H = daphnia_total)
 pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
 
 # Reorder rows in data frame by treatment ID, and then by days
-pdata <- arrange(pdata, unique_ID, days)
+pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
+
+# Write function for filling in unique IDs
+
+insertuniqueID <- function(data){
+
+					  }
 
 # Create a column for boltzmann-transformed temperatures
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
