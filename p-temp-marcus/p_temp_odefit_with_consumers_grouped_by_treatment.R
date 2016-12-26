@@ -16,6 +16,11 @@ pdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #f
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
+# Read the day zero data from the consumer free controls, and store as object
+initdata <- read.csv(file = file.path("data-processed", "march29_cell_data.csv"), #file.path() is used for cross-platform compatibility
+	strip.white = TRUE,
+	na.strings = c("NA","") )
+
 ### Data Manipulation ###
 
 # Rename columns in data frame to correspond to the names of the stocks in our
