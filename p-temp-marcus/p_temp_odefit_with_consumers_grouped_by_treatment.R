@@ -48,8 +48,8 @@ pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
 
 # Write function for filling in unique IDs
 
-insertuniqueID <- function(data){
-
+insertuniqueID <- function(column){
+					
 					  }
 
 # Create a column for boltzmann-transformed temperatures
