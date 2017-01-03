@@ -46,12 +46,6 @@ pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
 # Reorder rows in data frame by treatment ID, and then by days
 pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
 
-# Write function for filling in unique IDs
-
-insertuniqueID <- function(column){
-					
-					  }
-
 # Create a column for boltzmann-transformed temperatures
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
@@ -60,6 +54,8 @@ pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
 
 full12data <- filter(pdata, unique_ID == 37 | unique_ID == 38 | unique_ID == 39 |
 			     unique_ID == 40 | unique_ID == 41 | unique_ID == 42)
+
+full12datatest <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
 
 full16data <- filter(pdata, unique_ID == 13 | unique_ID == 14 | unique_ID == 15 |
 			     unique_ID == 16 | unique_ID == 17 | unique_ID == 18)
@@ -110,15 +106,15 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 0.5, K = 1e8, a = 10, b = 5e4, eps = 0.01, m = 0.05)
+Parameters <- c(r = 1, K = 1e8, a = 10, b = 5e6, eps = 0.01, m = 0.1)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.1, K = 1e6, a = 5, b = 1e4, eps = 0.005, m = 0.01)
-UpperBound <- c(r = 3, K = 1e13, a = 1e3, b = 1e5, eps = 0.02, m = 0.2) 
+LowerBound <- c(r = 0.1, K = 1e7, a = 5, b = 1e7, eps = 0.005, m = 0.01)
+UpperBound <- c(r = 2, K = 1e9, a = 1e3, b = 5e7, eps = 0.02, m = 0.3) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -172,8 +168,9 @@ CRmodel <- new("odeModel",
 
 pfit <- function(data) {
 	
+		dayzerodata <- filter(data, days == 0)
 		model <- CRmodel
-		init(model) <- c(P = mean(data$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		init(model) <- c(P = mean(dayzerodata$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
 		yobs <- select(data, P, H) # The Y values of the observed data points we are fitting our model to
 
@@ -195,7 +192,7 @@ pfit <- function(data) {
 		
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
-		# fitted parameters. 
+		# fitted parameters.
 	
 		coef(fittedmodel)
 
@@ -215,39 +212,15 @@ pfit <- function(data) {
 		return(simdata)
 }
 
-fitteddata <- pfit(full12data)
-
-fittedr <- distinct(fitteddata, r, transformedtemp)
-
-fittedr_plot <- ggplot(data = fittedr, aes(x = transformedtemp, y = log(r))) +
-        geom_point() +
-        geom_smooth(method = lm) +
-        ggtitle("Fitted log(r) Values") +
-        labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
-fittedr_plot
-
-r_model <- lm(data = fittedr, log(r) ~ transformedtemp)
-confint(r_model)
-
-fittedK <- distinct(fittedfulldata, K, transformedtemp)
-
-fittedK_plot <- ggplot(data = fittedK, aes(x = transformedtemp, y = log(K))) +
-        geom_point() +
-        geom_smooth(method = lm) +
-        ggtitle("Fitted log(K) Values") +
-        labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
-fittedK_plot
-
-K_model <- lm(data = fittedK, log(K) ~ transformedtemp)
-confint(K_model)
+fitteddata <- pfit(full12datatest)
 
 prod_plot <- ggplot() +
-		geom_point(data = full12data, aes(x = days, y = P)) +
+		geom_point(data = full12datatest, aes(x = days, y = P)) +
 		geom_line(data = fitteddata, aes(x = time, y = P), color = "red")
 
 
 het_plot <- ggplot() +
-		geom_point(data = full12data, aes(x = days, y = H)) +
+		geom_point(data = full12datatest, aes(x = days, y = H)) +
 		geom_line(data = fitteddata, aes(x = time, y = H), color = "red")
 
 grid.arrange(prod_plot, het_plot, ncol=2)
