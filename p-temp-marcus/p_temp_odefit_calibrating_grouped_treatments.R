@@ -52,31 +52,21 @@ pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
 
 # Split entire dataset into multiple indexed data frames based on their ID
 
-full12data <- filter(pdata, unique_ID == 37 | unique_ID == 38 | unique_ID == 39 |
-			     unique_ID == 40 | unique_ID == 41 | unique_ID == 42)
+full12data <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
 
-full12datatest <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
+full16data <- filter(pdata, Phosphorus == "FULL" & temperature == 16)
 
-full16data <- filter(pdata, unique_ID == 13 | unique_ID == 14 | unique_ID == 15 |
-			     unique_ID == 16 | unique_ID == 17 | unique_ID == 18)
+full20data <- filter(pdata, Phosphorus == "FULL" & temperature == 20)
 
-full20data <- filter(pdata, unique_ID == 1 | unique_ID == 2 | unique_ID == 3 |
-			     unique_ID == 4 | unique_ID == 5 | unique_ID == 6)
+full24data <- filter(pdata, Phosphorus == "FULL" & temperature == 24)
 
-full24data <- filter(pdata, unique_ID == 25 | unique_ID == 26 | unique_ID == 27 |
-			     unique_ID == 28 | unique_ID == 29 | unique_ID == 30)
+def12data <- filter(pdata, Phosphorus == "DEF" & temperature == 12)
 
-def12data <- filter(pdata, unique_ID == 43 | unique_ID == 44 | unique_ID == 45 |
-			     unique_ID == 46 | unique_ID == 47 | unique_ID == 48)
+def16data <- filter(pdata, Phosphorus == "DEF" & temperature == 16)
 
-def16data <- filter(pdata, unique_ID == 19 | unique_ID == 20 | unique_ID == 21 |
-			     unique_ID == 22 | unique_ID == 23 | unique_ID == 24)
+def20data <- filter(pdata, Phosphorus == "DEF" & temperature == 20)
 
-def20data <- filter(pdata, unique_ID == 7 | unique_ID == 8 | unique_ID == 9 |
-			     unique_ID == 10 | unique_ID == 11 | unique_ID == 12)
-
-def24data <- filter(pdata, unique_ID == 31 | unique_ID == 32 | unique_ID == 33 |
-			     unique_ID == 34 | unique_ID == 35 | unique_ID == 36)
+def24data <- filter(pdata, Phosphorus == "DEF" & temperature == 24)
 
 ### Model Construction ###
 
@@ -106,15 +96,17 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 1, K = 1e8, a = 10, b = 5e6, eps = 0.01, m = 0.1)
+Parameters <- c(r = 1.4, K = 1e8, a = 1000, b = 1e8, eps = 0.0001, m = 0.01)
+
+# original c(r = 5, K = 1e10, a = 10, b = 5e6, eps = 0.01, m = 0.1)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.1, K = 1e7, a = 5, b = 1e7, eps = 0.005, m = 0.01)
-UpperBound <- c(r = 2, K = 1e9, a = 1e3, b = 5e7, eps = 0.02, m = 0.3) 
+LowerBound <- c(r = 0.1, K = 1e7, a = 5, b = 1e6, eps = 0.005, m = 0.01)
+UpperBound <- c(r = 6, K = 1e13, a = 1e3, b = 5e6, eps = 0.02, m = 0.3) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -197,7 +189,7 @@ pfit <- function(data) {
 		coef(fittedmodel)
 
 		simmodel <- model
-		# set model parameters to fitted values and simulate again
+		# set model parameters to fitted values and simulate
 		parms(simmodel)[FittedParameters] <- coef(fittedmodel)
 		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
 		simdata <- mutate(simdata, r = coef(fittedmodel)["r"],
@@ -212,17 +204,40 @@ pfit <- function(data) {
 		return(simdata)
 }
 
-fitteddata <- pfit(full12datatest)
+fitteddata <- pfit(full16data)
+
+### Calibration function ###
+
+# Declare the parameters to be used in the dynamical models
+SimParameters <- c(r = 1.4, K = 8e7, a = 100, b = 3.02e6, eps = 0.00057, m = 0.10)
+
+simfit <- function(data){
+
+		dayzerodata <- filter(data, days == 0)
+		simmodel <- CRmodel
+		init(simmodel) <- c(P = mean(dayzerodata$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		parms(simmodel) <- SimParameters
+
+		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
+		
+		return(simdata)
+}
+
+calibdata <- simfit(full24data)
+
+### PLOTS ###
 
 prod_plot <- ggplot() +
-		geom_point(data = full12datatest, aes(x = days, y = P)) +
-		geom_line(data = fitteddata, aes(x = time, y = P), color = "red")
+		geom_point(data = full24data, aes(x = days, y = P)) +
+		geom_line(data = calibdata, aes(x = time, y = P), color = "red")
 
 
 het_plot <- ggplot() +
-		geom_point(data = full12datatest, aes(x = days, y = H)) +
-		geom_line(data = fitteddata, aes(x = time, y = H), color = "red")
+		geom_point(data = full24data, aes(x = days, y = H)) +
+		geom_line(data = calibdata, aes(x = time, y = H), color = "red")
 
 grid.arrange(prod_plot, het_plot, ncol=2)
 
 
+# for full12: m=0.17 (fitting line to early deaths in daphnia)
+# r = 1.4
