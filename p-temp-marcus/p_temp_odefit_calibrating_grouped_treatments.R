@@ -96,7 +96,7 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 1.4, K = 1e8, a = 1000, b = 1e8, eps = 0.0001, m = 0.01)
+Parameters <- c(r = 1.4, K = 1e8, a = 60.92596, b = 3023754, eps = 0.006605849 , m = 0.35)
 
 # original c(r = 5, K = 1e10, a = 10, b = 5e6, eps = 0.01, m = 0.1)
 
@@ -106,7 +106,7 @@ FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
 LowerBound <- c(r = 0.1, K = 1e7, a = 5, b = 1e6, eps = 0.005, m = 0.01)
-UpperBound <- c(r = 6, K = 1e13, a = 1e3, b = 5e6, eps = 0.02, m = 0.3) 
+UpperBound <- c(r = 2, K = 1e9, a = 2e2, b = 5e6, eps = 0.08, m = 0.5) 
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -209,7 +209,7 @@ fitteddata <- pfit(full16data)
 ### Calibration function ###
 
 # Declare the parameters to be used in the dynamical models
-SimParameters <- c(r = 1.4, K = 8e7, a = 100, b = 3.02e6, eps = 0.00057, m = 0.10)
+SimParameters <- c(r = 1.4, K = 1e8, a = 150.92596, b = 40237040, eps = 0.003605849 , m = 0.35)
 
 simfit <- function(data){
 
@@ -223,21 +223,24 @@ simfit <- function(data){
 		return(simdata)
 }
 
-calibdata <- simfit(full24data)
+targetdata <- full16data
+
+simulateddata <- simfit(targetdata)
 
 ### PLOTS ###
 
 prod_plot <- ggplot() +
-		geom_point(data = full24data, aes(x = days, y = P)) +
-		geom_line(data = calibdata, aes(x = time, y = P), color = "red")
+		geom_point(data = targetdata, aes(x = days, y = P)) +
+		geom_line(data = fitteddata, aes(x = time, y = P), color = "red")
 
 
 het_plot <- ggplot() +
-		geom_point(data = full24data, aes(x = days, y = H)) +
-		geom_line(data = calibdata, aes(x = time, y = H), color = "red")
+		geom_point(data = targetdata, aes(x = days, y = H)) +
+		geom_line(data = fitteddata, aes(x = time, y = H), color = "red")
 
 grid.arrange(prod_plot, het_plot, ncol=2)
 
-
+# initial parameter seedings
 # for full12: m=0.17 (fitting line to early deaths in daphnia)
 # r = 1.4
+# full16 params: c(r = 1.4, K = 1e8, a = 60.92596, b = 3023754, eps = 0.006605849 , m = 0.35)
