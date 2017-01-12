@@ -17,27 +17,27 @@ pdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #f
 	na.strings = c("NA","") )
 
 # Read the day zero data from the consumer free controls, and store as object
-initdata <- read.csv(file = file.path("data-processed", "march29_cell_data.csv"), #file.path() is used for cross-platform compatibility
+dayzerodata <- read.csv(file = file.path("data-processed", "march29_cell_data.csv"), #file.path() is used for cross-platform compatibility
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
 ### Data Manipulation ###
 
-# Remove unneeded columns from "initdata" dataframe
-initdata <- initdata[-c(1, 5, 7)] # column 1 is "filename"; column 5 is "date"; column 7 is "start time"
+# Remove unneeded columns from "dayzerodata" dataframe
+dayzerodata <- dayzerodata[-c(1, 5, 7)] # column 1 is "filename"; column 5 is "date"; column 7 is "start time"
 
-# Rename columns in "initdata" to correspond to those in pdata
-initdata <- rename(initdata, phosphorus_treatment = nutrient_level, 
+# Rename columns in "dayzerodata" to correspond to those in pdata
+dayzerodata <- rename(dayzerodata, phosphorus_treatment = nutrient_level, 
 				     volume_cell = cell_volume,
 				     algal_cell_concentration_cells_per_ml = cell_density
 			)
-# Calculate the initial algal biovolume, and also add in some new columns corresponding to initial values for days and daphnia.
-initdata <- mutate(initdata, algal_biovolume = volume_cell * algal_cell_concentration_cells_per_ml,
+# Calculate the initial algal biovolume, and also add in some new columns corresponding to day zero values for days and daphnia.
+dayzerodata <- mutate(dayzerodata, algal_biovolume = volume_cell * algal_cell_concentration_cells_per_ml,
 				     days = 0,
 				     daphnia_total = 10)
 
-# Vertically merge "pdata" and "initdata" data frames
-pdata <- bind_rows(pdata, initdata)
+# Vertically merge "pdata" and "dayzerodata" data frames
+pdata <- bind_rows(pdata, dayzerodata)
 
 # Rename columns in the "pdata" data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary to invoke the fitOdeModel function.
@@ -45,6 +45,7 @@ pdata <- rename(pdata, P = algal_biovolume)
 pdata <- rename(pdata, H = daphnia_total)
 pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
 
+# Here we scale the phytoplankton density by 250, in order to get the total biovolume present in the beaker.
 scalefactor <- 250
 pdata <- mutate(pdata, P = P * scalefactor)
 
@@ -58,19 +59,13 @@ pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
 # Split entire dataset into multiple indexed data frames based on their ID
 
 full12data <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
-
 full16data <- filter(pdata, Phosphorus == "FULL" & temperature == 16)
-
 full20data <- filter(pdata, Phosphorus == "FULL" & temperature == 20)
-
 full24data <- filter(pdata, Phosphorus == "FULL" & temperature == 24)
 
 def12data <- filter(pdata, Phosphorus == "DEF" & temperature == 12)
-
 def16data <- filter(pdata, Phosphorus == "DEF" & temperature == 16)
-
 def20data <- filter(pdata, Phosphorus == "DEF" & temperature == 20)
-
 def24data <- filter(pdata, Phosphorus == "DEF" & temperature == 24)
 
 ### Model Construction ###
