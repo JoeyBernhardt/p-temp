@@ -9,7 +9,7 @@ library(gridExtra)
 # Load the knitr package for producing tables and graphics with markdown
 library(knitr)
 
-### Data Frame ###
+### Data Frames ###
 
 # Read the data from the consumer free controls, and store as object
 pdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
@@ -21,21 +21,23 @@ initdata <- read.csv(file = file.path("data-processed", "march29_cell_data.csv")
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
-# Remove unneeded columns from "initdata" dataframe
+### Data Manipulation ###
 
-initdata <- initdata[-c(1, 5, 7)]
+# Remove unneeded columns from "initdata" dataframe
+initdata <- initdata[-c(1, 5, 7)] # column 1 is "filename"; column 5 is "date"; column 7 is "start time"
+
+# Rename columns in "initdata" to correspond to those in pdata
 initdata <- rename(initdata, phosphorus_treatment = nutrient_level, 
 				     volume_cell = cell_volume,
 				     algal_cell_concentration_cells_per_ml = cell_density
 			)
-
+# Calculate the initial algal biovolume, and also add in some new columns corresponding to initial values for days and daphnia.
 initdata <- mutate(initdata, algal_biovolume = volume_cell * algal_cell_concentration_cells_per_ml,
 				     days = 0,
 				     daphnia_total = 10)
 
+# Vertically merge "pdata" and "initdata" data frames
 pdata <- bind_rows(pdata, initdata)
-
-### Data Manipulation ###
 
 # Rename columns in the "pdata" data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary to invoke the fitOdeModel function.
