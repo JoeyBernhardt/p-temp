@@ -43,8 +43,8 @@ pdata <- rename(pdata, P = algal_biovolume)
 pdata <- rename(pdata, H = daphnia_total)
 pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
 
-scalefactor <- 1000000
-pdata <- mutate(pdata, P = P / scalefactor)
+scalefactor <- 250
+pdata <- mutate(pdata, P = P * scalefactor)
 
 # Reorder rows in data frame by treatment ID, and then by days
 pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
@@ -100,22 +100,19 @@ return(output)
 
 # Declare the parameters to be used in the dynamical models
 
-Parameters <- c(r = 1.4, K = 150, a = 6, b = 75, eps = 0.25, m = 0.25)
-# Parameters <- c(r = 2, K = 150, a = 5, b = 50, eps = 1, m = 0.01)
+Parameters <- c(r = 2.67, K = 92647516291, a = 0.27, eps = 5.834479e-11, m = 0.11)
 
-# original c(r = 5, K = 1e10, a = 15, b = 5e6, eps = 0.01, m = 0.1)
+# WORKED FOR DEF16!!!
+# Parameters <- c(r = 2.5, K = 1e13, a = 0.15, eps = 0.00000000008, m = 0.1)
+
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
-FittedParameters <- c("r", "K", "a", "b", "eps", "m")
+FittedParameters <- c("r", "K", "a", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 1, K = 75, a = 0, b = 10, eps = 0.1, m = 0.01)
-UpperBound <- c(r = 5, K = 300, a = 15, b = 300, eps = 2, m = 1) 
-
-# old set for fitting def16
-#LowerBound <- c(r = 0.1, K = 1e2, a = 0, b = 10, eps = 0.0005, m = 0.0001)
-#UpperBound <- c(r = 5, K = 1e3, a = 10000, b = 10000, eps = 0.5, m = 0.5) 
+LowerBound <- c(r = 0.5, K = 1e9, a = 0.1, eps = 0.000000000005, m = 0.001)
+UpperBound <- c(r = 6, K = 1e12, a = 10, eps = 0.0000001, m = 1)
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -140,8 +137,8 @@ ParamScaling <- 1 / UpperBound
 CRmodel <- new("odeModel",
 	main = function (time, init, parms) {
 			with(as.list(c(init, parms)), {
-		dp <-  r * P * (1 - (P / K)) - a * H * (P / (P + b))
-		dh <-  a * eps * H * (P / (P + b)) - m * H
+		dp <-  r * P * (1 - (P / K)) - a * H * P
+		dh <-  a * eps * H * P - m * H
 		list(c(dp, dh))
 		})
 	},
@@ -188,7 +185,8 @@ pfit <- function(data) {
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = TRUE),
 			    rtol = 1e-10,
-			    atol = 1e-10
+			    atol = 1e-10,
+			    maxsteps = 5000
 		)
 		
 		# Here we create vectors to be used to output a dataframe of
@@ -205,7 +203,6 @@ pfit <- function(data) {
 						   K = coef(fittedmodel)["K"],
 						   a = coef(fittedmodel)["a"],
 						   eps = coef(fittedmodel)["eps"],
-						   b = coef(fittedmodel)["b"],
 						   m = coef(fittedmodel)["m"],
 						   temp = data$temperature[1],
 						   transformedtemp = data$transformedtemp[1]
@@ -219,7 +216,8 @@ fitteddata <- pfit(targetdata)
 ### Calibration function ###
 
 # Declare the parameters to be used in the dynamical models
-SimParameters <- c(r = 1.4, K = 1e8, a = 150.92596, b = 40237040, eps = 0.003605849 , m = 0.35)
+SimParameters <- c(r = 4.05, K = 113051101738, a = 0.24029643, eps = 5.812694e-06, m = 0.009410279)
+
 
 simfit <- function(data){
 
@@ -249,14 +247,31 @@ het_plot <- ggplot() +
 grid.arrange(prod_plot, het_plot, ncol=2)
 
 # initial parameter seedings
-# for full12: m=0.17 (fitting line to early deaths in daphnia)
-# r = 1.4
-# full16 params: c(r = 1.4, K = 1e8, a = 60.92596, b = 3023754, eps = 0.006605849 , m = 0.35)
+# for def16: 2.676643 92647516291 0.1523916 5.834479e-11 0.1133629
 
-# scaled
-#def16 params: c(r = 5, K = 418.2061, a = 107.7169, eps = 0.005, b = 311.6985, m = 0.0676154)
-#even better for def16: 5 713.9072 697.2842 0.001893697 2191.698 0.01347364 
+# even better for def16!:
+#  4 178420773594 0.2292639 1.174038e-11 0.01743577
 
-#def20 2.114893 146.4018 1.496364 0.2825338 46.78096 0.2066709
+# calculate ssq
 
-#full12 1.031329 216.2141 250.4225 0.04376703 1963.497 0.1280431 
+obstime <- targetdata$days # The X values of the observed data points we are fitting our model to
+yobs <- select(targetdata, P, H) # The Y values of the observed data points we are fitting our model to
+
+findinit <- function(num){
+
+rand_r <- runif(1, min = 0, max = 5)
+rand_K <- runif(1, min = 1e9, max = 1e12)
+rand_a <- runif(1, min = 0, max = 10)
+rand_eps <- runif(1, min = 0, max = 1e-5)
+rand_m <- runif(1, min = 0, max = 0.5)
+
+SearchParameters <- c(r = rand_r, K = rand_K, a = rand_a, eps = rand_eps, m = rand_m)
+ssq <- ssqOdeModel(SearchParameters, CRmodel, obstime, yobs)
+
+output <- data.frame(ssq, rand_r, rand_K, rand_a, rand_eps, rand_m)
+return(output)
+}
+
+seq <- seq(1,1000,1)
+findinitdata <- map_df(seq, findinit)
+findinitdata
