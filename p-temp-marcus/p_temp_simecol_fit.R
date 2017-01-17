@@ -54,7 +54,7 @@ pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
 
 # Create a column for boltzmann-transformed temperatures
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
-pdata <- mutate(pdata, transformedtemp = -1/(Boltz * (temperature + 273.15)))
+pdata <- mutate(pdata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
 
 # Split entire dataset into multiple indexed data frames based on their ID
 
@@ -99,17 +99,29 @@ return(output)
 
 Parameters <- c(r = 2.67, K = 92647516291, a = 0.27, eps = 5.834479e-11, m = 0.11)
 
-# WORKED FOR DEF16!!!
-# Parameters <- c(r = 2.5, K = 1e13, a = 0.15, eps = 0.00000000008, m = 0.1)
-
-
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.5, K = 1e9, a = 0.1, eps = 0.000000000005, m = 0.001)
-UpperBound <- c(r = 6, K = 1e12, a = 10, eps = 0.0000001, m = 1)
+
+r_min <- 0.5
+r_max <- 8
+
+K_min <- 1e10
+K_max <- 1e12
+
+a_min <- 0.1
+a_max <- 1
+
+eps_min <- 1e-12
+eps_max <- 1e-10
+
+m_min <- 0.01
+m_max <- 0.1
+
+LowerBound <- c(r = r_min, K = K_min, a = a_min, eps = eps_min, m = m_min)
+UpperBound <- c(r = r_max, K = K_max, a = a_max, eps = eps_max, m = m_max)
 
 # Declare the "step size" for the PORT algorithm. 1 / UpperBound is recommended
 # by the simecol documentation.
@@ -160,12 +172,17 @@ CRmodel <- new("odeModel",
 # single replicate. To do this call rKfit(controldata[['X']], where "X" is the
 # replicate's ID number.
 
+portfit <- function(data) {
 
-pfit <- function(data) {
-	
 		dayzerodata <- filter(data, days == 0)
-		model <- CRmodel
-		init(model) <- c(P = mean(dayzerodata$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		model <- CRmodel # initial the simecol model object
+		parms(model)[FittedParameters] <- c(r = runif(1, min = r_min, max = r_max),
+								K = runif(1, min = K_min, max = K_max),
+								a = runif(1, min = a_min, max = a_max),
+								eps = runif(1, min = eps_min, max = eps_max),
+								m = runif(1, min = m_min, max = m_max)
+								)
+		init(model) <- c(P = mean(dayzerodata$P), H = 10) # Set initial model conditions to the mean biovolume taken from the first measurement day
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
 		yobs <- select(data, P, H) # The Y values of the observed data points we are fitting our model to
 
@@ -174,8 +191,8 @@ pfit <- function(data) {
 		# is fairly standard, although alternatives do exist.
 		
 		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
-		# "lower" is a vector containing the lower bound constraints
-		# for the parameter values. This may need tweaking.
+		# "lower" and upper are vectors containing the lower and upper bound constraints
+		# for the parameter values.
 
 		fittedmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
@@ -189,38 +206,88 @@ pfit <- function(data) {
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
 		# fitted parameters.
-	
-		coef(fittedmodel)
 
-		simmodel <- model
 		# set model parameters to fitted values and simulate
-		parms(simmodel)[FittedParameters] <- coef(fittedmodel)
-		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
-		simdata <- mutate(simdata, r = coef(fittedmodel)["r"],
-						   K = coef(fittedmodel)["K"],
-						   a = coef(fittedmodel)["a"],
-						   eps = coef(fittedmodel)["eps"],
-						   m = coef(fittedmodel)["m"],
-						   temp = data$temperature[1],
-						   transformedtemp = data$transformedtemp[1]
-					)
-		return(simdata)
+
+		ssq <- ssqOdeModel(coef(fittedmodel), model, obstime, yobs)
+		phosphorus <- data$Phosphorus[1]
+		temperature <- data$temperature[1]
+		transformedtemperature <- data$transformedtemperature[1]
+		r <- coef(fittedmodel)["r"]
+		K <- coef(fittedmodel)["K"]
+		a <- coef(fittedmodel)["a"]
+		eps <- coef(fittedmodel)["eps"]
+		m <- coef(fittedmodel)["m"]
+
+		simulation_data <- data.frame(ssq, phosphorus, temperature, transformedtemperature, r, K, a, eps, m)
+
+		return(simulation_data)
 }
 
-targetdata <- full20data
-fitteddata <- pfit(targetdata)
+repfit <- function(data, num){
 
-### Calibration function ###
+replicates <- seq(1, num, 1)
+simulation_data <- data.frame(ssq = double(),
+					phosphorus = integer(),
+					temperature = double(),
+					transformedtemperature = double(),
+					r = double(),
+			  		K = double(), 
+                	   		a = double(), 
+			   		eps = double(),
+					m = double(),
+                	   		stringsAsFactors = FALSE)
 
-# Declare the parameters to be used in the dynamical models
-SimParameters <- c(r = 4.05, K = 113051101738, a = 0.24029643, eps = 5.812694e-06, m = 0.009410279)
+for (i in replicates) {
+simulation_output <- portfit(data)
+simulation_data <- rbind(simulation_data, simulation_output)
+}
 
+return(simulation_data)
+}
 
+trimdata <- function(data){
+
+data <- filter(data, ssq != 0)
+data <- arrange(data, ssq)
+data <- data[1,]
+
+return(data)
+}
+
+num <- 50
+fitteddef12data <- trimdata(repfit(def12data, num))
+fitteddef16data <- trimdata(repfit(def16data, num))
+fitteddef20data <- trimdata(repfit(def20data, num))
+fitteddef24data <- trimdata(repfit(def24data, num))
+
+fittedfull12data <- trimdata(repfit(full12data, num))
+fittedfull16data <- trimdata(repfit(full16data, num))
+fittedfull20data <- trimdata(repfit(full20data, num))
+fittedfull24data <- trimdata(repfit(full24data, num))
+
+fitteddata <- bind_rows(fitteddef12data,
+				fitteddef16data,
+				fitteddef20data,
+				fitteddef24data,
+				fittedfull12data,
+				fittedfull16data,
+				fittedfull20data,
+				fittedfull24data)
+
+write.csv(fitteddata, "fitteddata.csv")
+
+targetdata <- def16data
+
+#def24data
+# SimParameters <- c(r = 8.000000, K = 231170612575, a = 0.2096601, eps = 4.818179e-11, m = 0.02274694)
+#def16data
+SimParameters <- c(r = 6.0269286, K = 2.040687e+11, a = 0.3919607, eps = 5.000000e-12, m = 0.01026190)
 simfit <- function(data){
 
 		dayzerodata <- filter(data, days == 0)
 		simmodel <- CRmodel
-		init(simmodel) <- c(P = mean(dayzerodata$P[1:6]), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		init(simmodel) <- c(P = mean(dayzerodata$P), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
 		parms(simmodel) <- SimParameters
 
 		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
@@ -234,41 +301,35 @@ simulateddata <- simfit(targetdata)
 
 prod_plot <- ggplot() +
 		geom_point(data = targetdata, aes(x = days, y = P)) +
-		geom_line(data = fitteddata, aes(x = time, y = P), color = "red")
+		geom_line(data = simulateddata, aes(x = time, y = P), color = "red")
 
 
 het_plot <- ggplot() +
 		geom_point(data = targetdata, aes(x = days, y = H)) +
-		geom_line(data = fitteddata, aes(x = time, y = H), color = "red")
+		geom_line(data = simulateddata, aes(x = time, y = H), color = "red")
 
 grid.arrange(prod_plot, het_plot, ncol=2)
 
-# initial parameter seedings
-# for def16: 2.676643 92647516291 0.1523916 5.834479e-11 0.1133629
+fittedr_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
+        geom_point() +
+        geom_smooth(method = lm) +
+        ggtitle("Fitted log(r) Values") +
+        labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
+fittedr_plot
 
-# even better for def16!:
-#  4 178420773594 0.2292639 1.174038e-11 0.01743577
+r_model <- lm(data = fitteddata, log(r) ~ transformedtemperature)
+confint(r_model)
 
-# calculate ssq
+fittedK_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(K), color = phosphorus)) +
+        geom_point() +
+        geom_smooth(method = lm) +
+        ggtitle("Fitted log(K) Values") +
+        labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
+fittedK_plot
 
-obstime <- targetdata$days # The X values of the observed data points we are fitting our model to
-yobs <- select(targetdata, P, H) # The Y values of the observed data points we are fitting our model to
-
-findinit <- function(num){
-
-rand_r <- runif(1, min = 0, max = 5)
-rand_K <- runif(1, min = 1e9, max = 1e12)
-rand_a <- runif(1, min = 0, max = 10)
-rand_eps <- runif(1, min = 0, max = 1e-5)
-rand_m <- runif(1, min = 0, max = 0.5)
-
-SearchParameters <- c(r = rand_r, K = rand_K, a = rand_a, eps = rand_eps, m = rand_m)
-ssq <- ssqOdeModel(SearchParameters, CRmodel, obstime, yobs)
-
-output <- data.frame(ssq, rand_r, rand_K, rand_a, rand_eps, rand_m)
-return(output)
-}
-
-seq <- seq(1,1000,1)
-findinitdata <- map_df(seq, findinit)
-findinitdata
+fitteda_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(a), color = phosphorus)) +
+        geom_point() +
+        geom_smooth(method = lm) +
+        ggtitle("Fitted log(a) Values") +
+        labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
+fitteda_plot
