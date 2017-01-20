@@ -245,7 +245,7 @@ data <- data[1,]
 return(data)
 }
 
-num <- 10
+num <- 100
 rawfitteddef12data <- repfit(def12data, num)
 rawfitteddef16data <- repfit(def16data, num)
 rawfitteddef20data <- repfit(def20data, num)
