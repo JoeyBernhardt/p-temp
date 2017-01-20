@@ -31,6 +31,7 @@ dayzerodata <- rename(dayzerodata, phosphorus_treatment = nutrient_level,
 				     volume_cell = cell_volume,
 				     algal_cell_concentration_cells_per_ml = cell_density
 			)
+
 # Calculate the initial algal biovolume, and also add in some new columns corresponding to day zero values for days and daphnia.
 dayzerodata <- mutate(dayzerodata, algal_biovolume = volume_cell * algal_cell_concentration_cells_per_ml,
 				     days = 0,
@@ -56,7 +57,7 @@ pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 pdata <- mutate(pdata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
 
-# Split entire dataset into multiple indexed data frames based on their ID
+# Split entire dataset into multiple indexed data frames based on their phosphorus and temperature combinations
 
 full12data <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
 full16data <- filter(pdata, Phosphorus == "FULL" & temperature == 16)
@@ -70,55 +71,53 @@ def24data <- filter(pdata, Phosphorus == "DEF" & temperature == 24)
 
 ### Model Construction ###
 
-# Here we construct the consumer resource model. First the Arrhenius function
-# is declared, and it is then used in the creation of the dynamical model. The
+# Here we construct the consumer resource model. The
 # resulting system of equations, called "CRModel", can be used to produce
 # theoretical predictions.
 
-# Create an Arrhenius function to transform metabolic rates based on
-# temperature. Here, "T" is the temperature. "E" is the activation energy
-# constant. Its structure is identical to the one used in O'Connor et al.
-# 2011
+# Declare the parameter values which will be used in the dynamical models. This is just a dummy set 
+# of parameters so that the CRmodel object below will properly initialize. The model parameters will 
+# be set in a non-arbitary fashion later on in the code; details on this can be found further down.
 
-## Arrhenius Function ##
+# For reference:
+# r = intrinsic growth rate of phytoplankton
+# K = carrying capacity of phytoplankton
+# a = attack rate of Daphnia
+# eps = transfer efficiency for Daphnia
+# m = intrinsic mortality rate for Daphnia
 
-# First we declare constants used in the Arrhenius function
-
-# The Boltzmann constant "Boltz" has already been declared earlier in the code
-BasalTemperature <- 12 + 273.15 # the "base temperature" that determines the basal metabolic rate; 12 was the lowest temp used during the experiment.
-
-# Declare Arrhenius function
-arrhenius <- function(T,E){
-	output <- exp(E * ((T + 273.15) - BasalTemperature) / (Boltz * (T + 273.15) * BasalTemperature))
-return(output)
-}
-
-## Consumer Resource Model ##
-
-# Declare the parameters to be used in the dynamical models
-
-Parameters <- c(r = 2.67, K = 92647516291, a = 0.27, eps = 5.834479e-11, m = 0.11)
+Parameters <- c(r = 2, K = 1000000, a = 0.5, eps = 1e-10, m = 0.1)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "eps", "m")
 
-# Declare the parameters to be used as the bounds for the fitting algorithm
+## Declare the parameters to be used as the bounds for the fitting algorithm. ##
 
-r_min <- 0.5
-r_max <- 8
+# These bounds will be used in two different ways:
+
+# (1) They determine the minimum and maximum ranges for the parameter values which the fitting algorithm is allowed to fit.
+
+# (2) They determine the entire range of the sample space from which our initial parameter values will be drawn from.
+
+# N.B. Note that because the parameter scaling vector, "ParamScaling" (located below), depends on "UpperBound", changing the upper bound 
+# of any of the parameter values can have unintended effects on the quality of fits. Thus, it recommended not to set the upper bounds on parameters 
+# too high; don't increase them unless you can think of a biological/mathematical reason for doing so!
+
+r_min <- 0.1
+r_max <- 10
 
 K_min <- 1e10
-K_max <- 1e12
+K_max <- 1e14
 
-a_min <- 0.1
-a_max <- 1
+a_min <- 100
+a_max <- 1000
 
-eps_min <- 1e-12
-eps_max <- 1e-10
+eps_min <- 1e-16
+eps_max <- 1e-11
 
-m_min <- 0.01
-m_max <- 0.1
+m_min <- 0.001
+m_max <- 1
 
 LowerBound <- c(r = r_min, K = K_min, a = a_min, eps = eps_min, m = m_min)
 UpperBound <- c(r = r_max, K = K_max, a = a_max, eps = eps_max, m = m_max)
@@ -128,18 +127,12 @@ UpperBound <- c(r = r_max, K = K_max, a = a_max, eps = eps_max, m = m_max)
 ParamScaling <- 1 / UpperBound
 
 # Create a new odeModel object. This represents the "base" Lotka-Volterra
-# consumer resource dynamics model that we would like to eventually fit, with
-# added metabolic effects due to temperature.
+# consumer resource dynamics model that we would like to eventually fit.
 
 # dp and dh are the differential equations for producers and heterotrophs,
-# respectively. Likewise, P and H refer to the population densities. For
-# producers, both the intrinsic growth rate r and the carrying capacity K are
-# subject to metabolic scaling. For heterotrophs, metabolic scaling applies to
-# the attack rate a, and the intrinsic mortality rate m. "temp" refers to the
-# temperature of the modelled system, used for determining the arrhenius
-# scaling factor.
+# respectively. Likewise, P and H refer to the population densities.
 
-# If you would like to view the model output, you can use the following
+# If you would like to view the model output (density vs. time plots) for troubleshooting purposes, you can use the following
 # command afer CRmodel has been evaluated:
 # plot(sim(CRmodel))
 
@@ -157,10 +150,7 @@ CRmodel <- new("odeModel",
 	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
 		)
 
-### FUNCTIONS ###
-
-# This section contains two functions, one for fitting, and one for plotting
-# the fit of a single replicate.
+### Fitting Functions ###
 
 ## 1. Model Fitting Function ##
 
@@ -255,16 +245,35 @@ data <- data[1,]
 return(data)
 }
 
-num <- 50
-fitteddef12data <- trimdata(repfit(def12data, num))
-fitteddef16data <- trimdata(repfit(def16data, num))
-fitteddef20data <- trimdata(repfit(def20data, num))
-fitteddef24data <- trimdata(repfit(def24data, num))
+num <- 10
+rawfitteddef12data <- repfit(def12data, num)
+rawfitteddef16data <- repfit(def16data, num)
+rawfitteddef20data <- repfit(def20data, num)
+rawfitteddef24data <- repfit(def24data, num)
 
-fittedfull12data <- trimdata(repfit(full12data, num))
-fittedfull16data <- trimdata(repfit(full16data, num))
-fittedfull20data <- trimdata(repfit(full20data, num))
-fittedfull24data <- trimdata(repfit(full24data, num))
+rawfittedfull12data <- repfit(full12data, num)
+rawfittedfull16data <- repfit(full16data, num)
+rawfittedfull20data <- repfit(full20data, num)
+rawfittedfull24data <- repfit(full24data, num)
+
+fitteddef12data <- trimdata(rawfitteddef12data)
+fitteddef16data <- trimdata(rawfitteddef16data)
+fitteddef20data <- trimdata(rawfitteddef20data)
+fitteddef24data <- trimdata(rawfitteddef24data)
+
+fittedfull12data <- trimdata(rawfittedfull12data)
+fittedfull16data <- trimdata(rawfittedfull16data)
+fittedfull20data <- trimdata(rawfittedfull20data)
+fittedfull24data <- trimdata(rawfittedfull24data)
+
+rawfitteddata <- bind_rows(rawfitteddef12data,
+				   rawfitteddef16data,
+				   rawfitteddef20data,
+				   rawfitteddef24data,
+				   rawfittedfull12data,
+				   rawfittedfull16data,
+				   rawfittedfull20data,
+				   rawfittedfull24data)
 
 fitteddata <- bind_rows(fitteddef12data,
 				fitteddef16data,
@@ -275,13 +284,12 @@ fitteddata <- bind_rows(fitteddef12data,
 				fittedfull20data,
 				fittedfull24data)
 
-write.csv(fitteddata, "fitteddata.csv")
+# Output data as csv
 
-targetdata <- def16data
+# write.csv(fitteddata, "fitteddata.csv")
+# write.csv(rawfitteddata, "rawfitteddata.csv")
 
-#def24data
-# SimParameters <- c(r = 8.000000, K = 231170612575, a = 0.2096601, eps = 4.818179e-11, m = 0.02274694)
-#def16data
+targetdata <- full24data
 SimParameters <- c(r = 6.0269286, K = 2.040687e+11, a = 0.3919607, eps = 5.000000e-12, m = 0.01026190)
 simfit <- function(data){
 
