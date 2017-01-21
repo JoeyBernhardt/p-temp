@@ -114,10 +114,10 @@ a_min <- 100
 a_max <- 1000
 
 eps_min <- 1e-16
-eps_max <- 1e-11
+eps_max <- 1e-13
 
 m_min <- 0.001
-m_max <- 1
+m_max <- 0.1
 
 LowerBound <- c(r = r_min, K = K_min, a = a_min, eps = eps_min, m = m_min)
 UpperBound <- c(r = r_max, K = K_max, a = a_max, eps = eps_max, m = m_max)
@@ -245,7 +245,7 @@ data <- data[1,]
 return(data)
 }
 
-num <- 100
+num <- 3
 rawfitteddef12data <- repfit(def12data, num)
 rawfitteddef16data <- repfit(def16data, num)
 rawfitteddef20data <- repfit(def20data, num)
@@ -304,6 +304,32 @@ simfit <- function(data){
 }
 
 simulateddata <- simfit(targetdata)
+
+# use this function on the "rawfittedx" subsets
+plotbest10 <- function(obsdata, fitdata) {
+
+fitdata <- filter(fitdata, ssq != 0)
+fitdata <- arrange(fitdata, ssq)
+fitdata <- fitdata[10,]
+
+fitdata$repnumber <- rownames(fitdata)
+fitdata <- split(fitdata, f = fitdata$repnumber)
+
+map_df(
+prod_plot <- ggplot() +
+		geom_point(data = obsdata, aes(x = days, y = P)) +
+		geom_line(data = fitdata, aes(x = time, y = P), color = repnumber)
+
+
+het_plot <- ggplot() +
+		geom_point(data = obsdata, aes(x = days, y = H)) +
+		geom_line(data = fitdata, aes(x = time, y = H), color = repnumber)
+
+grid.arrange(prod_plot, het_plot, ncol=2)
+
+}
+
+
 
 ### PLOTS ###
 
