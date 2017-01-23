@@ -315,7 +315,14 @@ fitdata <- fitdata[10,]
 fitdata$repnumber <- rownames(fitdata)
 fitdata <- split(fitdata, f = fitdata$repnumber)
 
-map_df(
+# objective is to write a function that operates on a single data frame of parameters and other info, and then produce the density estimates
+# using the sim function in simecol. Then use map_df on this guy.
+
+innerfunction <- function(xfitdata) {
+
+
+}
+
 prod_plot <- ggplot() +
 		geom_point(data = obsdata, aes(x = days, y = P)) +
 		geom_line(data = fitdata, aes(x = time, y = P), color = repnumber)
