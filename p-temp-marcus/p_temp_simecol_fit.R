@@ -113,7 +113,7 @@ K_max <- 1e14
 a_min <- 100
 a_max <- 1000
 
-eps_min <- 1e-16
+eps_min <- 1e-17
 eps_max <- 1e-13
 
 m_min <- 0.001
@@ -245,7 +245,7 @@ data <- data[1,]
 return(data)
 }
 
-num <- 3
+num <- 100
 rawfitteddef12data <- repfit(def12data, num)
 rawfitteddef16data <- repfit(def16data, num)
 rawfitteddef20data <- repfit(def20data, num)
@@ -286,8 +286,8 @@ fitteddata <- bind_rows(fitteddef12data,
 
 # Output data as csv
 
-# write.csv(fitteddata, "fitteddata.csv")
-# write.csv(rawfitteddata, "rawfitteddata.csv")
+write.csv(fitteddata, "fitteddata04_2017_22_01.csv")
+write.csv(rawfitteddata, "rawfitteddata04_2017_22_01.csv")
 
 targetdata <- full24data
 SimParameters <- c(r = 6.0269286, K = 2.040687e+11, a = 0.3919607, eps = 5.000000e-12, m = 0.01026190)
