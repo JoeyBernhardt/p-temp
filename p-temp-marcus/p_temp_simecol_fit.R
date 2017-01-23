@@ -107,16 +107,16 @@ FittedParameters <- c("r", "K", "a", "eps", "m")
 r_min <- 0.1
 r_max <- 10
 
-K_min <- 1e10
+K_min <- 1e11
 K_max <- 1e14
 
-a_min <- 100
-a_max <- 1000
+a_min <- 0
+a_max <- 1
 
-eps_min <- 1e-17
-eps_max <- 1e-13
+eps_min <- 1e-13
+eps_max <- 1e-11
 
-m_min <- 0.001
+m_min <- 0.0001
 m_max <- 0.1
 
 LowerBound <- c(r = r_min, K = K_min, a = a_min, eps = eps_min, m = m_min)
@@ -286,8 +286,8 @@ fitteddata <- bind_rows(fitteddef12data,
 
 # Output data as csv
 
-write.csv(fitteddata, "fitteddata04_2017_22_01.csv")
-write.csv(rawfitteddata, "rawfitteddata04_2017_22_01.csv")
+write.csv(fitteddata, "fitteddata05_2017_22_01.csv")
+write.csv(rawfitteddata, "rawfitteddata05_2017_22_01.csv")
 
 targetdata <- full24data
 SimParameters <- c(r = 6.0269286, K = 2.040687e+11, a = 0.3919607, eps = 5.000000e-12, m = 0.01026190)
