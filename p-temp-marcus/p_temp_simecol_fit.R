@@ -257,7 +257,9 @@ rawfitteddata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitte
 
 rawfitteddata <- mutate(rawfitteddata, treatment = paste(rawfitteddata$phosphorus, rawfitteddata$temperature, sep=""))
 
-
+fitteddata <- read.csv(file = file.path("p-temp-marcus", "outputs", "fitteddata05_2017_22_01.csv"), #file.path() is used for cross-platform compatibility
+	strip.white = TRUE,
+	na.strings = c("NA","") )
 
 # use this function on 
 plotbest3 <- function(phosphorus, temp) {
@@ -309,21 +311,35 @@ het_plot <- ggplot() +
 		geom_point(data = obsdata, aes(x = days, y = H)) +
 		geom_line(data = best3simdata, aes(x = time, y = H, color = repnumber))
 
-output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
+output_plot <- arrangeGrob(prod_plot, het_plot, ncol=2)
 
-return(obsdata)
+return(output_plot)
 
 }
 
-plotbest3("DEF", 12)
-plotbest3("DEF", 16)
-plotbest3("DEF", 20)
-plotbest3("DEF", 24)
+def12plot <- plotbest3("DEF", 12)
+ggsave("def12plot.png", plot = def12plot)
 
-plotbest3("FULL", 12)
-plotbest3("FULL", 16)
-plotbest3("FULL", 20)
-plotbest3("FULL", 24)
+def16plot <- plotbest3("DEF", 16)
+ggsave("def16plot.png", plot = def16plot)
+
+def20plot <- plotbest3("DEF", 20)
+ggsave("def20plot.png", plot = def20plot)
+
+def24plot <- plotbest3("DEF", 24)
+ggsave("def24plot.png", plot = def24plot)
+
+full12plot <- plotbest3("FULL", 12)
+ggsave("full12plot.png", plot = full12plot)
+
+full16plot <- plotbest3("FULL", 16)
+ggsave("full16plot.png", plot = full16plot)
+
+full20plot <- plotbest3("FULL", 20)
+ggsave("full20plot.png", plot = full20plot)
+
+full24plot <- plotbest3("FULL", 24)
+ggsave("full24plot.png", plot = full24plot)
 
 ### PLOTS ###
 
@@ -333,9 +349,13 @@ fittedr_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(r) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
 fittedr_plot
+ggsave("fittedr_2017_24_01.png", plot = last_plot())
 
-r_model <- lm(data = rawfitteddata, log(r) ~ transformedtemperature)
-confint(r_model)
+r_full_model <- lm(data = filter(rawfitteddata, phosphorus == "FULL"), log(r) ~ transformedtemperature)
+confint(r_full_model)
+
+r_def_model <- lm(data = filter(rawfitteddata, phosphorus == "DEF"), log(r) ~ transformedtemperature)
+confint(r_def_model)
 
 fittedK_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(K), color = phosphorus)) +
         geom_point() +
@@ -343,6 +363,7 @@ fittedK_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(K) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
 fittedK_plot
+ggsave("fittedK_2017_24_01.png", plot = last_plot())
 
 fitteda_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(a), color = phosphorus)) +
         geom_point() +
@@ -350,3 +371,4 @@ fitteda_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(a) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
 fitteda_plot
+ggsave("fitteda_2017_24_01.png", plot = last_plot())
