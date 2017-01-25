@@ -102,51 +102,8 @@ From the fitting algorithm's perspective, fitting a higher **b** is very similar
 
 Immediately below we can see the plots for the fitted **r** values. Note the large amount of alternatively high and low values for the two middle temperatures. This is because, for some of these replicates, the observed phytoplankton population dynamics appear to be periodic. Periodic dynamics in the producer are typically associated with higher **r** values, but the fitting algorithm was not able to successfully "figure out" that the dynamics were periodic in some of these cases, and subsequently fit very low values for **r**. We expect the fit to improve on our next few tries, by reducing the influence of **b**, as stated above.
 
-```r
-fittedr_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(r), color = Phosphorus)) +
-		geom_point() +
-		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted log(r) Values") +
-		labs(x = "-1/kT", y = "log(r)")
-fittedr_plot
-ggsave("fittedr_plot.png", plot = last_plot())
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_2017_24_01.png" width="600">
 
-r_model <- lm(log(r) ~ transformedtemp, data = plotdata)
-summary(r_model) #slope of 0.2375, 95% CI: (-0.17, 0.65), p-value = 0.253
-```
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_2017_24_01.png" width="600">
 
-
-Here we can see that **K** appears to be underestimated, at least for the replicates in the highest temperature treatment.
-```r
-fittedK_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(K), color = Phosphorus)) +
-		geom_point() +
-		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted log(K) Values") +
-		labs(x = "-1/kT", y = "log(K)")
-fittedK_plot
-ggsave("fittedK_plot.png", plot = last_plot())
-
-K_model <- lm(log(K) ~ transformedtemp, data = plotdata)
-summary(K_model) # slope of -0.1918, 95% CI: (-0.76, 0.38), p-value = 0.50
-```
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_plot.png" width="600">
-
-
-```r
-fitteda_plot <- ggplot(data = plotdata, aes(x = transformedtemp, y = log(a), color = Phosphorus)) +
-		geom_point() +
-		geom_smooth(method = lm, col = "red") +
-		ggtitle("Fitted log(a) Values") +
-		labs(x = "-1/kT", y = "log(a)")
-fitteda_plot
-ggsave("fitteda_plot.png", plot = last_plot())
-
-a_model <- lm(log(a) ~ transformedtemp, data = plotdata)
-summary(a_model) # slope of 0.2092, 95% CI: (-0.93, 1.35), p-value = 0.71
-```
-
-Some of the fitted **a's** are almost certainly off; this is due to the influence of the transfer efficiency **e**. For some replicates a very, very high **a** was fit (one order of magnitude larger than in the other replicates), but the fitted **e** for the same replicate was an order of magnitude smaller than what was produced by the other fittings. This is just a matter of tightening up the parameter constraints for the fitting. Improvements have already been made to the code to address this issue for the next step.
-
-
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_2017_24_01.png" width="600">
