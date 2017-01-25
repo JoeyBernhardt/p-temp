@@ -23,18 +23,18 @@ The goal here is to assess the quality of our model fits.
 
 #### 16 Degrees
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def16plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def16plot.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="1000">
 
 #### 20 Degrees
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def20plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full20plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def20plot.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full20plot.png" width="1000">
 
 #### 24 Degrees
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def24plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full24plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def24plot.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full24plot.png" width="1000">
 
 ```r
 plotbest3 <- function(phosphorus, temp) {
