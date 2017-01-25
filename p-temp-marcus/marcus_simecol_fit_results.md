@@ -16,17 +16,16 @@ Here we show plots of the "best" three simulation results vs. the observed exper
 
 The goal here is to assess the quality of our model fits.
 
-#### 12 Degrees
-
-##### Phosphorus Deficient
+##### 12 Degrees, Phosphorus Deficient
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot.png" width="1000">
 
-##### Phosphorus Rich
+##### 12 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full12plot.png" width="1000">
 
-#### 16 Degrees
-
+##### 16 Degrees, Phosphorus Deficient
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def16plot.png" width="1000">
+
+##### 16 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="1000">
 
 #### 20 Degrees
