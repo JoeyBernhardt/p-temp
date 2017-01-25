@@ -108,6 +108,22 @@ Given the poor fits observed for some the treatments, particularly those for the
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedr_2017_24_01.png" width="600">
 
+```r
+fittedr_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
+        geom_point() +
+        geom_smooth(method = lm) +
+        ggtitle("Fitted log(r) Values") +
+        labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
+fittedr_plot
+ggsave("fittedr_2017_24_01.png", plot = last_plot())
+
+r_full_model <- lm(data = filter(rawfitteddata, phosphorus == "FULL"), log(r) ~ transformedtemperature)
+confint(r_full_model)
+
+r_def_model <- lm(data = filter(rawfitteddata, phosphorus == "DEF"), log(r) ~ transformedtemperature)
+confint(r_def_model)
+```
+
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fittedK_2017_24_01.png" width="600">
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/fitteda_2017_24_01.png" width="600">
