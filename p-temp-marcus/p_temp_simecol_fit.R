@@ -233,8 +233,9 @@ outputdf <- map_df(data, repfit)
 return(outputdf)
 }
 
-rawfitteddata <- fitall(ptempdata,2)
+### PRODUCING DATA ###
 
+# rawfitteddata <- fitall(ptempdata, 100)
 
 fitteddata <- rawfitteddata %>%
 filter(ssq !=0) %>%
@@ -243,12 +244,22 @@ group_by(treatment) %>%
 slice(1) %>%
 ungroup
 
-# Output data as csv
+### OUTPUTTING DATA ###
 
 # write.csv(fitteddata, "fitteddata06_2017_24_01.csv")
 # write.csv(rawfitteddata, "rawfitteddata06_2017_24_01.csv")
 
-# use this function on the "rawfittedx" subsets
+### INPUTTING DATA ###
+
+rawfitteddata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitteddata05_2017_22_01.csv"), #file.path() is used for cross-platform compatibility
+	strip.white = TRUE,
+	na.strings = c("NA","") )
+
+rawfitteddata <- mutate(rawfitteddata, treatment = paste(rawfitteddata$phosphorus, rawfitteddata$temperature, sep=""))
+
+
+
+# use this function on 
 plotbest3 <- function(phosphorus, temp) {
 
 x <- paste(phosphorus, temp, sep = "")
@@ -304,27 +315,36 @@ return(obsdata)
 
 }
 
+plotbest3("DEF", 12)
+plotbest3("DEF", 16)
+plotbest3("DEF", 20)
+plotbest3("DEF", 24)
+
+plotbest3("FULL", 12)
+plotbest3("FULL", 16)
+plotbest3("FULL", 20)
+plotbest3("FULL", 24)
 
 ### PLOTS ###
 
-fittedr_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
+fittedr_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
         geom_point() +
         geom_smooth(method = lm) +
         ggtitle("Fitted log(r) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
 fittedr_plot
 
-r_model <- lm(data = fitteddata, log(r) ~ transformedtemperature)
+r_model <- lm(data = rawfitteddata, log(r) ~ transformedtemperature)
 confint(r_model)
 
-fittedK_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(K), color = phosphorus)) +
+fittedK_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(K), color = phosphorus)) +
         geom_point() +
         geom_smooth(method = lm) +
         ggtitle("Fitted log(K) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
 fittedK_plot
 
-fitteda_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(a), color = phosphorus)) +
+fitteda_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(a), color = phosphorus)) +
         geom_point() +
         geom_smooth(method = lm) +
         ggtitle("Fitted log(a) Values") +
