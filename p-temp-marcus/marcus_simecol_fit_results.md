@@ -19,7 +19,7 @@ https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/p_temp_simecol
 
 Here we show plots of the "best" three simulation results vs. the observed experimental data, for each treatment combination of phosphorus and temperature.
 
-The goal here is to assess the quality of our model fits.
+The goal here is to assess the quality of our model fits. **On the legend for each plot, the replicates are ordered by descending SSQ; the first replicate listed is the "best" fit.** In general, we see that the fitting algorithm is still struggling. The fits for the 16 degree treatments look nice, but the rest are still quite unsatisfactory, with the 24 degree treatments being particularly bad.
 
 ##### 12 Degrees, Phosphorus Deficient
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot.png" width="1000">
