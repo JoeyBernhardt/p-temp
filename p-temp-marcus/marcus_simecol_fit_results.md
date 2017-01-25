@@ -10,7 +10,7 @@ plotdata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitteddata
 	na.strings = c("NA","") )
 ```
 
-### Plotting Simulated Curves vs. Observed Data
+### Plotting Simulated Density Curves vs. Observed Data
 
 Here we show plots of the "best" three simulation results vs. the observed experimental data, for each treatment combination of phosphorus and temperature.
 
@@ -28,14 +28,14 @@ The goal here is to assess the quality of our model fits.
 ##### 16 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="1000">
 
-#### 20 Degrees
-
+##### 20 Degrees, Phosphorus Deficient
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def20plot.png" width="1000">
+##### 20 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full20plot.png" width="1000">
 
-#### 24 Degrees
-
+##### 24 Degrees, Phosphorus Deficient
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def24plot.png" width="1000">
+##### 24 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full24plot.png" width="1000">
 
 ```r
