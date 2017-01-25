@@ -245,7 +245,7 @@ data <- data[1,]
 return(data)
 }
 
-num <- 100
+num <- 10
 rawfitteddef12data <- repfit(def12data, num)
 rawfitteddef16data <- repfit(def16data, num)
 rawfitteddef20data <- repfit(def20data, num)
@@ -286,31 +286,15 @@ fitteddata <- bind_rows(fitteddef12data,
 
 # Output data as csv
 
-write.csv(fitteddata, "fitteddata05_2017_22_01.csv")
-write.csv(rawfitteddata, "rawfitteddata05_2017_22_01.csv")
-
-targetdata <- full24data
-SimParameters <- c(r = 6.0269286, K = 2.040687e+11, a = 0.3919607, eps = 5.000000e-12, m = 0.01026190)
-simfit <- function(data){
-
-		dayzerodata <- filter(data, days == 0)
-		simmodel <- CRmodel
-		init(simmodel) <- c(P = mean(dayzerodata$P), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
-		parms(simmodel) <- SimParameters
-
-		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
-		
-		return(simdata)
-}
-
-simulateddata <- simfit(targetdata)
+# write.csv(fitteddata, "fitteddata05_2017_22_01.csv")
+# write.csv(rawfitteddata, "rawfitteddata05_2017_22_01.csv")
 
 # use this function on the "rawfittedx" subsets
 plotbest10 <- function(obsdata, fitdata) {
 
 fitdata <- filter(fitdata, ssq != 0)
 fitdata <- arrange(fitdata, ssq)
-fitdata <- fitdata[10,]
+fitdata <- fitdata[1:3,] # use best 3 for now
 
 fitdata$repnumber <- rownames(fitdata)
 fitdata <- split(fitdata, f = fitdata$repnumber)
@@ -318,38 +302,47 @@ fitdata <- split(fitdata, f = fitdata$repnumber)
 # objective is to write a function that operates on a single data frame of parameters and other info, and then produce the density estimates
 # using the sim function in simecol. Then use map_df on this guy.
 
-innerfunction <- function(xfitdata) {
+innerfunction <- function(xdata) {
 
+fittedr <- xdata$r
+fittedK <- xdata$K
+fitteda <- xdata$a
+fittedeps <- xdata$eps
+fittedm <- xdata$m
 
+SimParameters <- c(r = fittedr, K = fittedK, a = fitteda, eps = fittedeps, m = fittedm)
+
+		dayzerodata <- filter(obsdata, days == 0)
+		simmodel <- CRmodel
+		init(simmodel) <- c(P = mean(dayzerodata$P), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		parms(simmodel) <- SimParameters
+
+		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
+		simdata <- mutate(simdata, repnumber = xdata$repnumber)
+
+return(simdata)
 }
+
+best10simdata <- map_df(fitdata, innerfunction)
 
 prod_plot <- ggplot() +
 		geom_point(data = obsdata, aes(x = days, y = P)) +
-		geom_line(data = fitdata, aes(x = time, y = P), color = repnumber)
+		geom_line(data = best10simdata, aes(x = time, y = P, color = repnumber))
 
 
 het_plot <- ggplot() +
 		geom_point(data = obsdata, aes(x = days, y = H)) +
-		geom_line(data = fitdata, aes(x = time, y = H), color = repnumber)
+		geom_line(data = best10simdata, aes(x = time, y = H, color = repnumber))
 
-grid.arrange(prod_plot, het_plot, ncol=2)
+output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
+
+return(output_plot)
 
 }
-
-
+rawfitteddef16data <- repfit(def16data, num)
+plotbest10(def16data, rawfitteddef16data)
 
 ### PLOTS ###
-
-prod_plot <- ggplot() +
-		geom_point(data = targetdata, aes(x = days, y = P)) +
-		geom_line(data = simulateddata, aes(x = time, y = P), color = "red")
-
-
-het_plot <- ggplot() +
-		geom_point(data = targetdata, aes(x = days, y = H)) +
-		geom_line(data = simulateddata, aes(x = time, y = H), color = "red")
-
-grid.arrange(prod_plot, het_plot, ncol=2)
 
 fittedr_plot <- ggplot(data = fitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
         geom_point() +
