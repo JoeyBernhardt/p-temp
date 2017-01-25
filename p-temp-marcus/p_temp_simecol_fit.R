@@ -318,28 +318,28 @@ return(output_plot)
 }
 
 def12plot <- plotbest3("DEF", 12)
-ggsave("def12plot.png", plot = def12plot)
+# ggsave("def12plot.png", plot = def12plot)
 
 def16plot <- plotbest3("DEF", 16)
-ggsave("def16plot.png", plot = def16plot)
+# ggsave("def16plot.png", plot = def16plot)
 
 def20plot <- plotbest3("DEF", 20)
-ggsave("def20plot.png", plot = def20plot)
+# ggsave("def20plot.png", plot = def20plot)
 
 def24plot <- plotbest3("DEF", 24)
-ggsave("def24plot.png", plot = def24plot)
+# ggsave("def24plot.png", plot = def24plot)
 
 full12plot <- plotbest3("FULL", 12)
-ggsave("full12plot.png", plot = full12plot)
+# ggsave("full12plot.png", plot = full12plot)
 
 full16plot <- plotbest3("FULL", 16)
-ggsave("full16plot.png", plot = full16plot)
+# ggsave("full16plot.png", plot = full16plot)
 
 full20plot <- plotbest3("FULL", 20)
-ggsave("full20plot.png", plot = full20plot)
+# ggsave("full20plot.png", plot = full20plot)
 
 full24plot <- plotbest3("FULL", 24)
-ggsave("full24plot.png", plot = full24plot)
+# ggsave("full24plot.png", plot = full24plot)
 
 ### PLOTS ###
 
