@@ -5,54 +5,79 @@
 Here we read in the data used for all of the below plots:
 ```r
 #file.path() is used for cross-platform compatibility
-plotdata <- read.csv(file = file.path("p-temp-marcus", "plotdata.csv"),
+plotdata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitteddata05_2017_22_01.csv"),
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 ```
 
-### Plotting Day 36 Densities for Predicted vs. Observed Data
+### Plotting Simulated Curves vs. Observed Data
 
-Here we show plots of the simulation results vs. the experimental data taken on day 36 (the final observation).
-The major point here is to assess the quality of our model fits. I have outputted some (possibly) relevant summary statistics for the linear regressions below each plot. Overall the fits look surprisingly good, especially for the Daphnia!
+Here we show plots of the "best" three simulation results vs. the observed experimental data, for each treatment combination of phosphorus and temperature.
 
-For the phytoplankton, there is a noticeable outlier, which I believe is an artefact of the fitting process. I'm going to take another look at this individual replicate. In general, some of the fits are off due to the fitting algorithm underestimating **K**. This should improve in the next fitting attempt (more details in the fitting section), so we should expect the new simulation results to do a better job of predicting the experimental data (and we'll see a higher R^2).
-
-```r
-# Plot the results of our model fitting.
-	producer_plot <- ggplot(data = plotdata, aes(x = logpredictedfinalP, y = logobservedfinalP, color = Phosphorus)) +
-		geom_point() + # predicted data
-		geom_smooth(method = lm, col = "red") +
-		labs(x = "log(Predicted phytoplankton density)", y = "log(observed Phytoplankton density)") +
-		ggtitle("Phytoplankton Densities: Observed vs. Predicted")
-	producer_plot
-```
+The goal here is to assess the quality of our model fits.
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png" width="600">
-
-```r
-P_model <- lm(logobservedfinalP ~ logpredictedfinalP, data = plotdata)
-summary(P_model)
-# adjusted R^2 of 0.4257, p-value of 3.04 * 10^-7
-```
-For the Daphnia, we can see some obvious outliers where the predicted values are much higher than the observed values; these are concentrated in the bottom left corner of the below plot.
-
-```r
-# Plot the results of our model fitting for daphnia
-	hetero_plot <- ggplot(data = plotdata, aes(x = logpredictedfinalH, y = logobservedfinalH, color = Phosphorus)) +
-		geom_point() + # predicted data
-		geom_smooth(method = lm, col = "red") +
-		labs(x = "log(Predicted Daphnia density)", y = "log(observed Daphnia density)") +
-		ggtitle("Daphnia Densities: Observed vs. Predicted")
-	hetero_plot
-```
 
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Daphnia_predicted_vs_observedplot.png" width="600">
 
 ```r
-H_model <- lm(logobservedfinalH ~ logpredictedfinalH, data = plotdata)
-summary(H_model)
-# adjusted R^2 of 0.7706, p-value of 2 * 10^-16
+plotbest3 <- function(phosphorus, temp) {
+
+x <- paste(phosphorus, temp, sep = "")
+obsdata <- ptempdata[[x]]
+
+fitdata <- filter(rawfitteddata, treatment == x)
+
+fitdata <- filter(fitdata, ssq != 0)
+fitdata <- arrange(fitdata, ssq)
+fitdata <- fitdata[1:3,] # use best 3 for now
+
+fitdata$repnumber <- rownames(fitdata)
+fitdata <- split(fitdata, f = fitdata$repnumber)
+
+# objective is to write a function that operates on a single data frame of parameters and other info, and then produce the density estimates
+# using the sim function in simecol. Then use map_df on this guy.
+
+innerfunction <- function(xdata) {
+
+fittedr <- xdata$r
+fittedK <- xdata$K
+fitteda <- xdata$a
+fittedeps <- xdata$eps
+fittedm <- xdata$m
+
+SimParameters <- c(r = fittedr, K = fittedK, a = fitteda, eps = fittedeps, m = fittedm)
+
+		dayzerodata <- filter(obsdata, days == 0)
+		simmodel <- CRmodel
+		init(simmodel) <- c(P = mean(dayzerodata$P), H = 10) # Set initial model conditions to the biovolume taken from the first measurement day
+		parms(simmodel) <- SimParameters
+
+		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
+		simdata <- mutate(simdata, repnumber = xdata$repnumber)
+
+return(simdata)
+}
+
+best3simdata <- map_df(fitdata, innerfunction)
+
+prod_plot <- ggplot() +
+		geom_point(data = obsdata, aes(x = days, y = P)) +
+		geom_line(data = best3simdata, aes(x = time, y = P, color = repnumber))
+
+
+het_plot <- ggplot() +
+		geom_point(data = obsdata, aes(x = days, y = H)) +
+		geom_line(data = best3simdata, aes(x = time, y = H, color = repnumber))
+
+output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
+
+return(obsdata)
+
+}
 ```
+
+
 ### Estimating Activation Energies for Fitted Parameter Values
 
 Here we estimate the activation energies for 3 different fitted parameters: **r**, **K**, and **a**. In general, the current fitting implementation likely underestimated **r** by a small amount, and also underestimated **K**, possibly by as much as an order of magnitude in some cases. This is due to the influence of the half-saturation constant (**b**) on the fitting process. You can think of **b** as being a kind of "pseudo-carrying capacity", because a higher **b** depresses the _effective_ attack rate, which then increases the _effective_ carrying capacity.
