@@ -12,7 +12,7 @@ library(knitr)
 ### Data Frames ###
 
 # Read the data from the consumer free controls, and store as object
-pdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
+ptempdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
@@ -38,36 +38,31 @@ dayzerodata <- mutate(dayzerodata, algal_biovolume = volume_cell * algal_cell_co
 				     daphnia_total = 10)
 
 # Vertically merge "pdata" and "dayzerodata" data frames
-pdata <- bind_rows(pdata, dayzerodata)
+ptempdata <- bind_rows(ptempdata, dayzerodata)
 
 # Rename columns in the "pdata" data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary to invoke the fitOdeModel function.
-pdata <- rename(pdata, P = algal_biovolume)
-pdata <- rename(pdata, H = daphnia_total)
-pdata <- rename(pdata, Phosphorus = phosphorus_treatment)
+ptempdata <- rename(ptempdata, P = algal_biovolume)
+ptempdata <- rename(ptempdata, H = daphnia_total)
+ptempdata <- rename(ptempdata, Phosphorus = phosphorus_treatment)
 
 # Here we scale the phytoplankton density by 250, in order to get the total biovolume present in the beaker.
+# We want to model the total algal biovolume because we have modelled the total Daphnia density.
 scalefactor <- 250
-pdata <- mutate(pdata, P = P * scalefactor)
+ptempdata <- mutate(ptempdata, P = P * scalefactor)
+
+# Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later
+Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
+ptempdata <- mutate(ptempdata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
 
 # Reorder rows in data frame by treatment ID, and then by days
-pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
+ptempdata <- arrange(ptempdata, Phosphorus, temperature, replicate, days)
 
-# Create a column for boltzmann-transformed temperatures
-Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
-pdata <- mutate(pdata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
+# Create a column that lists the treatment type of each replicate, which depends on its phosphorus and temperature combination
+ptempdata <- mutate(ptempdata, treatment = paste(ptempdata$Phosphorus, ptempdata$temperature, sep=""))
 
-# Split entire dataset into multiple data frames based on their phosphorus and temperature combinations
-
-full12data <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
-full16data <- filter(pdata, Phosphorus == "FULL" & temperature == 16)
-full20data <- filter(pdata, Phosphorus == "FULL" & temperature == 20)
-full24data <- filter(pdata, Phosphorus == "FULL" & temperature == 24)
-
-def12data <- filter(pdata, Phosphorus == "DEF" & temperature == 12)
-def16data <- filter(pdata, Phosphorus == "DEF" & temperature == 16)
-def20data <- filter(pdata, Phosphorus == "DEF" & temperature == 20)
-def24data <- filter(pdata, Phosphorus == "DEF" & temperature == 24)
+# Split entire dataset into multiple indexed data frames based on their treatment
+ptempdata <- split(ptempdata, f = ptempdata$treatment)
 
 ### Model Construction ###
 
@@ -162,7 +157,11 @@ CRmodel <- new("odeModel",
 # single replicate. To do this call rKfit(controldata[['X']], where "X" is the
 # replicate's ID number.
 
-portfit <- function(data) {
+fitall <- function(data, num_replicates) {
+
+repfit <- function(data) {
+
+PORTfit <- function(num) {
 
 		# First we initialize the simecol model object
 		model <- CRmodel
@@ -206,6 +205,7 @@ portfit <- function(data) {
 		# the fitted parameters.
 
 		ssq <- ssqOdeModel(coef(fittedmodel), model, obstime, yobs) # simulates another CRmodel, but now using our fitted parameters, and outputs the SSQ.
+		treatment <- data$treatment[1]
 		phosphorus <- data$Phosphorus[1]
 		temperature <- data$temperature[1]
 		transformedtemperature <- data$transformedtemperature[1]
@@ -221,48 +221,19 @@ portfit <- function(data) {
 		# Return above dataframe as the function's output
 		return(simulation_data)
 }
+replicates <- seq(1, num_replicates, 1) # number of fitting attempts
 
-repfit <- function(data, num){
+outputdf <- map_df(replicates, PORTfit) # use map_df here; DO NOT USE A FOR-LOOP!!!
 
-replicates <- seq(1, num, 1)
-simulation_data <- data.frame(ssq = double(),
-					phosphorus = integer(),
-					temperature = double(),
-					transformedtemperature = double(),
-					r = double(),
-			  		K = double(), 
-                	   		a = double(), 
-			   		eps = double(),
-					m = double(),
-                	   		stringsAsFactors = FALSE)
-
-for (i in replicates) {
-simulation_output <- portfit(data)
-simulation_data <- rbind(simulation_data, simulation_output)
+return(outputdf)
 }
 
-return(simulation_data)
+outputdf <- map_df(data, repfit)
+
+return(outputdf)
 }
 
-trimdata <- function(data){
-
-data <- filter(data, ssq != 0)
-data <- arrange(data, ssq)
-data <- data[1,]
-
-return(data)
-}
-
-num <- 10
-rawfitteddef12data <- repfit(def12data, num)
-rawfitteddef16data <- repfit(def16data, num)
-rawfitteddef20data <- repfit(def20data, num)
-rawfitteddef24data <- repfit(def24data, num)
-
-rawfittedfull12data <- repfit(full12data, num)
-rawfittedfull16data <- repfit(full16data, num)
-rawfittedfull20data <- repfit(full20data, num)
-rawfittedfull24data <- repfit(full24data, num)
+rawfitteddata <- fitall(ptempdata,2)
 
 fitteddef12data <- trimdata(rawfitteddef12data)
 fitteddef16data <- trimdata(rawfitteddef16data)
@@ -273,15 +244,6 @@ fittedfull12data <- trimdata(rawfittedfull12data)
 fittedfull16data <- trimdata(rawfittedfull16data)
 fittedfull20data <- trimdata(rawfittedfull20data)
 fittedfull24data <- trimdata(rawfittedfull24data)
-
-rawfitteddata <- bind_rows(rawfitteddef12data,
-				   rawfitteddef16data,
-				   rawfitteddef20data,
-				   rawfitteddef24data,
-				   rawfittedfull12data,
-				   rawfittedfull16data,
-				   rawfittedfull20data,
-				   rawfittedfull24data)
 
 fitteddata <- bind_rows(fitteddef12data,
 				fitteddef16data,
@@ -348,7 +310,7 @@ return(output_plot)
 
 }
 
-plotbest3(def12data, rawfitteddef12data)
+plotbest3(def16data, rawfitteddef16data)
 
 ### PLOTS ###
 
