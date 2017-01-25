@@ -16,9 +16,17 @@ Here we show plots of the "best" three simulation results vs. the observed exper
 
 The goal here is to assess the quality of our model fits.
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Phyto_predicted_vs_observedplot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full12plot.png" width="600">
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/Daphnia_predicted_vs_observedplot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def16plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="600">
+
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def20plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full20plot.png" width="600">
+
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def24plot.png" width="600">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full24plot.png" width="600">
 
 ```r
 plotbest3 <- function(phosphorus, temp) {
