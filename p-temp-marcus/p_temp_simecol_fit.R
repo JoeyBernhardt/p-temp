@@ -235,32 +235,26 @@ return(outputdf)
 
 rawfitteddata <- fitall(ptempdata,2)
 
-fitteddef12data <- trimdata(rawfitteddef12data)
-fitteddef16data <- trimdata(rawfitteddef16data)
-fitteddef20data <- trimdata(rawfitteddef20data)
-fitteddef24data <- trimdata(rawfitteddef24data)
 
-fittedfull12data <- trimdata(rawfittedfull12data)
-fittedfull16data <- trimdata(rawfittedfull16data)
-fittedfull20data <- trimdata(rawfittedfull20data)
-fittedfull24data <- trimdata(rawfittedfull24data)
-
-fitteddata <- bind_rows(fitteddef12data,
-				fitteddef16data,
-				fitteddef20data,
-				fitteddef24data,
-				fittedfull12data,
-				fittedfull16data,
-				fittedfull20data,
-				fittedfull24data)
+fitteddata <- rawfitteddata %>%
+filter(ssq !=0) %>%
+arrange(treatment, ssq) %>%
+group_by(treatment) %>%
+slice(1) %>%
+ungroup
 
 # Output data as csv
 
-# write.csv(fitteddata, "fitteddata05_2017_22_01.csv")
-# write.csv(rawfitteddata, "rawfitteddata05_2017_22_01.csv")
+# write.csv(fitteddata, "fitteddata06_2017_24_01.csv")
+# write.csv(rawfitteddata, "rawfitteddata06_2017_24_01.csv")
 
 # use this function on the "rawfittedx" subsets
-plotbest3 <- function(obsdata, fitdata) {
+plotbest3 <- function(phosphorus, temp) {
+
+x <- paste(phosphorus, temp, sep = "")
+obsdata <- ptempdata[[x]]
+
+fitdata <- filter(rawfitteddata, treatment == x)
 
 fitdata <- filter(fitdata, ssq != 0)
 fitdata <- arrange(fitdata, ssq)
@@ -306,11 +300,10 @@ het_plot <- ggplot() +
 
 output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
-return(output_plot)
+return(obsdata)
 
 }
 
-plotbest3(def16data, rawfitteddef16data)
 
 ### PLOTS ###
 
