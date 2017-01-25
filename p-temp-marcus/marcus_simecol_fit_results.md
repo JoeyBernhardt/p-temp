@@ -10,32 +10,38 @@ plotdata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitteddata
 	na.strings = c("NA","") )
 ```
 
-### Plotting Simulated Curves vs. Observed Data
+### Code
+
+The code used to generate the fits in seen below, as well as all related plotting functions, can be found at:
+https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/p_temp_simecol_fit.R
+
+### Plotting Simulated Density Curves vs. Observed Data
 
 Here we show plots of the "best" three simulation results vs. the observed experimental data, for each treatment combination of phosphorus and temperature.
 
 The goal here is to assess the quality of our model fits.
 
-#### 12 Degrees
+##### 12 Degrees, Phosphorus Deficient
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot.png" width="1000">
+##### 12 Degrees, Phosphorus Rich
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full12plot.png" width="1000">
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full12plot.png" width="600">
+##### 16 Degrees, Phosphorus Deficient
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def16plot.png" width="1000">
+##### 16 Degrees, Phosphorus Rich
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="1000">
 
-#### 16 Degrees
+##### 20 Degrees, Phosphorus Deficient
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def20plot.png" width="1000">
+##### 20 Degrees, Phosphorus Rich
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full20plot.png" width="1000">
 
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def16plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full16plot.png" width="600">
+##### 24 Degrees, Phosphorus Deficient
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def24plot.png" width="1000">
+##### 24 Degrees, Phosphorus Rich
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full24plot.png" width="1000">
 
-#### 20 Degrees
-
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def20plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full20plot.png" width="600">
-
-#### 24 Degrees
-
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def24plot.png" width="600">
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full24plot.png" width="600">
-
+The specific code used to generate the above plots can be found immediately below:
 ```r
 plotbest3 <- function(phosphorus, temp) {
 
