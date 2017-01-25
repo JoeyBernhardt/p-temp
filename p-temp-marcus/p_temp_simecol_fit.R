@@ -57,7 +57,7 @@ pdata <- arrange(pdata, Phosphorus, temperature, replicate, days)
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 pdata <- mutate(pdata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
 
-# Split entire dataset into multiple indexed data frames based on their phosphorus and temperature combinations
+# Split entire dataset into multiple data frames based on their phosphorus and temperature combinations
 
 full12data <- filter(pdata, Phosphorus == "FULL" & temperature == 12)
 full16data <- filter(pdata, Phosphorus == "FULL" & temperature == 16)
@@ -71,7 +71,7 @@ def24data <- filter(pdata, Phosphorus == "DEF" & temperature == 24)
 
 ### Model Construction ###
 
-# Here we construct the consumer resource model. The
+# Here, we construct the consumer resource model. The
 # resulting system of equations, called "CRModel", can be used to produce
 # theoretical predictions.
 
@@ -164,21 +164,29 @@ CRmodel <- new("odeModel",
 
 portfit <- function(data) {
 
-		dayzerodata <- filter(data, days == 0)
-		model <- CRmodel # initial the simecol model object
+		# First we initialize the simecol model object
+		model <- CRmodel
+
+		# Here we randomly generate our initial parameter settings by sampling from uniform distributions, with minima and maxima 
+		# corresponding to the bounds declared earlier in the code. These are then assigned to our simecol model object.
 		parms(model)[FittedParameters] <- c(r = runif(1, min = r_min, max = r_max),
 								K = runif(1, min = K_min, max = K_max),
 								a = runif(1, min = a_min, max = a_max),
 								eps = runif(1, min = eps_min, max = eps_max),
 								m = runif(1, min = m_min, max = m_max)
 								)
-		init(model) <- c(P = mean(dayzerodata$P), H = 10) # Set initial model conditions to the mean biovolume taken from the first measurement day
+
+		# Here we isolate all of the day zero data, and then use that to set our initial model conditions. The initial Daphnia density is always 10,
+		# regardless of treatment group. The initial phytoplankton density is set to the mean biovolume taken from the first measurement day.
+		dayzerodata <- filter(data, days == 0)
+		init(model) <- c(P = mean(dayzerodata$P), H = 10)
+		
+		# Here we declare our observed data in a form that fitOdeModel (used below) can understand.
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
 		yobs <- select(data, P, H) # The Y values of the observed data points we are fitting our model to
 
 		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
-		# squared differences between the experimental data and our modelled data. This
-		# is fairly standard, although alternatives do exist.
+		# squared differences (SSQ) between the experimental data and our modelled data.
 		
 		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
 		# "lower" and upper are vectors containing the lower and upper bound constraints
@@ -194,12 +202,10 @@ portfit <- function(data) {
 		)
 		
 		# Here we create vectors to be used to output a dataframe of
-		# the replicates' ID, Phosphorus level, temperature, and the
-		# fitted parameters.
+		# the replicates' SSQ, phosphorus level, temperature, transformed temperature, and the values of 
+		# the fitted parameters.
 
-		# set model parameters to fitted values and simulate
-
-		ssq <- ssqOdeModel(coef(fittedmodel), model, obstime, yobs)
+		ssq <- ssqOdeModel(coef(fittedmodel), model, obstime, yobs) # simulates another CRmodel, but now using our fitted parameters, and outputs the SSQ.
 		phosphorus <- data$Phosphorus[1]
 		temperature <- data$temperature[1]
 		transformedtemperature <- data$transformedtemperature[1]
@@ -208,9 +214,11 @@ portfit <- function(data) {
 		a <- coef(fittedmodel)["a"]
 		eps <- coef(fittedmodel)["eps"]
 		m <- coef(fittedmodel)["m"]
-
+		
+		# Create one-row dataframe of the above vectors
 		simulation_data <- data.frame(ssq, phosphorus, temperature, transformedtemperature, r, K, a, eps, m)
-
+		
+		# Return above dataframe as the function's output
 		return(simulation_data)
 }
 
@@ -290,7 +298,7 @@ fitteddata <- bind_rows(fitteddef12data,
 # write.csv(rawfitteddata, "rawfitteddata05_2017_22_01.csv")
 
 # use this function on the "rawfittedx" subsets
-plotbest10 <- function(obsdata, fitdata) {
+plotbest3 <- function(obsdata, fitdata) {
 
 fitdata <- filter(fitdata, ssq != 0)
 fitdata <- arrange(fitdata, ssq)
@@ -339,8 +347,8 @@ output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 return(output_plot)
 
 }
-rawfitteddef16data <- repfit(def16data, num)
-plotbest10(def16data, rawfitteddef16data)
+
+plotbest3(def12data, rawfitteddef12data)
 
 ### PLOTS ###
 
