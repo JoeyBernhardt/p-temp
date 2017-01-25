@@ -189,15 +189,15 @@ portfit <- function(data) {
 		# squared differences (SSQ) between the experimental data and our modelled data.
 		
 		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
-		# "lower" and upper are vectors containing the lower and upper bound constraints
-		# for the parameter values.
+		# "LowerBound" and "UpperBound" are vectors containing the lower and upper bound constraints
+		# for the parameter values. "ParamScaling" assists the function with fitting when the parameters take different orders of magnitude.
 
 		fittedmodel <- fitOdeModel(model, whichpar = FittedParameters, obstime, yobs,
  		debuglevel = 0, fn = ssqOdeModel,
    		method = "PORT", lower = LowerBound, upper = UpperBound, scale.par = ParamScaling,
   		control = list(trace = TRUE),
-			    rtol = 1e-10,
-			    atol = 1e-10,
+			    rtol = 1e-9,
+			    atol = 1e-9,
 			    maxsteps = 5000
 		)
 		
@@ -331,16 +331,16 @@ SimParameters <- c(r = fittedr, K = fittedK, a = fitteda, eps = fittedeps, m = f
 return(simdata)
 }
 
-best10simdata <- map_df(fitdata, innerfunction)
+best3simdata <- map_df(fitdata, innerfunction)
 
 prod_plot <- ggplot() +
 		geom_point(data = obsdata, aes(x = days, y = P)) +
-		geom_line(data = best10simdata, aes(x = time, y = P, color = repnumber))
+		geom_line(data = best3simdata, aes(x = time, y = P, color = repnumber))
 
 
 het_plot <- ggplot() +
 		geom_point(data = obsdata, aes(x = days, y = H)) +
-		geom_line(data = best10simdata, aes(x = time, y = H, color = repnumber))
+		geom_line(data = best3simdata, aes(x = time, y = H, color = repnumber))
 
 output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
