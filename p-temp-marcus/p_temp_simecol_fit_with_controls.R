@@ -12,7 +12,7 @@ library(knitr)
 ### Data Frames ###
 
 # Read the data from the consumer free controls, and store as object
-ptempdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
+controldata <- read.csv(file = file.path("data-processed", "p_temp_algae.csv"), #file.path() is used for cross-platform compatibility
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
@@ -21,7 +21,39 @@ dayzerodata <- read.csv(file = file.path("data-processed", "march29_cell_data.cs
 	strip.white = TRUE,
 	na.strings = c("NA","") )
 
+# Read the data from the consumer free controls, and store as object
+ptempdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), #file.path() is used for cross-platform compatibility
+	strip.white = TRUE,
+	na.strings = c("NA","") )
+
 ### Data Manipulation ###
+
+## controldata ##
+
+# Rename columns in data frame to correspond to the names of the stocks in our
+# dynamical model. This is necessary to invoke the fitOdeModel function.
+controldata <- rename(controldata, phosphorus = P,
+					     P = biovol,
+					     temperature = temp
+			)
+
+# Isolate only the data involving controls, labelled in the original data with "CX"; X is some number
+controldata <- filter(controldata, grepl("C", replicate))
+
+# Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later
+Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
+controldata <- mutate(controldata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
+
+# Reorder rows in data frame by resource treatment, temperature, and ID
+controldata <- arrange(controldata, phosphorus, temperature, ID)
+
+# Create a column that lists the treatment type of each replicate, which depends on its phosphorus and temperature combination
+controldata <- mutate(controldata, treatment = paste(controldata$phosphorus, controldata$temperature, sep=""))
+
+# Split data frame into multiple indexed data frames based on their ID
+controldata <- split(controldata, f = controldata$treatment)
+
+## dayzerodata ##
 
 # Remove unneeded columns from "dayzerodata" dataframe
 dayzerodata <- dayzerodata[-c(1, 5, 7)] # column 1 is "filename"; column 5 is "date"; column 7 is "start time"
@@ -37,6 +69,8 @@ dayzerodata <- mutate(dayzerodata, algal_biovolume = volume_cell * algal_cell_co
 				     days = 0,
 				     daphnia_total = 10)
 
+## ptempdata ##
+
 # Vertically merge "pdata" and "dayzerodata" data frames
 ptempdata <- bind_rows(ptempdata, dayzerodata)
 
@@ -51,8 +85,8 @@ ptempdata <- rename(ptempdata, Phosphorus = phosphorus_treatment)
 scalefactor <- 250
 ptempdata <- mutate(ptempdata, P = P * scalefactor)
 
-# Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later
-Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
+# Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later. "Boltz" is defined
+# earlier in the code, for a similar transformation of controldata
 ptempdata <- mutate(ptempdata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
 
 # Reorder rows in data frame by treatment ID, and then by days
@@ -64,7 +98,115 @@ ptempdata <- mutate(ptempdata, treatment = paste(ptempdata$Phosphorus, ptempdata
 # Split entire dataset into multiple indexed data frames based on their treatment
 ptempdata <- split(ptempdata, f = ptempdata$treatment)
 
-### Model Construction ###
+### FITTING CONSUMER FREE CONTROLS ###
+
+ControlParameters <- c(r = 2, K = 1000000)
+
+ControlFittedParameters <- c("r", "K")
+
+r_min <- 0
+r_max <- 10
+
+K_min <- 1e8
+K_max <- 1e16
+
+ControlLowerBound <- c(r = r_min, K = K_min)
+
+ControlUpperBound <- c(r = r_max, K = K_max)
+
+ControlParamScaling <- 1 / ControlUpperBound
+
+CONTROLmodel <- new("odeModel",
+	main = function (time, init, parms) {
+			with(as.list(c(init, parms)), {
+		dp <-  r * P * (1 - (P / K))
+		list(c(dp))
+		})
+	},
+	parms = ControlParameters,
+	times = c(from = 0, to = 36, by = 0.1), # the time interval over which the model will be simulated.
+	init = c(P = 1e6),
+	solver = "lsoda" #lsoda will be called with tolerances of 1e-9, as seen directly below. Default tolerances are both 1e-6. Lower is more accurate.
+		)
+
+controlfit <- function(data, num_replicates) {
+
+repfit <- function(data) {
+
+PORTfit <- function(num) {
+
+		# First we initialize the simecol model object; we are using a CONTROLmodel here, which will be modified further
+		model <- CONTROLmodel
+
+		# Here we randomly generate our initial parameter settings by sampling from uniform distributions, with minima and maxima 
+		# corresponding to the bounds declared earlier in the code. These are then assigned to our simecol model object.
+		parms(model)[ControlFittedParameters] <- c(r = runif(1, min = r_min, max = r_max),
+								K = runif(1, min = K_min, max = K_max)
+								)
+
+		# Here we isolate all of the day zero data, and then use that to set our initial model conditions. The initial phytoplankton density 
+		# is set to the mean biovolume taken from the first measurement day.
+		dayzerodata <- filter(data, days == 0)
+		init(model) <- c(P = mean(dayzerodata$P))
+
+		# Here we make sure that the times are correct
+		
+		times(model) <- c(from = 0, to = max(controldata[["FULL24"]]$days), by = 0.1)
+		
+		# Here we declare our observed data in a form that fitOdeModel (used below) can understand.
+		obstime <- data$days # The X values of the observed data points we are fitting our model to
+		yobs <- select(data, P) # The Y values of the observed data points we are fitting our model to
+
+		# Below we fit a CRmodel to the replicate's data. The optimization criterion used here is the minimization of the sum of
+		# squared differences (SSQ) between the experimental data and our modelled data.
+		
+		# The PORT algorithm is employed to perform the model fitting, analogous to O'Connor et al.
+		# "LowerBound" and "UpperBound" are vectors containing the lower and upper bound constraints
+		# for the parameter values. "ParamScaling" assists the function with fitting when the parameters take different orders of magnitude.
+
+		fittedmodel <- fitOdeModel(model, whichpar = ControlFittedParameters, obstime, yobs,
+ 		debuglevel = 0, fn = ssqOdeModel,
+   		method = "PORT", lower = ControlLowerBound, upper = ControlUpperBound, scale.par = ControlParamScaling,
+  		control = list(trace = TRUE),
+			    rtol = 1e-9,
+			    atol = 1e-9,
+			    maxsteps = 5000
+		)
+		
+		# Here we create vectors to be used to output a dataframe of
+		# the replicates' SSQ, phosphorus level, temperature, transformed temperature, and the values of 
+		# the fitted parameters.
+
+		ssq <- ssqOdeModel(coef(fittedmodel), model, obstime, yobs) # simulates another CONTROLmodel, but now using our fitted parameters, and outputs the SSQ.
+		treatment <- data$treatment[1]
+		phosphorus <- data$phosphorus[1]
+		temperature <- data$temperature[1]
+		transformedtemperature <- data$transformedtemperature[1]
+		r <- coef(fittedmodel)["r"]
+		K <- coef(fittedmodel)["K"]
+
+		# Create one-row dataframe of the above vectors
+		simulation_data <- data.frame(ssq, treatment, phosphorus, temperature, transformedtemperature, r, K)
+		
+		# Return above dataframe as the function's output
+		return(simulation_data)
+}
+replicates <- seq(1, num_replicates, 1) # number of fitting attempts
+
+outputdf <- map_df(replicates, PORTfit) # use map_df here; DO NOT USE A FOR-LOOP!!!
+
+return(outputdf)
+}
+
+outputdf <- map_df(data, repfit)
+
+return(outputdf)
+}
+
+rawfittedcontroldata <- controlfit(controldata, 2)
+
+
+### FITTING POPULATIONS WITH CONSUMERS ###
 
 # Here, we construct the consumer resource model. The
 # resulting system of equations, called "CRModel", can be used to produce
@@ -232,6 +374,7 @@ outputdf <- map_df(data, repfit)
 
 return(outputdf)
 }
+
 
 ### PRODUCING DATA ###
 
