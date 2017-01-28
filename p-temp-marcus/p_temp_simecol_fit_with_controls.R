@@ -104,11 +104,11 @@ ControlParameters <- c(r = 2, K = 1000000)
 
 ControlFittedParameters <- c("r", "K")
 
-r_min <- 0
-r_max <- 10
+r_min <- 0.01
+r_max <- 0.5
 
-K_min <- 1e8
-K_max <- 1e16
+K_min <- 1e12
+K_max <- 1e17
 
 ControlLowerBound <- c(r = r_min, K = K_min)
 
@@ -150,8 +150,7 @@ PORTfit <- function(num) {
 		init(model) <- c(P = mean(dayzerodata$P))
 
 		# Here we make sure that the times are correct
-		
-		times(model) <- c(from = 0, to = max(controldata[["FULL24"]]$days), by = 0.1)
+		times(model) <- c(from = 0, to = max(data$days), by = 0.1)
 		
 		# Here we declare our observed data in a form that fitOdeModel (used below) can understand.
 		obstime <- data$days # The X values of the observed data points we are fitting our model to
@@ -203,8 +202,55 @@ outputdf <- map_df(data, repfit)
 return(outputdf)
 }
 
-rawfittedcontroldata <- controlfit(controldata, 2)
+rawfittedcontroldata <- controlfit(controldata, 10)
 
+plotbest3controls <- function(phosphorus, temp) {
+
+x <- paste(phosphorus, temp, sep = "")
+obsdata <- controldata[[x]]
+
+fitdata <- filter(rawfittedcontroldata, treatment == x)
+
+fitdata <- filter(fitdata, ssq != 0)
+fitdata <- arrange(fitdata, ssq)
+fitdata <- fitdata[1:3,] # use best 3 for now
+
+fitdata$repnumber <- rownames(fitdata)
+fitdata <- split(fitdata, f = fitdata$repnumber)
+
+# objective is to write a function that operates on a single data frame of parameters and other info, and then produce the density estimates
+# using the sim function in simecol. Then use map_df on this guy.
+
+innerfunction <- function(xdata) {
+
+fittedr <- xdata$r
+fittedK <- xdata$K
+
+SimParameters <- c(r = fittedr, K = fittedK)
+
+		dayzerodata <- filter(obsdata, days == 0)
+		simmodel <- CONTROLmodel
+		init(simmodel) <- c(P = mean(dayzerodata$P)) # Set initial model conditions to the biovolume taken from the first measurement day
+		times(simmodel) <- c(from = 0, to = max(controldata[[x]]$days), by = 0.1)
+		parms(simmodel) <- SimParameters
+
+		simdata <- out(sim(simmodel, rtol = 1e-10, atol = 1e-10))
+		simdata <- mutate(simdata, repnumber = xdata$repnumber)
+
+return(simdata)
+}
+
+best3simdata <- map_df(fitdata, innerfunction)
+
+output_plot <- ggplot() +
+		geom_point(data = obsdata, aes(x = days, y = P)) +
+		geom_line(data = best3simdata, aes(x = time, y = P, color = repnumber))
+
+return(output_plot)
+
+}
+
+plotbest3controls("DEF", 24)
 
 ### FITTING POPULATIONS WITH CONSUMERS ###
 
@@ -492,7 +538,7 @@ fittedr_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(r) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log intrinsic growth rate (r)")
 fittedr_plot
-ggsave("fittedr_2017_24_01.png", plot = last_plot())
+# ggsave("fittedr_2017_24_01.png", plot = last_plot())
 
 r_full_model <- lm(data = filter(rawfitteddata, phosphorus == "FULL"), log(r) ~ transformedtemperature)
 confint(r_full_model)
@@ -506,7 +552,7 @@ fittedK_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(K) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log carrying capacity (K)")
 fittedK_plot
-ggsave("fittedK_2017_24_01.png", plot = last_plot())
+# ggsave("fittedK_2017_24_01.png", plot = last_plot())
 
 fitteda_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(a), color = phosphorus)) +
         geom_point() +
@@ -514,4 +560,4 @@ fitteda_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(a) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
 fitteda_plot
-ggsave("fitteda_2017_24_01.png", plot = last_plot())
+# ggsave("fitteda_2017_24_01.png", plot = last_plot())
