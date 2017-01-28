@@ -13,21 +13,21 @@ https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/p_temp_simecol
 ### Plotting Simulated Density Curves vs. Observed Data
 
 ##### 12 Degrees, Phosphorus Deficient
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF12controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF12controlplot_2017_JAN_27.png" width="600">
 ##### 12 Degrees, Phosphorus Rich
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL12controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL12controlplot_2017_JAN_27.png" width="600">
 
 ##### 16 Degrees, Phosphorus Deficient
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF16controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF16controlplot_2017_JAN_27.png" width="600">
 ##### 16 Degrees, Phosphorus Rich
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL16controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL16controlplot_2017_JAN_27.png" width="600">
 
 ##### 20 Degrees, Phosphorus Deficient
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF20controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF20controlplot_2017_JAN_27.png" width="600">
 ##### 20 Degrees, Phosphorus Rich
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL20controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL20controlplot_2017_JAN_27.png" width="600">
 
 ##### 24 Degrees, Phosphorus Deficient
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF24controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/DEF24controlplot_2017_JAN_27.png" width="600">
 ##### 24 Degrees, Phosphorus Rich
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL24controlplot_2017_JAN_27.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/FULL24controlplot_2017_JAN_27.png" width="600">
