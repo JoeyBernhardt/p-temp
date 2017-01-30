@@ -202,7 +202,15 @@ outputdf <- map_df(data, repfit)
 return(outputdf)
 }
 
-rawfittedcontroldata <- controlfit(controldata, 10)
+rawfittedcontroldata <- controlfit(controldata, 100)
+# write.csv(rawfittedcontroldata, "rawfittedcontroldata_2017_JAN_01.csv")
+
+fittedcontroldata <- rawfittedcontroldata %>%
+filter(ssq !=0) %>%
+arrange(treatment, ssq) %>%
+group_by(treatment) %>%
+slice(1) %>%
+ungroup
 
 plotbest3controls <- function(phosphorus, temp) {
 
@@ -250,7 +258,8 @@ return(output_plot)
 
 }
 
-plotbest3controls("DEF", 24)
+plotbest3controls("DEF", 16)
+ggsave("DEF16controlplot_2017_JAN_27.png", plot = last_plot())
 
 ### FITTING POPULATIONS WITH CONSUMERS ###
 
@@ -286,12 +295,6 @@ FittedParameters <- c("r", "K", "a", "eps", "m")
 # N.B. Note that because the parameter scaling vector, "ParamScaling" (located below), depends on "UpperBound", changing the upper bound 
 # of any of the parameter values can have unintended effects on the quality of fits. Thus, it recommended not to set the upper bounds on parameters 
 # too high; don't increase them unless you can think of a biological/mathematical reason for doing so!
-
-r_min <- 0.1
-r_max <- 10
-
-K_min <- 1e9
-K_max <- 1e13
 
 a_min <- 0
 a_max <- 1
@@ -506,30 +509,6 @@ return(output_plot)
 
 }
 
-def12plot <- plotbest3("DEF", 12)
-# ggsave("def12plot.png", plot = def12plot)
-
-def16plot <- plotbest3("DEF", 16)
-# ggsave("def16plot.png", plot = def16plot)
-
-def20plot <- plotbest3("DEF", 20)
-# ggsave("def20plot.png", plot = def20plot)
-
-def24plot <- plotbest3("DEF", 24)
-# ggsave("def24plot.png", plot = def24plot)
-
-full12plot <- plotbest3("FULL", 12)
-# ggsave("full12plot.png", plot = full12plot)
-
-full16plot <- plotbest3("FULL", 16)
-# ggsave("full16plot.png", plot = full16plot)
-
-full20plot <- plotbest3("FULL", 20)
-# ggsave("full20plot.png", plot = full20plot)
-
-full24plot <- plotbest3("FULL", 24)
-# ggsave("full24plot.png", plot = full24plot)
-
 ### PLOTS ###
 
 fittedr_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
@@ -560,4 +539,29 @@ fitteda_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y =
         ggtitle("Fitted log(a) Values") +
         labs(x = "inverse temperature (-1/kT)", y = "log attack rate (a)")
 fitteda_plot
+
 # ggsave("fitteda_2017_24_01.png", plot = last_plot())
+
+def12plot <- plotbest3("DEF", 12)
+# ggsave("def12plot.png", plot = def12plot)
+
+def16plot <- plotbest3("DEF", 16)
+# ggsave("def16plot.png", plot = def16plot)
+
+def20plot <- plotbest3("DEF", 20)
+# ggsave("def20plot.png", plot = def20plot)
+
+def24plot <- plotbest3("DEF", 24)
+# ggsave("def24plot.png", plot = def24plot)
+
+full12plot <- plotbest3("FULL", 12)
+# ggsave("full12plot.png", plot = full12plot)
+
+full16plot <- plotbest3("FULL", 16)
+# ggsave("full16plot.png", plot = full16plot)
+
+full20plot <- plotbest3("FULL", 20)
+# ggsave("full20plot.png", plot = full20plot)
+
+full24plot <- plotbest3("FULL", 24)
+# ggsave("full24plot.png", plot = full24plot)
