@@ -40,6 +40,11 @@ controldata <- rename(controldata, phosphorus = P,
 # Isolate only the data involving controls, labelled in the original data with "CX"; X is some number
 controldata <- filter(controldata, grepl("C", replicate))
 
+# Here we scale the phytoplankton density by 250, in order to get the total biovolume present in the beaker.
+# We want to model the total algal biovolume because we have modelled the total Daphnia density.
+scalefactor <- 250
+ptempdata <- mutate(ptempdata, P = P * scalefactor)
+
 # Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later
 Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
 controldata <- mutate(controldata, transformedtemperature = -1/(Boltz * (temperature + 273.15)))
@@ -107,8 +112,8 @@ ControlFittedParameters <- c("r", "K")
 r_min <- 0.01
 r_max <- 0.5
 
-K_min <- 1e12
-K_max <- 1e17
+K_min <- 1e17
+K_max <- 1e19
 
 ControlLowerBound <- c(r = r_min, K = K_min)
 
@@ -202,16 +207,6 @@ outputdf <- map_df(data, repfit)
 return(outputdf)
 }
 
-rawfittedcontroldata <- controlfit(controldata, 100)
-# write.csv(rawfittedcontroldata, "rawfittedcontroldata_2017_JAN_01.csv")
-
-fittedcontroldata <- rawfittedcontroldata %>%
-filter(ssq !=0) %>%
-arrange(treatment, ssq) %>%
-group_by(treatment) %>%
-slice(1) %>%
-ungroup
-
 plotbest3controls <- function(phosphorus, temp) {
 
 x <- paste(phosphorus, temp, sep = "")
@@ -258,8 +253,17 @@ return(output_plot)
 
 }
 
-plotbest3controls("DEF", 16)
-ggsave("DEF16controlplot_2017_JAN_27.png", plot = last_plot())
+rawfittedcontroldata <- controlfit(controldata, 10)
+# write.csv(rawfittedcontroldata, "rawfittedcontroldata_2017_JAN_01.csv")
+
+fittedcontroldata <- rawfittedcontroldata %>%
+filter(ssq !=0) %>%
+arrange(treatment, ssq) %>%
+group_by(treatment) %>%
+slice(1) %>%
+ungroup
+
+plotbest3controls("DEF", 12)
 
 ### FITTING POPULATIONS WITH CONSUMERS ###
 
@@ -427,7 +431,7 @@ return(outputdf)
 
 ### PRODUCING DATA ###
 
-# rawfitteddata <- fitall(ptempdata, 2)
+rawfitteddata <- fitall(ptempdata, 2)
 
 fitteddata <- rawfitteddata %>%
 filter(ssq !=0) %>%
@@ -511,7 +515,7 @@ return(output_plot)
 
 ### PLOTS ###
 
-fittedr_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
+fittedr_plot <- ggplot(data = rawfittedcontroldata, aes(x = transformedtemperature, y = log(r), color = phosphorus)) +
         geom_point() +
         geom_smooth(method = lm) +
         ggtitle("Fitted log(r) Values") +
@@ -525,7 +529,7 @@ confint(r_full_model)
 r_def_model <- lm(data = filter(rawfitteddata, phosphorus == "DEF"), log(r) ~ transformedtemperature)
 confint(r_def_model)
 
-fittedK_plot <- ggplot(data = rawfitteddata, aes(x = transformedtemperature, y = log(K), color = phosphorus)) +
+fittedK_plot <- ggplot(data = rawfittedcontroldata, aes(x = transformedtemperature, y = log(K), color = phosphorus)) +
         geom_point() +
         geom_smooth(method = lm) +
         ggtitle("Fitted log(K) Values") +
