@@ -14,9 +14,9 @@ https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/p_temp_simecol
 ##### 20 Degrees, Phosphorus Deficient
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/densityplot_def20_2017_FEB_03.png" width="900">
 ##### 20 Degrees, Phosphorus Rich
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/densityplot_def24_2017_FEB_03.png" width="900">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/densityplot_full20_2017_FEB_03.png" width="900">
 
 ##### 24 Degrees, Phosphorus Deficient
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/densityplot_full20_2017_FEB_03.png" width="900">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/densityplot_def24_2017_FEB_03.png" width="900">
 ##### 24 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/densityplot_full24_2017_FEB_03.png" width="900">
