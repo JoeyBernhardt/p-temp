@@ -363,7 +363,7 @@ PORTfit <- function(num) {
 
 		# Here we randomly generate our initial parameter settings by sampling from uniform distributions, with minima and maxima 
 		# corresponding to the bounds declared earlier in the code. These are then assigned to our simecol model object.
-		parms(model)[FittedParameters] <- c(r = runif(1, min = r_min, max = r_max),
+		parms(model)[FittedParameters] <- c(r = 0.19,
 								K = runif(1, min = K_min, max = K_max),
 								a = runif(1, min = a_min, max = a_max),
 								eps = runif(1, min = eps_min, max = eps_max),
@@ -441,21 +441,6 @@ slice(1) %>%
 ungroup
 
 ### OUTPUTTING DATA ###
-
-# write.csv(fitteddata, "fitteddata06_2017_24_01.csv")
-# write.csv(rawfitteddata, "rawfitteddata06_2017_24_01.csv")
-
-### INPUTTING DATA ###
-
-rawfitteddata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitteddata05_2017_22_01.csv"), #file.path() is used for cross-platform compatibility
-	strip.white = TRUE,
-	na.strings = c("NA","") )
-
-rawfitteddata <- mutate(rawfitteddata, treatment = paste(rawfitteddata$phosphorus, rawfitteddata$temperature, sep=""))
-
-fitteddata <- read.csv(file = file.path("p-temp-marcus", "outputs", "fitteddata05_2017_22_01.csv"), #file.path() is used for cross-platform compatibility
-	strip.white = TRUE,
-	na.strings = c("NA","") )
 
 # use this function on 
 plotbest3 <- function(phosphorus, temp) {
