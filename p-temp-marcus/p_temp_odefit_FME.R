@@ -102,6 +102,7 @@ ptempdata <- mutate(ptempdata, treatment = paste(ptempdata$Phosphorus, ptempdata
 # Split entire dataset into multiple indexed data frames based on their treatment
 ptempdata <- split(ptempdata, f = ptempdata$treatment)
 
+
 pdata <- ptempdata[["DEF16"]]
 
 # Extract from the above subset only what we require to fit our model
