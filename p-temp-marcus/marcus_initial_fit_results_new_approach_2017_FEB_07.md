@@ -1,28 +1,10 @@
 # Fitting results
 
-### Data
-
-Here we read in the data used for all of the below plots:
-```r
-#file.path() is used for cross-platform compatibility
-plotdata <- read.csv(file = file.path("p-temp-marcus", "outputs", "rawfitteddata05_2017_22_01.csv"),
-	strip.white = TRUE,
-	na.strings = c("NA","") )
-```
-
-### Code
-
-The code used to generate the fits in seen below, as well as all related plotting functions, can be found at:
-https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/p_temp_simecol_fit.R
-
 ### Plotting Simulated Density Curves vs. Observed Data
 
-Here we show plots of the "best" three simulation results vs. the observed experimental data, for each treatment combination of phosphorus and temperature.
-
-The goal here is to assess the quality of our model fits. **On the legend for each plot, the replicates are ordered by descending SSQ; the first replicate listed is the "best" fit.** In general, we see that the fitting algorithm is still struggling. The fits for the 16 degree treatments look nice, but the rest are still quite unsatisfactory, with the 24 degree treatments being particularly bad.
 
 ##### 12 Degrees, Phosphorus Deficient
-<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot.png" width="1000">
+<img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/def12plot_2017_FEB_07.tiff" width="1000">
 ##### 12 Degrees, Phosphorus Rich
 <img src="https://github.com/JoeyBernhardt/p-temp/blob/master/p-temp-marcus/plots/full12plot.png" width="1000">
 
