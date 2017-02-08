@@ -103,7 +103,7 @@ ptempdata <- mutate(ptempdata, treatment = paste(ptempdata$Phosphorus, ptempdata
 ptempdata <- split(ptempdata, f = ptempdata$treatment)
 
 
-pdata <- ptempdata[["DEF16"]]
+pdata <- ptempdata[["FULL20"]]
 
 # Extract from the above subset only what we require to fit our model
 obstime <- pdata$days # this is the time interval over which we are fitting our model
@@ -156,11 +156,17 @@ fitsodadf <- data.frame(fitsoda)
 
 prod_plot <- ggplot() + # declare ggplot object
 	geom_line(data = fitsodadf, aes(x = times, y = P, colour = "red")) +
-	geom_point(data = fittingdata, aes(x = time, y = P))
+	geom_point(data = fittingdata, aes(x = time, y = P)) +
+  ggtitle("Simulated Algal Biovolume") +
+	labs(x = "Days", y = "Algal Biovolume") +
+	theme(legend.position = "none")
 	
 het_plot <- ggplot() + 
 	geom_line(data = fitsodadf, aes(x = times, y = H, colour = "red")) +
-	geom_point(data = fittingdata, aes(x = time, y = H))
+	geom_point(data = fittingdata, aes(x = time, y = H)) +
+  ggtitle("Simulated Daphnia Density") +
+	labs(x = "Days", y = "Total Daphnia Density") +
+  theme(legend.position = "none")
 
 output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
