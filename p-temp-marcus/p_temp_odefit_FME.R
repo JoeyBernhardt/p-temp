@@ -159,7 +159,7 @@ obsdata <- ptempdata[["FULL20"]] %>%
 			
 			output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
-pdata <- ptempdata[["DEF16"]]
+pdata <- ptempdata[["FULL24"]]
 
 # Extract from the above subset only what we require to fit our model
 obstime <- pdata$days # this is the time interval over which we are fitting our model
@@ -172,13 +172,16 @@ times <- seq(0, 36, 0.1)
 dayzerodata <- filter(pdata, days == 0)
 initial_state <- c(P = mean(dayzerodata$P), H = 10)
 
+# works well for def12: 5.524790e+00 3.378748e+02 3.901555e-01 4.001129e-03 3.700928e-02 USE MARQ FOR DEF12
+# works well for full12: 5.654957e+00 2.025641e+02 3.683304e-01 1.261719e-03 1.009373e-03 USE NM
 # works well for def16: c(r = 4.8, K = 585, a = 0.25, eps = 0.002, m = 0.01)
 # works well for full16: c(r = 3.14, 882, a = 0.18, eps = 0.004, m = 0.01)
 # works well for def20: c(r = 4.9, K = 997, a = 0.23, eps = 0.002, m = 0.03)
+# works well for def24: c(r = 4.1, K = 700, a = 0.3, eps = 0.008, m = 0.02) WEIRD STUFF HAPPENING HERE. USE 10^5 for MCMC
 # works SOMEWHAT well for full20: c(r = 2.1, K = 928, a = 0.12, eps = 0.005, m = 0.09)
 # model_parameters <- c(r = 2, K = 500, a = 0.5, eps = 0.001, m = 0.01)
 
-model_parameters <- c(r = 4.8, K = 585, a = 0.25, eps = 0.002, m = 0.01)
+model_parameters <- c(r = 4.1, K = 700, a = 0.3, eps = 0.008, m = 0.02)
 lower_parameters <- c(0, 100, 0.1, 0.001, 0)
 upper_parameters <- c(6, 1000, 1, 0.01, 0.1)
 
@@ -204,7 +207,7 @@ Fit <- modFit(f = ModelCost2,
 		  p = model_parameters,
 		  lower = lower_parameters,
 		  upper = upper_parameters,
-		  method = c("Marq")
+		  method = c("Nelder-Mead") # options are "Marq" or "Nelder-Mead"
 		  )
 
 fitsoda <- ode(initial_state, times, CRmodel, Fit$par)
@@ -226,15 +229,104 @@ het_plot <- ggplot() +
 
 output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
+set.seed(7) # set pseudorandom seed; for reproducibility
 var0 <- Fit$var_ms_unweighted
 cov0 <- summary(Fit)$cov.scaled * 2.4^2/5
 MCMC <- modMCMC(f = ModelCost2, p = Fit$par, 
 					  lower = lower_parameters,
 					  upper = upper_parameters,
-					  niter = 5000, jump = cov0,
+					  niter = 50000, jump = cov0,
             var0 = var0, wvar0 = 0.1,
 					  updatecov = 50)
+summary(MCMC)
+
+sink("full24_MCMC_parameter_summary.txt")
+summary(as.mcmc(MCMC$pars))
+sink()
 
 Sfun <- sensFun(ModelCost2, model_parameters)
 ident <- collin(Sfun)
 
+
+temp <- c(12, 16, 20, 24)
+transformedtemp <- -1/(Boltz * (temp + 273.15))
+
+defr <- c(5.428, 5.034, 5.130, 4.409)
+defK <- c(556.0, 688.5, 629.1, 659.0)
+defa <- c(0.4625, 0.2999, 0.1269, 0.3450)
+
+fullr <- c(3.891, 4.432, 5.045, 5.408)
+fullK <- c(423.3, 262.9, 495.5, 597.9)
+fulla <- c(0.5348, 0.2062, 0.1343, 0.3168)
+
+slope.df <- data.frame(temp,transformedtemp,defr,defK,defa,fullr,fullK,fulla)
+
+
+defrlm <- lm(data = slope.df, log(defr) ~ transformedtemp)
+summary(defrlm)
+
+defr_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(defr))) + 
+	geom_point() +
+	geom_smooth(method = lm, col = "red") +
+	ggtitle("Estimated values of r - Phosphorus Deficient") +
+	labs(x = "Temperature (-1/kT)", y = "log(r)") +
+	theme(legend.position = "none")
+defr_plot
+
+fullrlm <- lm(data = slope.df, log(fullr) ~ transformedtemp)
+summary(fullrlm)
+
+fullr_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(fullr))) + 
+	geom_point() +
+	geom_smooth(method = lm, col = "red") +
+	ggtitle("Estimated values of r - Phosphorus Rich") +
+	labs(x = "Temperature (-1/kT)", y = "log(r)") +
+	theme(legend.position = "none")
+fullr_plot
+
+defKlm <- lm(data = slope.df, log(defK) ~ transformedtemp)
+summary(defKlm)
+
+defK_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(defK))) + 
+	geom_point() +
+	geom_smooth(method = lm, col = "red") +
+	ggtitle("Estimated values of K - Phosphorus Deficient") +
+	labs(x = "Temperature (-1/kT)", y = "log(K)") +
+	theme(legend.position = "none")
+defK_plot
+
+fullKlm <- lm(data = slope.df, log(fullK) ~ transformedtemp)
+summary(fullKlm)
+
+fullK_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(fullK))) + 
+	geom_point() +
+	geom_smooth(method = lm, col = "red") +
+	ggtitle("Estimated values of K - Phosphorus Rich") +
+	labs(x = "Temperature (-1/kT)", y = "log(K)") +
+	theme(legend.position = "none")
+fullK_plot
+
+# density plots
+
+pdata <- ptempdata[["DEF24"]]
+
+# Extract from the above subset only what we require to fit our model
+obstime <- pdata$days # this is the time interval over which we are fitting our model
+yobs <- select(pdata, P, H)
+
+fittingdata <- data.frame(obstime, yobs)
+fittingdata <- rename(fittingdata, time = obstime)
+
+prod_plot <- ggplot() + # declare ggplot object
+	geom_point(data = fittingdata, aes(x = time, y = P)) +
+	ggtitle("Simulated Algal Biovolume") +
+	labs(x = "Days", y = "Algal Biovolume") +
+	theme(legend.position = "none")
+
+het_plot <- ggplot() + 
+	geom_point(data = fittingdata, aes(x = time, y = H)) +
+	ggtitle("Simulated Daphnia Density") +
+	labs(x = "Days", y = "Total Daphnia Density") +
+	theme(legend.position = "none")
+
+output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
