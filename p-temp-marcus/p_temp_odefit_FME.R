@@ -18,7 +18,7 @@ initialdata <- read.csv(file = file.path("data-processed", "march29_cell_data.cs
 												)
 
 # Read the data, and store as an object
-ptempdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), # file.path() is used for cross-platform compatibility
+rawdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv"), # file.path() is used for cross-platform compatibility
 											strip.white = TRUE, # remove leading and trailing spaces from character string entries
 											na.strings = c("NA","") # treat empty fields as missing
 											)
@@ -28,7 +28,7 @@ ptempdata <- read.csv(file = file.path("data-processed", "p_temp_processed.csv")
 # Remove unneeded columns from "initialdata" dataframe
 initialdata <- initialdata[-c(1, 5, 7)] # column 1 is "filename"; column 5 is "date"; column 7 is "start time"
 
-# Rename columns in "initialdata" to correspond to those in "ptempdata"
+# Rename columns in "initialdata" to correspond to those in "rawdata"
 initialdata <- rename(initialdata,
 											phosphorus_treatment = nutrient_level,
 											volume_cell = cell_volume,
@@ -43,12 +43,12 @@ initialdata <- mutate(initialdata,
 				     					daphnia_total = 10
 											)
 
-# Vertically merge "ptempdata" and "initialdata" data frames
-ptempdata <- bind_rows(ptempdata, initialdata)
+# Vertically merge "rawdata" and "initialdata" data frames
+rawdata <- bind_rows(rawdata, initialdata)
 
 # Rename columns in the "ptempdata" data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary before we can initialize the fitting process.
-ptempdata <- rename(ptempdata,
+ptempdata <- rename(rawdata,
 										P = algal_biovolume,
 										H = daphnia_total,
 										phosphorus = phosphorus_treatment
@@ -137,7 +137,7 @@ SANNfit <- function(data){
 			return(SANNfitdata)
 }
 
-sfitdf <- SANNfit(ptempdata[["FULL20"]])
+sfitdf <- SANNfit(ptempdata[["FULL24"]])
 
 obsdata <- ptempdata[["FULL20"]] %>%
 	select(days, P, H) %>%
@@ -159,7 +159,7 @@ obsdata <- ptempdata[["FULL20"]] %>%
 			
 			output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
-pdata <- ptempdata[["FULL24"]]
+pdata <- ptempdata[["FULL12"]]
 
 # Extract from the above subset only what we require to fit our model
 obstime <- pdata$days # this is the time interval over which we are fitting our model
@@ -172,7 +172,8 @@ times <- seq(0, 36, 0.1)
 dayzerodata <- filter(pdata, days == 0)
 initial_state <- c(P = mean(dayzerodata$P), H = 10)
 
-# works well for def12: 5.524790e+00 3.378748e+02 3.901555e-01 4.001129e-03 3.700928e-02 USE MARQ FOR DEF12
+# parameter settings for when using P = algal_biovolume:
+# works well for def12: 4, 337, 3.901555e-01 4.001129e-03 3.700928e-02 USE MARQ FOR DEF12
 # works well for full12: 5.654957e+00 2.025641e+02 3.683304e-01 1.261719e-03 1.009373e-03 USE NM
 # works well for def16: c(r = 4.8, K = 585, a = 0.25, eps = 0.002, m = 0.01)
 # works well for full16: c(r = 3.14, 882, a = 0.18, eps = 0.004, m = 0.01)
@@ -181,9 +182,13 @@ initial_state <- c(P = mean(dayzerodata$P), H = 10)
 # works SOMEWHAT well for full20: c(r = 2.1, K = 928, a = 0.12, eps = 0.005, m = 0.09)
 # model_parameters <- c(r = 2, K = 500, a = 0.5, eps = 0.001, m = 0.01)
 
-model_parameters <- c(r = 4.1, K = 700, a = 0.3, eps = 0.008, m = 0.02)
-lower_parameters <- c(0, 100, 0.1, 0.001, 0)
-upper_parameters <- c(6, 1000, 1, 0.01, 0.1)
+# parameter settings for when using P = cell_density
+# DEF 20: 2.287622e+00 4.621829e+03 1.044994e-01 1.729104e-03 2.131745e-02
+# DEF 24: c(r = 2.2, K = 450, a = 0.1, eps = 0.008, m = 0.02)
+
+model_parameters <- c(r = 4, K = 200, a = 0.37, eps = 0.008, m = 0.03)
+lower_parameters <- c(0, 50, 0.1, 0.001, 0)
+upper_parameters <- c(5, 1000, 1, 0.5, 0.1)
 
 CRmodel <- function (times, initial_state, model_parameters) {
 		with(as.list(c(initial_state, model_parameters)), {
@@ -238,9 +243,9 @@ MCMC <- modMCMC(f = ModelCost2, p = Fit$par,
 					  niter = 50000, jump = cov0,
             var0 = var0, wvar0 = 0.1,
 					  updatecov = 50)
-summary(MCMC)
+summary(as.mcmc(MCMC$pars))
 
-sink("full24_MCMC_parameter_summary.txt")
+sink("full12_MCMC_parameter_summary.txt")
 summary(as.mcmc(MCMC$pars))
 sink()
 
@@ -330,3 +335,24 @@ het_plot <- ggplot() +
 	theme(legend.position = "none")
 
 output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
+
+#look at temperature size relationship
+
+# Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later.
+Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
+rawdata <- mutate(rawdata,
+										transformedtemperature = -1/(Boltz * (temperature + 273.15))
+)
+size_plot <- ggplot(data = rawdata, aes(x = transformedtemperature, y = log(volume_cell), color = phosphorus_treatment)) + # declare ggplot object
+	geom_point() +
+	geom_smooth(method = lm) +
+	ggtitle("Cell Volume vs. temperature") +
+	labs(x = "Temperature", y = "Cell volume")
+size_plot
+
+size_plot + facet_grid(. ~ unique_ID)
+
+vol.lm <- lm(data = rawdata, volume_cell ~ phosphorus_treatment)
+summary(vol.lm)
+
+size_box <- boxplot(data = rawdata, volume_cell ~ phosphorus_treatment)

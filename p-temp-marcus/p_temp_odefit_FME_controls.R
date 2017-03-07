@@ -12,7 +12,7 @@ library(knitr)
 #### Data Frames ####
 
 # Read the data from the consumer free controls, and store as an object
-controldata <- read.csv(file = file.path("data-processed", "p_temp_algae.csv"), # file.path() is used for cross-platform compatibility
+rawdata <- read.csv(file = file.path("data-processed", "p_temp_algae.csv"), # file.path() is used for cross-platform compatibility
 												strip.white = TRUE, # remove leading and trailing spaces from character string entries
 												na.strings = c("NA","") # treat empty fields as missing
 												)
@@ -21,7 +21,7 @@ controldata <- read.csv(file = file.path("data-processed", "p_temp_algae.csv"), 
 
 # Rename columns in the "ptempdata" data frame to correspond to the names of the stocks in our
 # dynamical model. This is necessary before we can initialize the fitting process.
-controldata <- rename(controldata,
+controldata <- rename(rawdata,
 										phosphorus = P,
 										P = cellcon, # used biovol before
 										temperature = temp
@@ -136,11 +136,15 @@ sink("full12control_MCMC_parameter_summary.txt")
 summary(as.mcmc(MCMC$pars))
 sink()
 
-prod_plot <- ggplot() + # declare ggplot object
-	geom_line(data = fitsodadf, aes(x = times, y = P, colour = "red")) +
-	geom_point(data = fittingdata, aes(x = time, y = P)) +
-	ggtitle("Simulated Algal Biovolume") +
-	labs(x = "Days", y = "Algal Biovolume") +
+size_plot <- ggplot(data = rawdata, aes(x = temp, y = vol_cell, color = P)) + # declare ggplot object
+	geom_point() +
+	geom_smooth(method = lm) +
+	ggtitle("Cell Volume vs. temperature") +
+	labs(x = "Temperature", y = "Cell volume") +
 	theme(legend.position = "none")
-prod_plot
+size_plot
 
+vol.lm <- lm(data = rawdata, vol_cell ~ temp)
+summary(vol.lm)
+
+size_box <- boxplot(data = rawdata, vol_cell ~ temp)
