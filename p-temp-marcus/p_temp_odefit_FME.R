@@ -159,7 +159,7 @@ obsdata <- ptempdata[["FULL20"]] %>%
 			
 			output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
-pdata <- ptempdata[["FULL12"]]
+pdata <- ptempdata[["FULL24"]]
 
 # Extract from the above subset only what we require to fit our model
 obstime <- pdata$days # this is the time interval over which we are fitting our model
@@ -186,7 +186,7 @@ initial_state <- c(P = mean(dayzerodata$P), H = 10)
 # DEF 20: 2.287622e+00 4.621829e+03 1.044994e-01 1.729104e-03 2.131745e-02
 # DEF 24: c(r = 2.2, K = 450, a = 0.1, eps = 0.008, m = 0.02)
 
-model_parameters <- c(r = 4, K = 200, a = 0.37, eps = 0.008, m = 0.03)
+model_parameters <- c(r = 3, K = 400, a = 0.37, eps = 0.008, m = 0.03)
 lower_parameters <- c(0, 50, 0.1, 0.001, 0)
 upper_parameters <- c(5, 1000, 1, 0.5, 0.1)
 
@@ -245,7 +245,7 @@ MCMC <- modMCMC(f = ModelCost2, p = Fit$par,
 					  updatecov = 50)
 summary(as.mcmc(MCMC$pars))
 
-sink("full12_MCMC_parameter_summary.txt")
+sink("full24_MCMC_parameter_summary.txt")
 summary(as.mcmc(MCMC$pars))
 sink()
 
