@@ -1,0 +1,25 @@
+
+Iterations = 1:50000
+Thinning interval = 1 
+Number of chains = 1 
+Sample size per chain = 50000 
+
+1. Empirical mean and standard deviation for each variable,
+   plus standard error of the mean:
+
+         Mean        SD  Naive SE Time-series SE
+r     2.01631 8.979e-01 4.015e-03      6.876e-02
+K   453.44556 2.271e+02 1.016e+00      1.455e+01
+a     0.25821 1.317e-01 5.889e-04      9.285e-03
+eps   0.01881 8.185e-03 3.661e-05      7.042e-04
+m     0.08352 1.307e-02 5.847e-05      8.579e-04
+
+2. Quantiles for each variable:
+
+         2.5%       25%       50%       75%     97.5%
+r   1.059e+00   1.45006   1.70943   2.24998   4.67153
+K   1.343e+02 284.39959 382.37837 613.83741 955.72630
+a   1.199e-01   0.17596   0.21740   0.28460   0.65985
+eps 5.063e-03   0.01230   0.01913   0.02409   0.03670
+m   5.578e-02   0.07758   0.08584   0.09315   0.09931
+
