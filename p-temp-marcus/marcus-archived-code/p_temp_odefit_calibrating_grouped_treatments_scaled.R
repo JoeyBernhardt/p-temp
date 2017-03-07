@@ -99,17 +99,19 @@ return(output)
 ## Consumer Resource Model ##
 
 # Declare the parameters to be used in the dynamical models
-Parameters <- c(r = 4, K = 150, a = 5, b = 50, eps = 1, m = 0.01)
 
-# original c(r = 5, K = 1e10, a = 10, b = 5e6, eps = 0.01, m = 0.1)
+Parameters <- c(r = 1.4, K = 150, a = 6, b = 75, eps = 0.25, m = 0.25)
+# Parameters <- c(r = 2, K = 150, a = 5, b = 50, eps = 1, m = 0.01)
+
+# original c(r = 5, K = 1e10, a = 15, b = 5e6, eps = 0.01, m = 0.1)
 
 # This vector simply contains strings; they are used to tell the function
 # "fitOdeModel" which parameters it is supposed to fit
 FittedParameters <- c("r", "K", "a", "b", "eps", "m")
 
 # Declare the parameters to be used as the bounds for the fitting algorithm
-LowerBound <- c(r = 0.1, K = 1e2, a = 0, b = 10, eps = 0.0005, m = 0.0001)
-UpperBound <- c(r = 5, K = 1e3, a = 10, b = 500, eps = 2, m = 1) 
+LowerBound <- c(r = 1, K = 75, a = 0, b = 10, eps = 0.1, m = 0.01)
+UpperBound <- c(r = 5, K = 300, a = 15, b = 300, eps = 2, m = 1) 
 
 # old set for fitting def16
 #LowerBound <- c(r = 0.1, K = 1e2, a = 0, b = 10, eps = 0.0005, m = 0.0001)
@@ -211,7 +213,7 @@ pfit <- function(data) {
 		return(simdata)
 }
 
-targetdata <- def16data
+targetdata <- full20data
 fitteddata <- pfit(targetdata)
 
 ### Calibration function ###
