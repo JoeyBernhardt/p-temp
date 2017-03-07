@@ -144,7 +144,9 @@ pfit <- function(data){
 			    rtol = 1e-9,
 			    atol = 1e-9
 		)
-		
+	
+		?fitOdeModel
+			
 		# Here we create vectors to be used to output a dataframe of
 		# the replicates' ID, Phosphorus level, temperature, and the
 		# fitted parameters. 
