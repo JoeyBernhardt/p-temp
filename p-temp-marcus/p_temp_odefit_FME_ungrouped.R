@@ -161,6 +161,7 @@ obsdata <- ptempdata[["FULL20"]] %>%
 
 pdata <- ptempdata[["DEF24"]]
 
+rkfit <- function(pdata){
 # Extract from the above subset only what we require to fit our model
 obstime <- pdata$days # this is the time interval over which we are fitting our model
 yobs <- select(pdata, P, H)
@@ -218,6 +219,9 @@ Fit <- modFit(f = ModelCost2,
 fitsoda <- ode(initial_state, times, CRmodel, Fit$par)
 fitsodadf <- data.frame(fitsoda)
 
+return(fitsodadf)
+}
+
 prod_plot <- ggplot() + # declare ggplot object
 	geom_line(data = fitsodadf, aes(x = times, y = P, colour = "red")) +
 	geom_point(data = fittingdata, aes(x = time, y = P)) +
@@ -234,134 +238,3 @@ het_plot <- ggplot() +
 
 output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
-set.seed(7) # set pseudorandom seed; for reproducibility
-var0 <- Fit$var_ms_unweighted
-cov0 <- summary(Fit)$cov.scaled * 2.4^2/5
-MCMC <- modMCMC(f = ModelCost2, p = Fit$par, 
-					  lower = lower_parameters,
-					  upper = upper_parameters,
-					  niter = 50000, jump = cov0,
-            var0 = var0, wvar0 = 0.1,
-					  updatecov = 50)
-summary(as.mcmc(MCMC$pars))
-
-sink("full24_MCMC_parameter_summary.txt")
-summary(as.mcmc(MCMC$pars))
-sink()
-
-Sfun <- sensFun(ModelCost2, model_parameters)
-ident <- collin(Sfun)
-
-# def12 4.702999e+00 1.809444e+02 2.916798e-01 1.689089e-03 3.085566e-04
-# def16 3.22536333 427.38679541   0.11112584   0.01071260   0.02145473 
-# def20 4.91034323 608.05712160   0.11023060   0.00811337   0.06197717 
-# def24 4.965987e+00 5.246114e+01 1.213860e-01 8.761128e-02 4.432156e-04
-
-# full12 4.609412e+00 1.319497e+02 2.925639e-01 1.590663e-03 1.792128e-03 
-# full16 3.359776e+00 6.434189e+02 1.995889e-01 3.623085e-03 1.611643e-02 
-# full20 2.247432e+00 9.033248e+02 1.390829e-01 5.277502e-03 9.304805e-02
-# full24  4.98218031 55.33433771  0.10468099  0.08477569  0.06382569 
-
-temp <- c(12, 16, 20, 24)
-transformedtemp <- -1/(Boltz * (temp + 273.15))
-
-defr <- c(5.428, 5.034, 5.130, 4.409)
-defK <- c(556.0, 688.5, 629.1, 659.0)
-defa <- c(0.4625, 0.2999, 0.1269, 0.3450)
-
-fullr <- c(3.891, 4.432, 5.045, 5.408)
-fullK <- c(423.3, 262.9, 495.5, 597.9)
-fulla <- c(0.5348, 0.2062, 0.1343, 0.3168)
-
-slope.df <- data.frame(temp,transformedtemp,defr,defK,defa,fullr,fullK,fulla)
-
-
-defrlm <- lm(data = slope.df, log(defr) ~ transformedtemp)
-summary(defrlm)
-
-defr_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(defr))) + 
-	geom_point() +
-	geom_smooth(method = lm, col = "red") +
-	ggtitle("Estimated values of r - Phosphorus Deficient") +
-	labs(x = "Temperature (-1/kT)", y = "log(r)") +
-	theme(legend.position = "none")
-defr_plot
-
-fullrlm <- lm(data = slope.df, log(fullr) ~ transformedtemp)
-summary(fullrlm)
-
-fullr_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(fullr))) + 
-	geom_point() +
-	geom_smooth(method = lm, col = "red") +
-	ggtitle("Estimated values of r - Phosphorus Rich") +
-	labs(x = "Temperature (-1/kT)", y = "log(r)") +
-	theme(legend.position = "none")
-fullr_plot
-
-defKlm <- lm(data = slope.df, log(defK) ~ transformedtemp)
-summary(defKlm)
-
-defK_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(defK))) + 
-	geom_point() +
-	geom_smooth(method = lm, col = "red") +
-	ggtitle("Estimated values of K - Phosphorus Deficient") +
-	labs(x = "Temperature (-1/kT)", y = "log(K)") +
-	theme(legend.position = "none")
-defK_plot
-
-fullKlm <- lm(data = slope.df, log(fullK) ~ transformedtemp)
-summary(fullKlm)
-
-fullK_plot <- ggplot(data = slope.df, aes(x = transformedtemp, y = log(fullK))) + 
-	geom_point() +
-	geom_smooth(method = lm, col = "red") +
-	ggtitle("Estimated values of K - Phosphorus Rich") +
-	labs(x = "Temperature (-1/kT)", y = "log(K)") +
-	theme(legend.position = "none")
-fullK_plot
-
-# density plots
-
-pdata <- ptempdata[["DEF24"]]
-
-# Extract from the above subset only what we require to fit our model
-obstime <- pdata$days # this is the time interval over which we are fitting our model
-yobs <- select(pdata, P, H)
-
-fittingdata <- data.frame(obstime, yobs)
-fittingdata <- rename(fittingdata, time = obstime)
-
-prod_plot <- ggplot() + # declare ggplot object
-	geom_point(data = fittingdata, aes(x = time, y = P)) +
-	ggtitle("Simulated Algal Biovolume") +
-	labs(x = "Days", y = "Algal Biovolume") +
-	theme(legend.position = "none")
-
-het_plot <- ggplot() + 
-	geom_point(data = fittingdata, aes(x = time, y = H)) +
-	ggtitle("Simulated Daphnia Density") +
-	labs(x = "Days", y = "Total Daphnia Density") +
-	theme(legend.position = "none")
-
-output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
-
-#look at temperature size relationship
-
-# Create a column for boltzmann-transformed temperatures; this is useful for plotting purposes later.
-Boltz <- 8.62 * 10 ^ (-5) # Boltzmann constant
-rawdata <- mutate(rawdata,
-										transformedtemperature = -1/(Boltz * (temperature + 273.15))
-)
-size_plot <- ggplot(data = rawdata, aes(x = transformedtemperature, y = log(volume_cell), color = phosphorus_treatment)) + # declare ggplot object
-	geom_point() +
-	geom_smooth(method = lm) +
-	ggtitle("Cell Volume vs. temperature") +
-	labs(x = "Temperature", y = "Cell volume")
-size_plot
-
-size_plot + facet_grid(. ~ unique_ID)
-
-vol.lm <- lm(data = rawdata, volume_cell ~ phosphorus_treatment)
-summary(vol.lm)
-
-size_box <- boxplot(data = rawdata, volume_cell ~ phosphorus_treatment)

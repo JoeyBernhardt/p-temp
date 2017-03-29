@@ -23,7 +23,7 @@ rawdata <- read.csv(file = file.path("data-processed", "p_temp_algae.csv"), # fi
 # dynamical model. This is necessary before we can initialize the fitting process.
 controldata <- rename(rawdata,
 										phosphorus = P,
-										P = cellcon, # used biovol before
+										P = biovol, # used biovol before
 										temperature = temp
 									  )
 
@@ -31,7 +31,7 @@ controldata <- rename(rawdata,
 controldata <- filter(controldata, grepl("C", replicate))
 
 # Here we scale the phytoplankton density downwards by six orders of magnitude.
-scalefactor <- 10 ^ 3 # use 10 ^ 6 for biovol
+scalefactor <- 10 ^ 6 # use 10 ^ 6 for biovol
 controldata <- mutate(controldata,
 										P = P / scalefactor
 										)
@@ -72,7 +72,7 @@ Pmodel <- function(model_times, initial_state, model_parameters) {
 
 #### Functions ####
 
-pdata <- controldata[["DEF16"]]
+pdata <- controldata[["FULL16"]]
 
 # Extract from the above subset only what we require to fit our model
 obstime <- pdata$days # this is the time interval over which we are fitting our model
@@ -132,7 +132,7 @@ MCMC <- modMCMC(f = ModelCost2, p = Fit$par,
 					  updatecov = 50)
 summary(as.mcmc(MCMC$pars))
 
-sink("full12control_MCMC_parameter_summary.txt")
+sink("full16control_MCMC_parameter_summary.txt")
 summary(as.mcmc(MCMC$pars))
 sink()
 
@@ -145,6 +145,72 @@ size_plot <- ggplot(data = rawdata, aes(x = temp, y = vol_cell, color = P)) + # 
 size_plot
 
 vol.lm <- lm(data = rawdata, vol_cell ~ temp)
-summary(vol.lm)
 
 size_box <- boxplot(data = rawdata, vol_cell ~ temp)
+
+## k0 is the ref K
+## m is body mass
+## ss is the temperature size slope (i.e. change in size due to change in temp)
+## t is the temperature
+## k is boltzman's constant
+## EP is the activation energy of photosynthesis
+
+
+KMT2 <- function(k0, m, EM, EP, k, t) k0*(m^(-3/4))*exp((3*EM - 4*EP)/(4*k*t))
+
+## draw K curve with TSR (in black)
+curve(KMT2(k0 = 10000, m = 100, EP = -0.30, EM = -0.4, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y")
+
+## now add curve for K without TSR, shown in blue
+curve(KMT2(k0 = 10000, m = 100, EP = -0.32, EM = 0, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", add = TRUE, col = "blue")
+
+
+KMT3 <- function(k0, m, EM, EP, k, t) k0*((m*exp((-EM/(k*t))))^(-3/4))*exp((-EP/(k*t)))
+
+## draw K curve with TSR (in black)
+curve(KMT3(k0 = 10000, m = 100, EP = -0.32, EM = -0.32, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y")
+
+## now add curve for K without TSR, shown in blue
+curve(KMT3(k0 = 10000, m = 100, EP = -0.32, EM = 0, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", add = TRUE, col = "blue")
+
+
+Barr <- function(EP,k,t, m) (m^(-3/4))*exp(-EP/(k*t))
+
+curve(Barr(m = 500, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15, to=273.15+10, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y")
+
+JMT <- function(k0, m, ss, EP, k, t) k0*((m + ss*(t-273.15))^(-3/4))*exp(-EP/(k*t))
+
+## draw K curve with TSR (in black)
+curve(JMT(k0 = 10000, m = 500, ss = -15, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y")
+
+## now add curve for K without TSR, shown in blue
+curve(JMT(k0 = 10000, m = 500, ss = 0, EP = -0.32, k = 8.62 * 10^(-5), x), from=273.15, to=273.15+20, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", add = TRUE, col = "blue")
+
+
+DMT <- function(k0, m, EM, k, t)  k0*m*(exp(-EM/(k*t)))^(-3/4)
+
+#curve(mmt(k0 = 10000, m = 100, EP = -0.32, EM = 0, k = 8.62 * 10^(-5), x), from=273.15-20, to=273.15+50, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y")
+
+KMT <- function(k0, m, ss, EP, k, t) k0*((m + ss*(t-273.15) + 30)^(-3/4))*exp(-EP/(k*t))
+
+## draw K curve with TSR (in green)
+curve(KMT(k0 = 100, m = 10, ss = (-3/100)*10, EP = -0.32, k = 8.62 * 10^(-5), x), from=270, to=310, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "green")
+
+## now add curve for K without TSR, shown in red
+curve(KMT(k0 = 100, m = 10, ss = 0, EP = -0.32, k = 8.62 * 10^(-5), x), from=270, to=310, xlab="Temperature (Kelvins)", ylab="log(K)", log = "y", col = "red", add = TRUE)
+
+require(ggplot2)
+KMT <- function(x) 6.5*((1000 + ((-2/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
+KMT2 <- function(x) 6.5*((1000 + ((0/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
+KMT3 <- function(x) 6.5*((1000 + ((-2.5/100)*1000)*(x-278.15))^(-3/4))*exp(0.32/(8.62 * 10^(-5)*x))
+
+
+p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x))
+
+p + 
+	stat_function(fun = KMT, color = "black", size = 2) +  stat_function(fun = KMT2, color = "cadetblue", size = 2) +
+	stat_function(fun = KMT3, color = "green", size = 2) +
+	xlim(273.15 + 5, 273.15 + 32) +
+	scale_y_continuous(trans = "log", breaks = 5) + theme_bw() +
+	xlab("temperature (kelvin)") + ylab("ln carrying capacity (K)") +
+	theme(text = element_text(size=20))
