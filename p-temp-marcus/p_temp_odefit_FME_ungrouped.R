@@ -80,86 +80,9 @@ ptempdata <- mutate(ptempdata,
 										)
 
 # Split entire dataset into multiple indexed data frames based on their treatment
-ptempdata <- split(ptempdata, f = ptempdata$treatment)
+ptempdata <- split(ptempdata, f = ptempdata$unique_ID)
 
 #### Objects ####
-
-model_times <- seq(0, 36, 0.1)
-initial_state <- c(P = 100, H = 10)
-model_parameters <- c(r = 1, K = 1000, a = 1, eps = 0.1, m = 0.1)
-
-PHmodel <- function(model_times, initial_state, model_parameters) {
-	with(as.list(c(initial_state, model_parameters)), {
-		dP <-  r * P * (1 - (P /  K)) - a * H * P 
-		dH <-  a * eps * H * P - m * H
-		list(c(dP, dH))
-	})
-}
-
-#### Functions ####
-
-SANNfit <- function(data){
-	    
-			model_times <- seq(0, max(data$days), 0.1)
-			
-			# Here we isolate all of the day zero data, which is then used to set our initial model conditions. The initial Daphnia density is always 10,
-			# regardless of treatment group. The initial phytoplankton density is set to the mean biovolume taken from the first measurement day.
-			dayzerodata <- filter(data, days == 0)
-			initial_state <- c(P = mean(dayzerodata$P), H = 10)
-			
-			SANN_parameters <- c(r = 5, K = 1000, a = 5, eps = 0.002, m = 0.01)
-			SANN_lower_bound <- c(0, 50, 0, 0.001, 0)
-			SANN_upper_bound <- c(10, 1500, 10, 0.01, 0.5)
-
-			obsdata <- data %>%
-								 select(days, P, H) %>%
-								 rename(time = days)
-			
-			SANNcost <- function(parms) {
-				odemodel <- ode(initial_state, model_times, PHmodel, parms)
-				cost <- modCost(odemodel, obsdata, scaleVar = TRUE) # Note that scaleVar is true here...
-				return(cost) # returns object of class modCost
-																	}
-
-			SANNfit <- modFit(f = SANNcost,
-								        p = SANN_parameters,
-								        lower = SANN_lower_bound,
-												upper = SANN_upper_bound,
-												method = c("SANN"),
-									    	control = list(maxit = 5,
-																	     temp = 50,
-																	     tmax = 100)
-												)
-			
-			SANNsim <- ode(initial_state, model_times, PHmodel, SANNfit$par)
-			SANNfitdata <- data.frame(SANNsim)
-			
-			return(SANNfitdata)
-}
-
-sfitdf <- SANNfit(ptempdata[["FULL24"]])
-
-obsdata <- ptempdata[["FULL20"]] %>%
-	select(days, P, H) %>%
-	rename(time = days)
-
-			prod_plot <- ggplot() + # declare ggplot object
-				geom_line(data = sfitdf, aes(x = model_times, y = P, colour = "red")) +
-				geom_point(data = obsdata, aes(x = time, y = P)) +
-				ggtitle("Simulated Algal Biovolume") +
-				labs(x = "Days", y = "Algal Biovolume") +
-				theme(legend.position = "none")
-			
-			het_plot <- ggplot() + 
-				geom_line(data = sfitdf, aes(x = model_times, y = H, colour = "red")) +
-				geom_point(data = obsdata, aes(x = time, y = H)) +
-				ggtitle("Simulated Daphnia Density") +
-				labs(x = "Days", y = "Total Daphnia Density") +
-				theme(legend.position = "none")
-			
-			output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
-
-pdata <- ptempdata[["DEF24"]]
 
 rkfit <- function(pdata){
 # Extract from the above subset only what we require to fit our model
@@ -173,21 +96,7 @@ times <- seq(0, 36, 0.1)
 dayzerodata <- filter(pdata, days == 0)
 initial_state <- c(P = mean(dayzerodata$P), H = 10)
 
-# parameter settings for when using P = algal_biovolume:
-# works well for def12: 4, 337, 3.901555e-01 4.001129e-03 3.700928e-02 USE MARQ FOR DEF12
-# works well for full12: 5.654957e+00 2.025641e+02 3.683304e-01 1.261719e-03 1.009373e-03 USE NM
-# works well for def16: c(r = 4.8, K = 585, a = 0.25, eps = 0.002, m = 0.01)
-# works well for full16: c(r = 3.14, 882, a = 0.18, eps = 0.004, m = 0.01)
-# works well for def20: c(r = 4.9, K = 997, a = 0.23, eps = 0.002, m = 0.03)
-# works well for def24: c(r = 4.1, K = 700, a = 0.3, eps = 0.008, m = 0.02) WEIRD STUFF HAPPENING HERE. USE 10^5 for MCMC
-# works SOMEWHAT well for full20: c(r = 2.1, K = 928, a = 0.12, eps = 0.005, m = 0.09)
-# model_parameters <- c(r = 2, K = 500, a = 0.5, eps = 0.001, m = 0.01)
-
-# parameter settings for when using P = cell_density
-# DEF 20: 2.287622e+00 4.621829e+03 1.044994e-01 1.729104e-03 2.131745e-02
-# DEF 24: c(r = 2.2, K = 450, a = 0.1, eps = 0.008, m = 0.02)
-
-model_parameters <- c(r = 4, K = 155, a = 0.11, eps = 0.008, m = 0.03)
+model_parameters <- c(r = 4, K = 505, a = 0.11, eps = 0.008, m = 0.03)
 lower_parameters <- c(0, 50, 0.1, 0.001, 0)
 upper_parameters <- c(5, 1000, 1, 0.5, 0.1)
 
@@ -198,7 +107,6 @@ CRmodel <- function (times, initial_state, model_parameters) {
 	list(c(dP, dH))
 	})
 	}
-
 
 Lsoda <- ode(initial_state, times, CRmodel, model_parameters) # lsoda is default method
 dfsoda <- data.frame(Lsoda)
@@ -219,22 +127,9 @@ Fit <- modFit(f = ModelCost2,
 fitsoda <- ode(initial_state, times, CRmodel, Fit$par)
 fitsodadf <- data.frame(fitsoda)
 
-return(fitsodadf)
+return(Fit$par)
 }
 
-prod_plot <- ggplot() + # declare ggplot object
-	geom_line(data = fitsodadf, aes(x = times, y = P, colour = "red")) +
-	geom_point(data = fittingdata, aes(x = time, y = P)) +
-  ggtitle("Simulated Algal Biovolume") +
-	labs(x = "Days", y = "Algal Biovolume") +
-	theme(legend.position = "none")
-	
-het_plot <- ggplot() + 
-	geom_line(data = fitsodadf, aes(x = times, y = H, colour = "red")) +
-	geom_point(data = fittingdata, aes(x = time, y = H)) +
-  ggtitle("Simulated Daphnia Density") +
-	labs(x = "Days", y = "Total Daphnia Density") +
-  theme(legend.position = "none")
+results <- map_df(ptempdata, rkfit)
 
-output_plot <- grid.arrange(prod_plot, het_plot, ncol=2)
 
