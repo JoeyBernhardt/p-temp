@@ -84,8 +84,8 @@ resp_weights %>%
 	filter(term != "(Intercept)") %>% 
 	summarise(mean.slope = mean(estimate)) %>% 
 	mutate(met.rate = mean.slope*-1) %>%
-# 	lm(log(met.rate) ~ log(drymass), data = .) %>% 
-# 	summary() %>% 
+# lm(log(met.rate) ~ log(drymass), data = .) %>% 
+# summary() %>% 
 	ggplot(data =., aes(x = drymass, y = met.rate)) + geom_point() +
 	geom_smooth(method = "lm")
 
@@ -300,6 +300,7 @@ slopes.20.weights %>%
 
 all.but.12 <- bind_rows(slopes.20.weights, slopes.24.weights, slopes.16.weights)
 all <- bind_rows(slopes.20.weights, slopes.24.weights, slopes.16.weights, slopes.12.weights)
+write_csv(all, "data-processed/metabolic_rates_all_unknown.csv")
 
 all.but.12 %>% 
 	filter(temperature.x == "24") %>% View
