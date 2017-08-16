@@ -27,7 +27,8 @@ plot_data %>%
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black")) +
-	theme(text = element_text(size=16, family = "Helvetica")) + ylab('Log metabolic rate (mg oxygen/L/hour)') + xlab("Log mass (mg DW)")
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab('Log metabolic rate (mg oxygen/L/hour)') + xlab("Log mass (mg DW)") + 
+	annotate("text", x = -4.49, y= -2.5, label = "b = 1.44, CI (1.01, 1.89)", size = 6)
 ggsave("p-temp-figures_files/daphnia_metabolic_rate_per_mass.pdf")
 ggsave("p-temp-figures_files/daphnia_metabolic_rate_per_mass.png")
 
