@@ -96,3 +96,6 @@ resp.long20 %>%
 	geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) 
 
 
+mass_slopes %>% 
+	filter(daph_minus_water < 0.3) %>% 
+	ggplot(aes(x = daph_minus_water, y = cons_per_hour)) + geom_point()
