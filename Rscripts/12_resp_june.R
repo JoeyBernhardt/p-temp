@@ -8,6 +8,7 @@ library(dplyr)
 library(broom)
 library(plotrix)
 library(stringr)
+library(tidyverse)
 
 resp_16 <- read_csv("respirometry-data/daphrespinmg/16C_daph_resp_mg_Oxygen.csv")
 resp_12 <- read_csv("respirometry-data/daphrespinmg/12C_daph_resp_mg_Oxygen.csv")
@@ -300,7 +301,7 @@ slopes.20.weights %>%
 
 all.but.12 <- bind_rows(slopes.20.weights, slopes.24.weights, slopes.16.weights)
 all <- bind_rows(slopes.20.weights, slopes.24.weights, slopes.16.weights, slopes.12.weights)
-write_csv(all, "data-processed/metabolic_rates_all_unknown.csv")
+# write_csv(all, "data-processed/metabolic_rates_all_unknown.csv")
 
 all.but.12 %>% 
 	filter(temperature.x == "24") %>% View
@@ -314,13 +315,17 @@ resp.mass <- all %>%
 	summarise_each(funs(mean,median, sd,std.error)) %>%
 	ungroup() %>% 
 	mutate(temperature = as.numeric(temperature.x)) %>% 
-	mutate(inverse_temp = (1/(.00008617*(temperature+ 273.15)))) %>% 
-ggplot(data = ., aes(y = mean, x = inverse_temp)) +
+	mutate(inverse_temp = (1/(.00008617*(temperature+ 273.15))))
+
+write_csv(resp.mass, "data-processed/resp.mass.csv")
+
+	resp.mass %>% 
+	ggplot(aes(y = mean, x = temperature), data =.) +
 	# geom_errorbar(aes(ymin=mean-std.error, ymax=mean+std.error), width=.2) +
 	geom_point(size = 4, color = "blue", alpha = 0.5) +
 	geom_smooth(method = "lm", color = "blue", size = 2) +
-	scale_x_reverse() + 
-	theme_bw() + ylab("mass-normalized oxygen flux") + xlab("temperature (1/kT)") +
+	# scale_x_reverse() + 
+	theme_bw() + ylab("mass-normalized oxygen flux\n (mg oxygen/L/hour)") + xlab("temperature (1/kT)") +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold")) + 
 	theme(axis.text.y   = element_text(size=20),
@@ -335,28 +340,32 @@ ggplot(data = ., aes(y = mean, x = inverse_temp)) +
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 
 
+	tidy(lm(log(mean) ~ inverse_temp, data = resp.mass), conf.int = TRUE) %>% 
+		View	
+	
+	
 ggsave("daphnia_metabolic_rate.png")
 
 ### convert the 12C values which are in air sat to torr
 
-resp.mass$mean[resp.mass$uniqueID == "12_A5"] <- 0.12
-resp.mass$mean[resp.mass$uniqueID == "12_A6"] <- 0.19
-resp.mass$mean[resp.mass$uniqueID == "12_B1"] <- 0.15
-resp.mass$mean[resp.mass$uniqueID == "12_B2"] <- 0.11
-resp.mass$mean[resp.mass$uniqueID == "12_B3"] <- 0.11
-resp.mass$mean[resp.mass$uniqueID == "12_B4"] <- 0.12
-resp.mass$mean[resp.mass$uniqueID == "12_B5"] <- 0.13
-resp.mass$mean[resp.mass$uniqueID == "12_B6"] <- 0.16
-resp.mass$mean[resp.mass$uniqueID == "12_C1"] <- 0.12
-resp.mass$mean[resp.mass$uniqueID == "12_C3"] <- 0.21
-resp.mass$mean[resp.mass$uniqueID == "12_C4"] <- 0.12
-resp.mass$mean[resp.mass$uniqueID == "12_C5"] <- 0.09
-resp.mass$mean[resp.mass$uniqueID == "12_C6"] <- 0.07
-resp.mass$mean[resp.mass$uniqueID == "12_D1"] <- 0.11
-resp.mass$mean[resp.mass$uniqueID == "12_D2"] <- 0.18
-resp.mass$mean[resp.mass$uniqueID == "12_D3"] <- 0.09
-resp.mass$mean[resp.mass$uniqueID == "12_D4"] <- 0.14
-resp.mass$mean[resp.mass$uniqueID == "12_D6"] <- 0.08
+# resp.mass$mean[resp.mass$uniqueID == "12_A5"] <- 0.12
+# resp.mass$mean[resp.mass$uniqueID == "12_A6"] <- 0.19
+# resp.mass$mean[resp.mass$uniqueID == "12_B1"] <- 0.15
+# resp.mass$mean[resp.mass$uniqueID == "12_B2"] <- 0.11
+# resp.mass$mean[resp.mass$uniqueID == "12_B3"] <- 0.11
+# resp.mass$mean[resp.mass$uniqueID == "12_B4"] <- 0.12
+# resp.mass$mean[resp.mass$uniqueID == "12_B5"] <- 0.13
+# resp.mass$mean[resp.mass$uniqueID == "12_B6"] <- 0.16
+# resp.mass$mean[resp.mass$uniqueID == "12_C1"] <- 0.12
+# resp.mass$mean[resp.mass$uniqueID == "12_C3"] <- 0.21
+# resp.mass$mean[resp.mass$uniqueID == "12_C4"] <- 0.12
+# resp.mass$mean[resp.mass$uniqueID == "12_C5"] <- 0.09
+# resp.mass$mean[resp.mass$uniqueID == "12_C6"] <- 0.07
+# resp.mass$mean[resp.mass$uniqueID == "12_D1"] <- 0.11
+# resp.mass$mean[resp.mass$uniqueID == "12_D2"] <- 0.18
+# resp.mass$mean[resp.mass$uniqueID == "12_D3"] <- 0.09
+# resp.mass$mean[resp.mass$uniqueID == "12_D4"] <- 0.14
+# resp.mass$mean[resp.mass$uniqueID == "12_D6"] <- 0.08
 
 
 str(resp.mass)
@@ -365,16 +374,33 @@ resp.mass$temperature.x <- as.numeric(as.character(resp.mass$temperature.x))
 resp.mass$temp.k <- resp.mass$temperature.x + 273.15
 
 resp.mass <- resp.mass %>% 
-	mutate(temp.inv = (1/(.00008617*(temperature.x+ 273.15))))
+	mutate(temp.inv = (-1/(.00008617*(temperature.x+ 273.15))))
 
 
 write_csv(resp.mass, "data-processed/daphnia_metabolic_rates.csv")
 
+resp.mass <- read_csv("data-processed/daphnia_metabolic_rates.csv")
+
 tidy(lm(log(mean) ~ inverse_temp, data = resp.mass), conf.int = TRUE) %>% 
 	View
 
-ggplot(aes(x = temp.inv, y = log(mean)), data = resp.mass) + geom_point()
-
+ggplot(aes(x = inverse_temp, y = log(mean)), data = resp.mass) + 
+	geom_point(size = 4, color = "blue", alpha = 0.5) +
+	geom_smooth(method = "lm", color = "blue", size = 2) +
+	scale_x_reverse() + 
+	theme_bw() + ylab("mass-normalized oxygen flux\n (mg oxygen/L/hour)") + xlab("temperature (1/kT)") +
+	theme(axis.text=element_text(size=16),
+				axis.title=element_text(size=16,face="bold")) + 
+	theme(axis.text.y   = element_text(size=20),
+				axis.text.x   = element_text(size=20),
+				axis.title.y  = element_text(size=20),
+				axis.title.x  = element_text(size=20),
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				axis.line = element_line(colour = "black"),
+				axis.ticks = element_line(size = 1)) +
+	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 
 
 estimate.m(resp.mass$temperature.x, resp.mass$mean)
@@ -413,18 +439,23 @@ ggsave("test.png", bg = "transparent")
 
 
 
-
+?by_row
 
 resp.mass <- resp.mass %>% 
 	mutate(temp.kelvin = (1/(.00008617*(temperature.x+ 273.15))))
 
 
-### convert torr to mg/l
 
+
+
+
+
+### convert torr to mg/l
+library(dplyr)
 library(purrr)
 resp.k <- resp.mass %>% 
-	dplyr::select(temperature.x, mean, uniqueID, temp.kelvin) %>% 
-	by_row(~ convert_torr_to_mg_per_litre(.x$temperature.x, .x$mean), .to = "oxygen_in_mg") %>%
+	dplyr::select(temperature.x, mean, uniqueID, temp.k) %>% 
+	purrr::by_row(~ convert_torr_to_mg_per_litre(.x$temperature.x, .x$mean), .to = "oxygen_in_mg") %>%
 	mutate(oxygen_in_mg = as.numeric(as.character(oxygen_in_mg))) %>%
 	ggplot(data = ., aes(x = temp.kelvin, y = log(oxygen_in_mg))) + geom_point() + geom_smooth(method = "lm")
 
@@ -434,6 +465,28 @@ summary(mod)
 tidy(mod, conf.int = TRUE) %>% 
 	View
 
+
+# Convert from torr to mg -------------------------------------------------
+
+
+## Let's try this with dplyr!
+
+resp_flux <- resp.mass %>% 
+	mutate(flux = NA) %>% 
+	mutate(flux = ifelse(temperature.x == 16, mean*0.0000019705*32*1000, flux)) %>% 
+	mutate(flux = ifelse(temperature.x == 20, mean*0.0000018239*32*1000, flux)) %>% 
+	mutate(flux = ifelse(temperature.x == 24, mean*0.0000016993*32*1000, flux)) %>% 
+	mutate(flux = ifelse(temperature.x == 12, mean*0.0000021415*32*1000, flux))
+
+
+
+resp_flux %>% 
+	ggplot(aes(x = temperature.x, y = log(flux))) + geom_point() +
+	geom_smooth(method = "lm")
+
+
+resp_flux %>% 
+	do(tidy(lm(log(flux) ~ temp.inv, data = .), conf.int = TRUE)) %>% View
 
 
 resp.mass %>% 
@@ -489,6 +542,14 @@ df %>%
 	ylab("oxygen flux, mg/l*mgDW") + xlab("temperature, C") +
 	theme(axis.text=element_text(size=16),
 				axis.title=element_text(size=16,face="bold"))
+
+df %>% 
+	mutate(temperature = as.numeric(as.character(temperature))) %>% 
+	mutate(temp.inv = (1/(.00008617*(temperature + 273.15)))) %>% 
+	mutate(oxygen_in_mg = as.numeric(as.character(oxygen_in_mg))) %>% 
+	do(tidy(lm(log(oxygen_in_mg) ~ temp.inv, data = .), conf.int = TRUE)) %>% View
+
+	
 
 
 estimate.m<-function(tvalues,rvalues)
